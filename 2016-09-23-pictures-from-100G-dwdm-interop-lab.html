@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Pictures from the 100G DWDM interop lab</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<div class="post-date">23 Sep 2016</div><h1 class="post-title"><a href="2016-09-23-pictures-from-100G-dwdm-interop-lab.html">Pictures from the 100G DWDM interop lab</a></h1>
+<p>
+These are some pictures from the coherent 100G DWDM interoperability tests performed in the TeraStream lab. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///100G-dwdm-configuration">router configuration</a>.
+</p>
+
+<div id="outline-container-orgd0b96af" class="outline-2">
+<h2 id="orgd0b96af"><span class="section-number-2">1</span> 1500km fiber test path</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+All tests have been completed over a DWDM system in our lab. It can be slightly reconfigured but have been at least 1500km in all the tests.
+</p>
+
+<p>
+The logical topology of our 1600km fiber path <img src="images/terastream-lab-1600km-fiber-link-topology.jpg" alt="terastream-lab-1600km-fiber-link-topology.jpg">
+</p>
+
+<p>
+It's amplified with these EDFAs every 80km:
+<img src="images/terastream-lab-1600km-fiber-link-dwdm-amps.jpg" alt="terastream-lab-1600km-fiber-link-dwdm-amps.jpg">
+</p>
+
+<p>
+No RAMANs! Here's the whole amp rack:
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-dwdm-rack.jpg" alt="terastream-lab-1600km-fiber-link-dwdm-rack.jpg" width="880px">
+
+</figure>
+
+<p>
+The 1600km of fiber rolls
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-fiber-rack.jpg" alt="terastream-lab-1600km-fiber-link-fiber-rack.jpg" width="880px">
+
+</figure>
+
+<p>
+In a previous, slightly less carrier-grade, incarnation:
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-old-dwdm-fiber.jpg" alt="terastream-lab-1600km-fiber-link-old-dwdm-fiber.jpg" width="880px">
+
+</figure>
+</div>
+</div>
+
+
+<div id="outline-container-org5d3e6aa" class="outline-2">
+<h2 id="org5d3e6aa"><span class="section-number-2">2</span> Router DWDM linecards</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org074f610" class="outline-3">
+<h3 id="org074f610"><span class="section-number-3">2.1</span> Juniper</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+The first Juniper implementation was a pure beta build with the optical parts in a separate chassis and grey 100G-SR10 link back to the MX960. It looks more like a transponder but management happened exclusively from the router and the components could later simply be integrated on a linecard instead of in a separate chassis. I believe four of these were built all in all of which <del>two</del> three (one broke, so we got a replacement) ended up with us.
+<img src="images/terastream-lab-juniper-100G-beta-box.jpg" alt="terastream-lab-juniper-100G-beta-box.jpg">
+</p>
+
+<p>
+Juniper have since released a proper linecard. It's a single port 100G card and instead of utilizing a CFP they have shrunk it down to a CFP2. Specifically CFP2-ACO which means it's analog and all the DSP magic is happening on the linecard unlike the earlier CFP which had pretty beefy DSPs of its own.
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-juniper-1port-dwdm.jpg" alt="terastream-lab-juniper-1port-dwdm.jpg">
+
+</figure>
+
+<p>
+We still have one of the first generation "transponders" from Juniper in use as part of a PNI (private peering link) with NorduNet (AS2603). NorduNet is running Juniper routers and they have it connected to their router in Hamburg which is then linked over a piece of metro dark fibre to a TeraStream Nokia 7750 router.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8a114da" class="outline-3">
+<h3 id="org8a114da"><span class="section-number-3">2.2</span> Nokia</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Nokia, previously Alcatel-Lucent (previously TiMetra), were one of the early partners behind the 100G DWDM standard and were also early with putting together a line card for their 7750 router:
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-alu-dwdm-frontplate.jpg" alt="terastream-lab-alu-dwdm-frontplate.jpg">
+
+</figure>
+
+<p>
+They are now also rolling new 2-port cards for the 7950, which we're about to
+install. Here's me with one of those cards:
+</p>
+
+
+<figure>
+<img src="images/me-holding-nokia-100G-linecard.png" alt="me-holding-nokia-100G-linecard.png">
+
+</figure>
+
+<p>
+And installed in router (the one on the left - the right one is for grey optics):
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-nokia-7950-dwdm.jpg" alt="terastream-lab-nokia-7950-dwdm.jpg">
+
+</figure>
+</div>
+</div>
+
+<div id="outline-container-orgcae626e" class="outline-3">
+<h3 id="orgcae626e"><span class="section-number-3">2.3</span> Cisco</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Cisco has a couple of different generations. Here's one of the first for the ASR9000 router, which has since been discontinued:
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-cisco-dwdm-linecards.jpg" alt="terastream-lab-cisco-dwdm-linecards.jpg">
+
+</figure>
+
+<p>
+There is also a transponder for the ONS15454 that integrates with the router, much like the Juniper solution, so the DWDM configuration can be managed by the router but the optical components are situated in a ONS15454 chassis. I don't currently have a picture of this however.
+</p>
+
+<p>
+Laserbeak is Cisco's latest addition to the family of 100G cards that support <i>the standard</i>, here in the middle (also with 20x10GE ports);
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-cisco-laserbeak.jpg" alt="terastream-lab-cisco-laserbeak.jpg">
+
+</figure>
+
+<p>
+The Laserbeak card also uses the more modern CFP2-ACO optical modules.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3bab0a5" class="outline-3">
+<h3 id="org3bab0a5"><span class="section-number-3">2.4</span> Huawei</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+Last but not least we have stack of Huawei routers. The 2-port card in the first two slots is the 100G card:
+<img src="images/terastream-lab-huawei-ne40e_1.jpg" alt="terastream-lab-huawei-ne40e_1.jpg">
+</p>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div></div>
+<div id="postamble" class="status"><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+#+TITLE: Configure your 100G DWDM linecard for interop!
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2016-09-23 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: TeraStream, 100G DWDM
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+This is how you configure your shiny new 100G router port for interoperability according to [[/assets/docs/standards/100G-long-haul.pdf][/the standard/]]. Read the [[/interoperable-100G][full story]] and look at the [[/pictures-from-100G-dwdm-interop-lab][pretty pictures from our 100G interop lab]].
+
+The interface number is naturally an example and you need to fill in yours. The same is true for channel / frequency / wavelength and output power. I have however shown a configuration here that is the equivalent for each platform, i.e. we use a frequency if 193.4THz, which is channel 34 on Nokia, channel 54 on Huawei and wavelength 1550.12nm on Juniper. Output power is -10dBm but this is expressed in different ways, some platforms use dBm while other work in units of 0.1 dBm which means that -10dBm is equivalent to a value of -100.
+
+* Cisco
+Cisco IOS XR configuration for the ASR9k. Already XML formatted so you can punt
+it over the NETCONF interface and have your router configured!
+
+#+BEGIN_SRC xml
+<interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg">
+    <interface-configuration>
+        <active>act</active>
+        <interface-name>dwdm0/1/0/20/0</interface-name>
+        <dwdm xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-dwdm-ui-cfg">
+            <g709>
+                <fec>
+                    <fec-mode>high-gain-multivendor-hd</fec-mode>
+                </fec>
+                <enable>true</enable>
+            </g709>
+            <wavelength>
+                <wave-channel>19340</wave-channel>
+                <wave-channel-number>channel-frequency</wave-channel-number>
+            </wavelength>
+            <transport-admin-state>in-service-config-allowed</transport-admin-state>
+            <transmit-power>-100</transmit-power>
+        </dwdm>
+    </interface-configuration>
+</interface-configurations>
+#+END_SRC
+
+* Huawei
+CLI conf for Huawei since their NETCONF interface is currently an abomination.
+
+#+BEGIN_SRC text
+controller Wdm 1/0/0
+ fec enhanced
+#
+interface 100GE 1/0/0
+ optical-tx-power target -100
+ wavelength-channel 54
+#
+#+END_SRC
+
+* Juniper
+Juniper calls /the standard/ "hgfec", here expressed in XML that you can send over a NETCONF interface!
+
+#+BEGIN_SRC xml
+<configuration xmlns="http://xml.juniper.net/xnm/1.1/xnm">
+    <interfaces>
+        <interface>
+            <name>et-10/0/0</name>
+            <optics-options>
+                <wavelength>1550.12</wavelength>
+                <tx-power>-10</tx-power>
+            </optics-options>
+            <otn-options>
+                <laser-enable>
+                <fec>hgfec</fec>
+                <rate>otu4</rate>
+            </otn-options>
+        </interface>
+    </interfaces>
+</configuration>
+#+END_SRC
+
+* Nokia
+
+Here's how to configure a port on Nokia SROS. "interop2" is the magic name for the interoperable FEC and bit mapping:
+
+#+BEGIN_SRC text
+port 1/2/3
+    otu
+    dwdm
+        channel 34
+        coherent
+            channel 34
+            compatibility interop2
+            target-power -10
+#+END_SRC

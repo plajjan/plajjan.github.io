@@ -1,0 +1,27 @@
+#+TITLE: Interoperable 100G DWDM equipment
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2017-03-15 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: TeraStream, 100G DWDM
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+* Interoperable coherent 100G DWDM
+  
+This is a non-comprehensive list of interoperable coherent 100G DWDM equipment.
+
+| Vendor  | Model          | Description                      | Tested |
+|---------+----------------+----------------------------------+--------|
+| Juniper | MIC3-100G-DWDM | 1x100GE IPoDWDM line card for MX | TS     |
+
+
+* Coherent 100G DWDM without interop
+
+This is a non-comprehensive list of equipment that supports coherent 100G DWDM but does **NOT** support standardised FEC and mapping:
+
+| Vendor  | Model             | Description                   | Tested |
+|---------+-------------------+-------------------------------+--------|
+| Juniper | P1-PTX-2-100G-WDM | 2x100G IPoDWDM module for PTX |        |
+| Juniper | PTX-5-100G-WDM    | 5x100G IPoDWDM module for PTX |        |

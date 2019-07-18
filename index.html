@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+
+<div class="post-date">25 Jul 2019</div><h1 class="post-title"><a href="2019-07-25-there-is-no-golden-configuration.html">There is no golden configuration - using Cisco NSO services for everything</a></h1>
+<div class="abstract">
+<p>
+Using services in Cisco NSO to enable management of the full life cycle of configuration.
+</p>
+
+</div>
+
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgd3465da">1. TL;DR;</a></li>
+<li><a href="#orgd79e83c">2. Golden configuration</a></li>
+<li><a href="#org6ddb8ce">3. FASTMAP and reference counting in Cisco NSO</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgd3465da" class="outline-2">
+<h2 id="orgd3465da"><span class="section-number-2">1</span> TL;DR;</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Use services in Cisco NSO for everything you configure on your devices.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd79e83c" class="outline-2">
+<h2 id="orgd79e83c"><span class="section-number-2">2</span> Golden configuration</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+If you've been in the networking business for some time you'll likely be familiar with the term "golden configuration". A sort of master template for how configuration should look. It brings associations to something that is perfect - like a golden statue on a pedestal.
+</p>
+
+
+<figure>
+<img src="images/Golden_statue_on_Pont_Alexandre_III_1.jpg" alt="Golden_statue_on_Pont_Alexandre_III_1.jpg">
+
+</figure>
+
+
+
+<p>
+It is however a flawed idea. There is no such thing as a perfect configuration. Times change and so needs the configuration.
+</p>
+
+<p>
+Somewhat similarly is the concept of day 0 or day 1 (ah, an off-by-one error!?) configuration. It's the idea of a configuration you put on the device when you initially configure it. There's usually nothing defined for managing the life cycle of this "day 0" or "initial" configuration and so it becomes outdated on devices that were installed a long time ago.
+</p>
+
+<p>
+The name "day 0" has a temporal association as the name implies it is something you only do on the first day whereas in reality it is something you must configure on many days - to be precise; every day that you change that configuration! I prefer to call this "base configuration" as it removes that connotation of "configure once on first day". The device base configuration is a living thing and you must manage its life cycle.
+</p>
+
+<p>
+We have to be able to manage the life cycle of configuration, like:
+</p>
+<ul class="org-ul">
+<li>adding new leaves</li>
+<li>changing value of leaves, lists etc</li>
+<li>removing leaves, list entries etc</li>
+</ul>
+
+<p>
+For example, today we configure DNS servers:
+</p>
+<ul class="org-ul">
+<li><code>8.8.8.8</code></li>
+<li><code>1.1.1.1</code></li>
+</ul>
+
+<p>
+Tomorrow we realize we don't want neither <code>8.8.8.8</code> nor <code>1.1.1.1</code>. We want to replace those entries (in a list) with our own DNS <code>192.0.2.1</code>. Changing the golden day 0 configuration on disk is simple, we just edit the file and remove two entries and add another but we must then synchronize this change to the device in our network. We must keep track of what we have added in the past so we can send the configuration delta.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org6ddb8ce" class="outline-2">
+<h2 id="org6ddb8ce"><span class="section-number-2">3</span> FASTMAP and reference counting in Cisco NSO</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the <code>create</code> function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declarative define what the configuration should look like and the system will figure out the rest.
+</p>
+
+<p>
+In contrast, using device templates, we won't get reference counting which means that removing leaves won't happen automatically. If we have set leaf X in our golden configuration today, pushed it to a thousand devices and want to remove it tomorrow, we have to do that manually.
+</p>
+
+<p>
+There seems to be a trend to use device templates for this day 0 / golden configuration style use cases in Cisco NSO and I quite frankly don't understand why. The only reason I see for using device templates at all is because they could be easier to work with, depending on your perspective. Device templates live as part of the configuration in NSO and so it is editable from the NSO CLI. For people with a networking background, this is probably more intuitive than using services and their configuration templates as one has to edit files, create NSO packages etc. However, using Cisco NSO without using services is a complete waste of potential. Get over the hurdle and start writing services for all!
+</p>
+
+<p>
+Enable the power of FASTMAP. Use services for everything you configure on your devices.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div>
+<div class="post-date">02 Jul 2019</div><h1 class="post-title"><a href="2019-07-02-writing-a-background-worker-for-cisco-nso.html">Writing a Python background worker for Cisco NSO</a></h1>
+
+<div id="outline-container-orgff7faae" class="outline-2">
+<h2 id="orgff7faae"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The <code>create()</code> callback is the primary means of which we get things done in Cisco NSO. The use of NSO is most often focused on configuration provisioning and so the <code>create()</code> callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our <code>create()</code> code which renders new configuration output. In the YANG model we use a <code>servicepoint</code> for attaching a <code>create()</code> callback to a particular subtree in the YANG model. In addition to <code>create()</code> <code>servicepoint</code> we also have <code>actionpoints</code> which allow us to attach our code to YANG actions. Both <code>servicepoint</code> and <code>actionpoint</code> both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the worker to do whatever you need to accomplish.
+</p>
+
+<p>
+It should be noted that there is functionality in NSO to schedule periodic activities cron job style but I find it somewhat lacking, not that it's worse than cron but cron just isn't the right tool for everything. You would probably do well in understanding it before deciding on how to solve your specific challenge. Either way, as is common with us technical people the question of why or why not is not the focus of this post. Rather, we want to focus on the <b>how</b>. If you feel the need for a background worker in NSO, how do you actually go about implementing one?
+</p>
+
+<p>
+I'll assume you have some experience with Cisco NSO and that you know how to implement basic services, actions etc. Since I have a strong preference of Python over Java, this will focus on how to do this using the Python support in NSO. Let's go on a journey of implementing a Python background worker for Cisco NSO!
+</p>
+</div>
+
+<div id="outline-container-org4e8130a" class="outline-3">
+<h3 id="org4e8130a"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+The NSO core is written in Erlang and so to run user code written in Python it runs a separate Python VM process that communicates with the NSO core over a number of APIs. It will spawn one Python VM process for each NSO package that wants to run Python code. Thus there is some separation between different packages and given the GIL (Giant Interpreter Lock) in the standard Python interpreter it also allows for a natural way to get past the parallel execution problem, at least to a certain extent.
+</p>
+
+<p>
+Within each Python VM there will be a main thread and then multiple other threads for the various components that are specified by the <code>package-meta-data.xml</code> file.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org54529d3" class="outline-3">
+<h3 id="org54529d3"><span class="section-number-3">1.2</span> A naive approach</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Taking a queue from the implementation of the NCS related
+Okay, so let's get started. Let's try writing a background worker. We'll start by making a new package and we'll start off from the python service skeleton.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">ncs-make-package --service-skeleton python
+</pre>
+</div>
+
+<p>
+The purpose of our background worker, as an example, will be to increment a counter at a periodic interval. It's stupid simple and not useful on its own but as we will see, our focus won't be on the work carried out but primarily on the things around setting up a worker and so this will serve as a simple example. I'm sure you'll be able to adapt it to your task.
+</p>
+
+<p>
+Edit or replace the YANG model to the following. We just want a simple leaf called counter, that is config false (i.e. operational state data). To avoid total chaos we put it under a bgworker container.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span> <span style="color: #4f97d7;">{</span>
+
+  <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://example.com/bgworker"</span>;
+  <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span>;
+
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">counter</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">config</span> <span style="color: #a45bad;">false</span>;
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">0</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+There are some other things, like revision and description of the module that you should add in but I'm trying to keep it down to an absolute bare minimum in order to show what is relevant for our scenario.
+</p>
+
+<p>
+We set the default value to 0 which means the counter will be 0 each time NCS starts up. Unlike configuration data, state data in NCS is not persisted per default which is why our leaf will go back to a value of 0 each time NCS starts. We could add <code>tailf:persist</code> to the leaf to make it persisted in CDB.
+</p>
+
+<p>
+With a YANG model in place, how do we actually go about implementing the worker itself? The <code>ncs.application.Application</code> class offered by the NSO Python libraries allows us to define an "Application" which is our entry point and way of hooking into NSO. The normal example skeleton code produced by <code>ncs-make-package</code> shows us the use of the <code>setup()</code> and <code>teardown()</code> methods to hook into the start and stop of our Application.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">------------------------</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">SERVICE CALLBACK EXAMPLE</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">------------------------</span>
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">ServiceCallbacks</span><span style="color: #4f97d7;">(</span>Service<span style="color: #4f97d7;">)</span>:
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">The create() callback is invoked inside NCS FASTMAP and</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">must always exist.</span>
+    <span style="color: #ce537a; font-weight: bold;">@Service.create</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">cb_create</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, tctx, root, service, proplist<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Service create(service='</span>, service._path, <span style="color: #2d9574;">')'</span><span style="color: #4f97d7;">)</span>
+
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">The pre_modification() and post_modification() callbacks are optional,</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">and are invoked outside FASTMAP. pre_modification() is invoked before</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">create, update, or delete of the service, as indicated by the enum</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">ncs_service_operation op parameter. Conversely</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">post_modification() is invoked after create, update, or delete</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">of the service. These functions can be useful e.g. for</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">allocations that should be stored and existing also when the</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">service instance is removed.</span>
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">@Service.pre_lock_create</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">def cb_pre_lock_create(self, tctx, root, service, proplist):</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">#     </span><span style="color: #2aa1ae; background-color: #292e34;">self.log.info('Service plcreate(service=', service._path, ')')</span>
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">@Service.pre_modification</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">def cb_pre_modification(self, tctx, op, kp, root, proplist):</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">#     </span><span style="color: #2aa1ae; background-color: #292e34;">self.log.info('Service premod(service=', kp, ')')</span>
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">@Service.post_modification</span>
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">def cb_post_modification(self, tctx, op, kp, root, proplist):</span>
+    <span style="color: #2aa1ae; background-color: #292e34;">#     </span><span style="color: #2aa1ae; background-color: #292e34;">self.log.info('Service premod(service=', kp, ')')</span>
+
+
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">---------------------------------------------</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">COMPONENT THREAD THAT WILL BE STARTED BY NCS.</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">---------------------------------------------</span>
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">The application class sets up logging for us. It is accessible</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">through 'self.log' and is a ncs.log.Log instance.</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Service callbacks require a registration for a 'service point',</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">as specified in the corresponding data model.</span>
+        <span style="color: #2aa1ae; background-color: #292e34;">#</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.register_service<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker-servicepoint'</span>, ServiceCallbacks<span style="color: #4f97d7;">)</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">If we registered any callback(s) above, the Application class</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">took care of creating a daemon (related to the service/action point).</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">When this setup method is finished, all registrations are</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">considered done and the application is 'started'.</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">When the application is finished (which would happen if NCS went</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">down, packages were reloaded or some error occurred) this teardown</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">method will be called.</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+As can be seen by this comment, this is a component thread and runs as a thread in the Python VM.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">---------------------------------------------</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">COMPONENT THREAD THAT WILL BE STARTED BY NCS.</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">---------------------------------------------</span>
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        ...
+</pre>
+</div>
+
+<p>
+We want a background worker, so all we have to do is start another thread from this <code>setup()</code> method, right?
+</p>
+
+<p>
+Here's the modified Python code:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
+            time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+I ripped out the <code>ServiceCallbacks</code> class with its <code>cb_create()</code> since we don't need that here and instead created a new thread definition called <code>BgWorker</code> which is instantiated and started from the <code>setup()</code> method of our Application. Let's try loading the package by running <code>request packages reload</code> on our NCS instance (I'm presuming you know how to start up NCS, put the package in the right place etc).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">admin@ncs&gt; request packages reload force
+
+&gt;&gt;&gt; System upgrade is starting.
+&gt;&gt;&gt; Sessions in configure mode must exit to operational mode.
+&gt;&gt;&gt; No configuration changes can be performed until upgrade has completed.
+&gt;&gt;&gt; System upgrade has completed successfully.
+reload-result {
+    package bgworker
+    result true
+}
+[ok][2019-07-01 13:43:04]
+admin@ncs&gt;
+</pre>
+</div>
+
+<p>
+The only thing our background worker does at this point is print a message once a second. Since they are printed and not logged, they will show up in the main python log of NCS <code>ncs-python-vm.log</code>. 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">kll@nuc:~/ncs-4.7.4.2/ncs-run/logs$ tail -f ncs-python-vm.log 
+&lt;INFO&gt; 1-Jul-2019::13:43:04.534 nuc ncs[11832]: Started PyVM: &lt;&lt;"bgworker"&gt;&gt; , Port=#Port&lt;0.26560&gt; , OSpid="26111"
+&lt;INFO&gt; 1-Jul-2019::13:43:04.535 nuc ncs[11832]: bgworker :: Starting /home/kll/ncs-4.7.4.2/src/ncs/pyapi/ncs_pyvm/startup.py -l info -f ./logs/ncs-python-vm -i bgworker
+&lt;INFO&gt; 1-Jul-2019::13:43:04.595 nuc ncs[11832]: bgworker :: Hello from background worker
+&lt;INFO&gt; 1-Jul-2019::13:43:05.597 nuc ncs[11832]: bgworker :: Hello from background worker
+&lt;INFO&gt; 1-Jul-2019::13:43:06.598 nuc ncs[11832]: bgworker :: Hello from background worker
+&lt;INFO&gt; 1-Jul-2019::13:43:07.599 nuc ncs[11832]: bgworker :: Hello from background worker
+&lt;INFO&gt; 1-Jul-2019::13:43:08.599 nuc ncs[11832]: bgworker :: Hello from background worker
+</pre>
+</div>
+
+<p>
+Et voilà! It's working.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org14fb886" class="outline-3">
+<h3 id="org14fb886"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+<code>request packages reload</code> is the "standard" way of loading in new packages, including loading new packages, loading a newer version of an existing already loaded package as well as unloading package (in which case you have to also provide the <code>force</code> as NCS will complain over the removal of namespace which it thinks is a mistake). It covers all changes like config template changes, YANG model changes and code changes. It is however quite slow and if you have a lot of packages you will soon be rather annoyed over the time it takes (around 2 minutes with the packages we usually have loaded in my work environment). Code changes are perhaps the most common changes during development as you are changing lines, wanting to get them loaded immediately and then run your code again. There is a <code>redeploy</code> command for exactly this purpose which can redeploy the code for a single package. In our case, the package is called <code>bgworker</code> and so we can redeploy the code by running <code>request packages package bgworker redeploy</code>.
+</p>
+
+<p>
+Let's try:
+</p>
+<div class="org-src-container">
+<pre class="src src-text">admin@ncs&gt; request packages package bgworker redeploy
+result false
+[ok][2019-07-01 13:48:49]
+admin@ncs&gt; 
+</pre>
+</div>
+<p>
+uh oh. <code>result false</code> why?
+</p>
+
+<p>
+Well, our thread runs a <code>while True</code> loop and so it simply doesn't have a way of exiting. Unlike UNIX processes, there is no way to kill a thread. They can't be interrupted through signals or similar. If you want to stop a thread, the thread itself has to cooperate, so in effect what you are doing is to <i>ask</i> the thread to shut down. We can still forcibly stop our thread by stopping the entire Python VM for our NCS package, since it is running as a UNIX process and can thus be terminated, which will naturally bring down the thread as well. There is a <code>request python-vm stop</code> command in NCS or we can just run <code>request packages reload</code> which also involves restarting the Python VM (restart being a stop of the old version and a start of the new version). 
+</p>
+
+<p>
+We want to be able to run <code>redeploy</code> though, so how do we get our background worker to play nice? The requirement is that the work has to stop within 3 seconds or NCS thinks it's a failure.
+</p>
+
+<p>
+Using a Python events might be the most natural way:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag = threading.Event<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+We modify our code a bit, inserting a checking on a threading.Event in the main loop and then set the Event externally in the thread <code>stop</code> method. Since we can run <code>wait()</code> on the Event with a timeout of 1 second we no longer need the separate <code>time.sleep(1)</code> call.
+</p>
+
+<p>
+We override <code>__init__()</code> but since we have to call the overwritten <code>__init__</code> we do that by calling <code>threading.Thread.__init__(self)</code>.
+</p>
+
+<p>
+Now running redeploy works just fine:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">admin@ncs&gt; request packages package bgworker redeploy               
+result true
+[ok][2019-07-01 15:02:09]
+admin@ncs&gt; 
+</pre>
+</div>
+
+<p>
+Maybe we should implement the main functionality of our program, to increment the counter, instead of just printing a message. Let's rewrite the <code>run</code> method. I've included the full module here but the changes are only in the <code>run</code> method.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag = threading.Event<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
+            <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+                <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+                <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+                <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+                oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+</pre>
+</div>
+<p>
+We've added some code where we open a single MAAPI write transaction using <code>single_write_trans</code> which allows us to open both a maapi context, session and transaction all in one call. We use it as a context manager to ensure we close all those resources in case of errors or normal exit. There are three parameters to this call. The first and second are the "authentication" information to the system. All of this is running over a trusted MAAPI session but we can tell it what user we are then running our session as. The <code>system</code> user is special and has access to pretty much everything. It doesn't rely on the AAA system and so it is a good candidate for writing these kinds of background workers - if someone messes up the AAA configuration you still don't risk your background workers stopping. The first parameter is a context name. I've found that it's very useful to use a good name (you can use an empty string) since it makes troubleshooting so much easier - this context name shows up in <code>ncs --status</code> and other places - if you want to be able to know who is holding a lock, you want to put something useful here. The third parameter is where we say we are only interested in the operational datastore, whereas if we wanted to change any configuration this would have to be <code>running</code>, which also is the default so we could just leave out the argument completely.
+</p>
+
+<p>
+Once we have a transaction to the operational database we want to find our node, read out its value, add 1 and write it back which is what the following three lines accomplishes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+<span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+<span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+finally we <code>apply()</code> the transaction.
+</p>
+
+<p>
+In the logs we can now see our log message reflecting what it is doing:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">&lt;INFO&gt; 1-Jul-2019::15:11:54.906 nuc ncs[11832]: Started PyVM: &lt;&lt;"bgworker"&gt;&gt; , Port=#Port&lt;0.34116&gt; , OSpid="32328"
+&lt;INFO&gt; 1-Jul-2019::15:11:54.906 nuc ncs[11832]: bgworker :: Starting /home/kll/ncs-4.7.4.2/src/ncs/pyapi/ncs_pyvm/startup.py -l info -f ./logs/ncs-python-vm -i bgworker
+&lt;INFO&gt; 1-Jul-2019::15:11:55.956 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 0 to 1
+&lt;INFO&gt; 1-Jul-2019::15:11:56.964 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 1 to 2
+&lt;INFO&gt; 1-Jul-2019::15:11:57.977 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 2 to 3
+&lt;INFO&gt; 1-Jul-2019::15:11:58.982 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 3 to 4
+&lt;INFO&gt; 1-Jul-2019::15:11:59.997 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 4 to 5
+&lt;INFO&gt; 1-Jul-2019::15:12:01.007 nuc ncs[11832]: bgworker :: Hello from background worker, increment counter from 5 to 6
+</pre>
+</div>
+
+<p>
+And if we go look at the value through the CLI we can see how it is being incremented:
+</p>
+<div class="org-src-container">
+<pre class="src src-text">admin@ncs&gt; show bgworker counter 
+bgworker counter 845
+[ok][2019-07-01 15:26:08]
+admin@ncs&gt; 
+</pre>
+</div>
+
+<p>
+Success!
+</p>
+
+<p>
+If we <code>redeploy</code> the <code>bgworker</code> package or reload all packages, the worker would continue incrementing the counter from where it left off. This is because we only restart the Python VM while NCS is still running and since the value is stored in CDB, which is part of NCS, it will not go back to the default value of 0 unless we restart NCS.
+</p>
+
+<p>
+Let's clean up our code a bit. Instead of printing these messages to stdout we want to use standard Python logging (well, it's actually overridden by an NCS logging module but it acts the same, just allowing reconfiguration from within NCS itself). We want to hide this background thread and just make it look like our application is printing the messages and so we pass the log object down (you can do it in other ways if you want to):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, log<span style="color: #4f97d7;">)</span>:
+        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = log
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag = threading.Event<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
+            <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+                <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+                <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+                <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+                oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">(</span>log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+And looking in the log <code>ncs-python-vm-bgworker-log</code> (notice the package name <code>bgworker</code> in the file name) we see how it is now logging there as expected:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">&lt;INFO&gt; 01-Jul-2019::15:30:06.582 bgworker MainThread: - Python 2.7.16 (default, Apr  6 2019, 01:42:57) [GCC 8.3.0]
+&lt;INFO&gt; 01-Jul-2019::15:30:06.582 bgworker MainThread: - Starting...
+&lt;INFO&gt; 01-Jul-2019::15:30:06.583 bgworker MainThread: - Started
+&lt;INFO&gt; 01-Jul-2019::15:30:06.602 bgworker ComponentThread:main: - Main RUNNING
+&lt;INFO&gt; 01-Jul-2019::15:30:07.607 bgworker Thread-5: - Hello from background worker, increment counter from 1061 to 1062
+&lt;INFO&gt; 01-Jul-2019::15:30:08.620 bgworker Thread-5: - Hello from background worker, increment counter from 1062 to 1063
+&lt;INFO&gt; 01-Jul-2019::15:30:09.624 bgworker Thread-5: - Hello from background worker, increment counter from 1063 to 1064
+&lt;INFO&gt; 01-Jul-2019::15:30:10.628 bgworker Thread-5: - Hello from background worker, increment counter from 1064 to 1065
+</pre>
+</div>
+
+<p>
+(you can also sort of figure out how long I am taking to write the various sections of this post based on the counter).
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org2b4a630" class="outline-3">
+<h3 id="org2b4a630"><span class="section-number-3">1.4</span> Back to killable threads</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+Now that we've opened a transaction towards CDB there is one issue we will inevitable face. The running datastore has a global lock and while there are no locks on the operational datastore, applying a transaction can still take some time. For example, in a HA cluster the operational data is synchronously replicated and if other nodes are busy or there are other things ahead of us queued up, it can take some time to apply a transaction. Remember that we have to exit in three seconds. The way we structured our code, we read the <code>self._exit_flag</code> waiting for up to a second for any values to happen, then we open the transaction and write some data and then we come back to looking at our exit flag again. If we spend more than three seconds in the transaction part of the code we won't observe the exit flag and we will fail to exit in three seconds.
+</p>
+
+<p>
+How do we avoid this? How can we leave a guarantee on being able to exit in three seconds?
+</p>
+
+<p>
+One solution is to avoid threads altogether and instead use separate processes and this is the route which we will go down. A process can be interrupted by signals like TERM or KILL, which is the functionality we are after here.
+</p>
+
+<p>
+Also, David Beazley did an interesting talk on killable threads <a href="https://www.youtube.com/watch?v=U66KuyD3T0M">https://www.youtube.com/watch?v=U66KuyD3T0M</a> which you're encouraged to check out. It's rather interesting&#x2026; but back to our background worker process!
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf3560eb" class="outline-3">
+<h3 id="orgf3560eb"><span class="section-number-3">1.5</span> multiprocessing</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+Python has a very convenient library called <code>multiprocessing</code> which is close to a drop in replacement for the threading library but as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> multiprocessing
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+<span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">bg_worker</span><span style="color: #4f97d7;">(</span>log<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+            <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+            <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+            <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+            oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+
+        log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker process, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = multiprocessing.Process<span style="color: #4f97d7;">(</span>target=bg_worker, args=<span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #bc6ec5;">]</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.terminate<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+Much simpler, no? And the result is the same, in fact, since we are passing in the logging object, it is inseparable from the threading solution in the log:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">&lt;INFO&gt; 01-Jul-2019::21:12:42.897 bgworker ComponentThread:main: - Main RUNNING
+&lt;INFO&gt; 01-Jul-2019::21:12:42.905 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21271 to 21272
+&lt;INFO&gt; 01-Jul-2019::21:12:43.911 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21272 to 21273
+</pre>
+</div>
+
+<p>
+well, I changed the log message slightly so I'd actually see it was from the background worker <b>process</b>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0da27a0" class="outline-3">
+<h3 id="org0da27a0"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
+<div class="outline-text-3" id="text-1-6">
+<p>
+What happens if something goes wrong with our worker process? Let's try.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">bg_worker</span><span style="color: #4f97d7;">(</span>log<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+            <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+            <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+            <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+            oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+
+        log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker process, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> random.randint<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span>, <span style="color: #a45bad;">9</span><span style="color: #4f97d7;">)</span> == <span style="color: #a45bad;">9</span>:
+            <span style="color: #4f97d7; font-weight: bold;">raise</span> <span style="color: #ce537a; font-weight: bold;">ValueError</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"bad dice value"</span><span style="color: #4f97d7;">)</span>
+        time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+</pre>
+</div>
+
+<p>
+so we'll throw our ten sided dice and if we hit 9 we'll throw an error which should lead to termination of the python vm in the background process.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">kll@nuc:~/ncs-4.7.4.2/ncs-run/logs$ tail -f ncs-python-vm-bgworker.log ncs-python-vm.log 
+...
+==&gt; ncs-python-vm-bgworker.log &lt;==
+&lt;INFO&gt; 01-Jul-2019::21:21:56.770 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21804 to 21805
+&lt;INFO&gt; 01-Jul-2019::21:21:57.783 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21805 to 21806
+&lt;INFO&gt; 01-Jul-2019::21:21:58.788 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21806 to 21807
+&lt;INFO&gt; 01-Jul-2019::21:21:59.798 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21807 to 21808
+&lt;INFO&gt; 01-Jul-2019::21:22:00.807 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21808 to 21809
+&lt;INFO&gt; 01-Jul-2019::21:22:01.824 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21809 to 21810
+&lt;INFO&gt; 01-Jul-2019::21:22:02.841 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21810 to 21811
+&lt;INFO&gt; 01-Jul-2019::21:22:03.859 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21811 to 21812
+&lt;INFO&gt; 01-Jul-2019::21:22:04.873 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21812 to 21813
+&lt;INFO&gt; 01-Jul-2019::21:22:05.880 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21813 to 21814
+&lt;INFO&gt; 01-Jul-2019::21:22:06.898 bgworker ComponentThread:main: - Hello from background worker process, increment counter from 21814 to 21815
+
+==&gt; ncs-python-vm.log &lt;==
+&lt;INFO&gt; 1-Jul-2019::21:22:06.899 nuc ncs[11832]: bgworker :: Process Process-1:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 267, in _bootstrap
+&lt;INFO&gt; 1-Jul-2019::21:22:06.899 nuc ncs[11832]: bgworker ::     self.run()
+  File "/usr/lib/python2.7/multiprocessing/process.py", line 114, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/kll/ncs-4.7.4.2/ncs-run/state/packages-in-use/1/bgworker/python/bgworker/main.py", line 19, in bg_worker
+    raise ValueError("bad dice value")
+ValueError: bad dice value
+^C
+</pre>
+</div>
+
+<p>
+Lo and behold, it did. After this, nothing more happens as our process is dead. If we want the process restarted, we are going to have to do it ourselves. First, we need to monitor for liveness of the process and take action based on that&#x2026; but before we do that, let's think through some other things that might happen and which we should react to.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1b31ca4" class="outline-3">
+<h3 id="org1b31ca4"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
+<div class="outline-text-3" id="text-1-7">
+<p>
+Since you are reading this you probably haven't implemented a background worker yet so let me share some advice - add an <b>off</b> button. When you are troubleshooting your system it can be rather difficult with lots of things going on, triggered by these background workers. Having multiple background workers both of different type and multiple instances of the same type exacerbate the issue. With an off button we can easily turn them off and troubleshoot the interesting parts. It might seem crude, and I think it is, but in lack of better instrumentation in NCS, it is the best we have.
+</p>
+
+<p>
+The most intuitive way of doing this, and the way I've done it so far, is to simply add some configuration that controls whether the background worker is enabled or not. Going back to our YANG model, we add an <code>enabled</code> leaf to control if the worker is enabled or not.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span> <span style="color: #4f97d7;">{</span>
+
+  <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://example.com/bgworker"</span>;
+  <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span>;
+
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgworker</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">counter</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">config</span> <span style="color: #a45bad;">false</span>;
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">0</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge66e940" class="outline-3">
+<h3 id="orge66e940"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
+<div class="outline-text-3" id="text-1-8">
+<p>
+Finally, we have to react to High Availability (HA) events. Depending on which type of worker we are implementing we might want different behaviour. I've so far only had to deal with background workers that write configuration and since that can only be done on the master of a HA system, our background worker should only run on the master node. If you on the other hand are operating on some other data or perhaps not writing anything to CDB, it is possible to still run the worker on all nodes.
+</p>
+
+<p>
+Assuming you only want to run on the HA master we have to determine;
+</p>
+<ul class="org-ul">
+<li>if HA is enabled</li>
+<li>what the HA mode is</li>
+</ul>
+
+<p>
+Getting HA mode is quite simple, it's available from <code>/ncs:ncs-state/ha/mode</code>.
+</p>
+
+<p>
+I wrote this simple decision algorithm for the behaviour we are looking for:
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">HA enabled</th>
+<th scope="col" class="org-left">mode</th>
+<th scope="col" class="org-left">run worker?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">enabled</td>
+<td class="org-left">master</td>
+<td class="org-left">true</td>
+</tr>
+
+<tr>
+<td class="org-left">enabled</td>
+<td class="org-left">slave</td>
+<td class="org-left">false</td>
+</tr>
+
+<tr>
+<td class="org-left">enabled</td>
+<td class="org-left">none</td>
+<td class="org-left">false</td>
+</tr>
+
+<tr>
+<td class="org-left">disabled</td>
+<td class="org-left">none</td>
+<td class="org-left">true</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The sort of tricky thing is that when we are in mode <code>none</code> we should either run or not depending on if the whole HA functionality is enabled or not. Unlike the mode, I don't know what the official way is to determine if HA is enabled or not. The best I've gotten so far is to check if <code>/ncs:ncs-state/ha</code> exists or not. If it doesn't exist, it means HA is disabled and vice versa. The problem with this approach is that I doubt it's a deliberate part of the interface - I think it is happenstance based on the current implementation and if it were to change in the future it might be possible the behaviour around this would change.
+</p>
+
+<p>
+Another problem around HA event monitoring is that the <code>/ncs:ncs-state/ha</code> path isn't in CDB oper as one might have thought, it is actually data provider (DP) backed meaning that we can't use the CDB subscriber design pattern to listen to events. Instead there is a new API that was introduced with NCS 4.7.3 that allows us to subscribe to various events. I'm not sure how I feel about this because one of the strengths of NCS was the YANG modeled nature of everything and that's been effectively abandoned here in benefit of some other interfaces. I've written code that repetitively reads from the <code>/ncs:ncs-state/ha</code> path but as it turns out, it's not very fast, probably due to the DP simply not being very fast. We should avoid hammering this path with reads and instead try to subscribe to changes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge20f219" class="outline-3">
+<h3 id="orge20f219"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
+<div class="outline-text-3" id="text-1-9">
+<p>
+Okay, so we've gathered all our requirements and are ready to write, as we will see, the Rube Goldberg of NSO background worker process frameworks!
+</p>
+
+<p>
+To sum up, we want:
+</p>
+<ul class="org-ul">
+<li>react to NCS package events (redeploy primarily)</li>
+<li>react to the background worker dying (supervisor style)</li>
+<li>react to changes of the configuration for our background worker (enabled or not)</li>
+<li>react to HA events</li>
+</ul>
+
+<p>
+The basic challenge is that we have multiple different data sources we want to read and monitor but they come in different shape and form. For example, we can write some code that listens for HA events:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #7590db;">mask</span> = events.NOTIF_HA_INFO
+<span style="color: #7590db;">event_socket</span> = socket.socket<span style="color: #4f97d7;">()</span>
+events.notifications_connect<span style="color: #4f97d7;">(</span>event_socket, mask, ip=<span style="color: #2d9574;">'127.0.0.1'</span>, port=ncs.NCS_PORT<span style="color: #4f97d7;">)</span>
+<span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
+    <span style="color: #7590db;">notification</span> = events.read_notification<span style="color: #4f97d7;">(</span>event_socket<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+The standard way of monitoring say multiple sockets would be by using a select loop, but we can't do that here since <code>events.read_notification()</code> isn't selectable nor does a standard CDB subscriber expose a selectable interface. Instead we end up in some form of loop where we need to run various read or wait calls on the things we want to monitor. If we do that using non-blocking calls on all the things it means we will busy loop, which is bad due to CPU usage. If we do blocking calls with a timeout on at least one item, then it means we are blocking on item X while an event could come in on item Y. Maybe the sleep isn't long enough to make it a real problem but it's not an elegant solution and means we are bound to always (statistically) wait for some time before reacting to events.
+</p>
+
+<p>
+We'll solve all this by defining multiple cooperating pieces:
+</p>
+<ul class="org-ul">
+<li>a worker that is running as its own UNIX process through the multiprocessing library</li>
+<li>a supervisor thread that starts and stop the worker process
+<ul class="org-ul">
+<li>the supervisor has a queue over which it receives events from other components</li>
+<li>it also monitors the process itself merely checking if the worker process is alive and restarts it if not</li>
+</ul></li>
+<li>a CDB subscriber for monitoring the configuration of the background worker (if it's enabled or not) and puts these as messages on the supervisor queue</li>
+<li>a HA event listener thread that subscribes to HA mode changes and notifies the supervisor through the supervisor queue</li>
+</ul>
+
+<p>
+It's only the worker process that is an actual UNIX process as I believe we can write all the other components in a way that allows them to exit in a guaranteed time.
+</p>
+
+<p>
+It's rather elaborate, a little Rube Goldbergian, but I still think it's rather clean. Perhaps it can be made more efficient through asyncio instead of threads but since we don't spawn many threads (only at startup) I doubt it would yield much. If we want multiple instance of the same background worker process then we should probably find a way to reuse the same auxiliary processes to avoid death by a thousand threads.
+</p>
+
+<p>
+The code:
+</p>
+<div class="org-src-container">
+<pre class="src src-python">
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
+<div class="post-date">30 Oct 2017</div><h1 class="post-title"><a href="2017-10-30-yang-validation-in-the-real-world.html">YANG validation in the real world</a></h1>
+<p>
+Some time ago I wrote an [introductory post on how to validate data using YANG](/validating-data-with-YANG).  A simple example as it were, it can be difficult to apply to the real world as there are some blanks to fill in. This time around we'll follow up and use the same tools to validate if the NETCONF / YANG interface of a Huawei router is sound and adheres to standards.
+</p>
+
+<p>
+Evaluating whether NETCONF / YANG interfaces are RFC compliant is something I
+do on a rather frequent basis. Unfortunately I can't share all the YANG models
+or our configuration as both are secret or private in one way or another. I
+could perhaps have censored but that would likely have required much more time
+than I was willing to spend on this post.
+</p>
+
+<p>
+The Huawei router is running a software build that is compiled for us
+(TeraStream) so you can't currently download or get your hands on this (unless
+you ask Huawei nicely to compile one for you too, I guess).
+</p>
+
+<p>
+I got the YANG models separately from Huawei;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls
+huawei-aaa-action.yang
+huawei-aaa-lam-action.yang
+huawei-aaa-lam-type.yang
+huawei-aaa-lam.yang
+huawei-aaa-type.yang
+huawei-aaa.yang
+huawei-acl-action.yang
+huawei-acl-type.yang
+huawei-acl.yang
+huawei-bfd-action.yang
+huawei-bfd-type.yang
+huawei-bfd.yang
+huawei-bgp-action.yang
+huawei-bgp-bgpcomm-action.yang
+huawei-bgp-bgpcomm.yang
+huawei-bgp-bgpmultiinstcomm.yang
+huawei-bgp-type.yang
+huawei-bgp.yang
+huawei-dcn-action.yang
+huawei-dcn-dscpremark.yang
+huawei-dcn-type.yang
+huawei-dcn.yang
+huawei-devm-action.yang
+huawei-devm-type.yang
+huawei-devm.yang
+huawei-dgmp-type.yang
+huawei-dgmp.yang
+huawei-dhcpv6-action.yang
+huawei-dhcpv6-relay-action.yang
+huawei-dhcpv6-relay-type.yang
+huawei-dhcpv6-relay.yang
+huawei-dhcpv6-server-action.yang
+huawei-dhcpv6-server-type.yang
+huawei-dhcpv6-server.yang
+huawei-dhcpv6-type.yang
+huawei-dhcpv6.yang
+huawei-dns-action.yang
+huawei-dns-type.yang
+huawei-dns.yang
+huawei-ethernet-action.yang
+huawei-ethernet-stacking.yang
+huawei-ethernet-type.yang
+huawei-ethernet.yang
+huawei-extension.yang
+huawei-hwtacacs-action.yang
+huawei-hwtacacs-type.yang
+huawei-hwtacacs.yang
+huawei-ifm-action.yang
+huawei-ifmatm-type.yang
+huawei-ifmatm.yang
+huawei-ifmbundle-type.yang
+huawei-ifmbundle.yang
+huawei-ifmcpostrunk-type.yang
+huawei-ifmcpostrunk.yang
+huawei-ifm-flowalarm.yang
+huawei-ifm-fr-type.yang
+huawei-ifm-fr.yang
+huawei-ifm-hdlc-type.yang
+huawei-ifm-hdlc.yang
+huawei-ifmima-type.yang
+huawei-ifmima.yang
+huawei-ifmlag-action.yang
+huawei-ifmlag-type.yang
+huawei-ifmlag.yang
+huawei-ifmmp-type.yang
+huawei-ifmmp.yang
+huawei-ifmpostrunk-type.yang
+huawei-ifmpostrunk.yang
+huawei-ifm-pppbase-type.yang
+huawei-ifm-pppbase.yang
+huawei-ifmtrunk-action.yang
+huawei-ifmtrunk-type.yang
+huawei-ifmtrunk.yang
+huawei-ifm-type.yang
+huawei-ifm.yang
+huawei-ipsec-action.yang
+huawei-ipsec-ike-action.yang
+huawei-ipsec-ike-type.yang
+huawei-ipsec-ike.yang
+huawei-ipsec-type.yang
+huawei-ipsec.yang
+huawei-isiscomm-action.yang
+huawei-isiscomm-type.yang
+huawei-isiscomm.yang
+huawei-l2tpv3-action.yang
+huawei-l2tpv3-type.yang
+huawei-l2tpv3.yang
+huawei-l3vpn-action.yang
+huawei-l3vpn-l3vpncomm-type.yang
+huawei-l3vpn-l3vpncomm.yang
+huawei-l3vpn-mpls-type.yang
+huawei-l3vpn-mpls.yang
+huawei-l3vpn-netslice.yang
+huawei-l3vpn-qos-action.yang
+huawei-l3vpn-qos-type.yang
+huawei-l3vpn-qos.yang
+huawei-l3vpn-staticfrr.yang
+huawei-l3vpn-tnl-type.yang
+huawei-l3vpn-tnl.yang
+huawei-l3vpn-type.yang
+huawei-l3vpn.yang
+huawei-mcastbase-type.yang
+huawei-mcastbase.yang
+huawei-nd-action.yang
+huawei-nd-type.yang
+huawei-nd.yang
+huawei-netconf-authorization-type.yang
+huawei-netconf-authorization.yang
+huawei-netconf-notification-type.yang
+huawei-netconf-notification.yang
+huawei-netconf-type.yang
+huawei-netconf.yang
+huawei-ntp-type.yang
+huawei-ntp.yang
+huawei-pim-pimafspro-type.yang
+huawei-pim-pimafspro.yang
+huawei-pim-type.yang
+huawei-pim.yang
+huawei-pub-type.yang
+huawei-qos-action.yang
+huawei-qos-cbqos-type.yang
+huawei-qos-cbqos.yang
+huawei-qos-hqos-type.yang
+huawei-qos-hqos.yang
+huawei-qos-type.yang
+huawei-qos-vllpipe.yang
+huawei-qos-wred.yang
+huawei-qos.yang
+huawei-rm-action.yang
+huawei-rm-l3vpn-labelstack.yang
+huawei-rm-rmbase-type.yang
+huawei-rm-rmbase.yang
+huawei-rm.yang
+huawei-rsa-type.yang
+huawei-rsa.yang
+huawei-rtp-action.yang
+huawei-rtp-type.yang
+huawei-rtp.yang
+huawei-snmp-action.yang
+huawei-snmp-type.yang
+huawei-snmp.yang
+huawei-sshc-action.yang
+huawei-sshc-type.yang
+huawei-sshc.yang
+huawei-sshs-action.yang
+huawei-sshs-type.yang
+huawei-sshs.yang
+huawei-staticrt-staticmrt-type.yang
+huawei-staticrt-staticmrt.yang
+huawei-staticrt-staticrtbase-type.yang
+huawei-staticrt-staticrtbase.yang
+huawei-staticrt.yang
+huawei-syslog-action.yang
+huawei-syslog-type.yang
+huawei-syslog.yang
+huawei-system-action.yang
+huawei-system-type.yang
+huawei-system.yang
+huawei-timerange-type.yang
+huawei-timerange.yang
+huawei-tty-type.yang
+huawei-tty.yang
+huawei-vlan-action.yang
+huawei-vlan-type.yang
+huawei-vlan.yang
+huawei-vty-action.yang
+huawei-vty-type.yang
+huawei-vty.yang
+huawei-wdm-type.yang
+huawei-wdm.yang
+huawei-y1731-action.yang
+huawei-y1731-dtools-action.yang
+huawei-y1731-dtools-type.yang
+huawei-y1731-dtools.yang
+huawei-y1731-type.yang
+huawei-y1731.yang
+ietf-inet-types.yang
+ietf-yang-types.yang
+</pre>
+</div>
+
+<p>
+Quite a few models!
+</p>
+
+<p>
+Before this point we've had numerous issues with the NETCONF server but most of
+them seem to have been resolved so that we can get the config using NETCONFs
+get-config RPC. We use netconf-console to do this but you can use whatever
+NETCONF client you might have handy, like ncclient (which is kinda a personal
+favourite of mine).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf$ netconf-console -u test -p secr3tpassw0rd --proto ssh --port <span style="color: #a45bad;">830</span> --host my-vrp-lab-router --get-config &gt; config-from-netconf
+kll@lingloi:~/vrp-netconf$ wc -l config-from-netconf
+<span style="color: #a45bad;">205780</span> config-from-netconf
+</pre>
+</div>
+
+<p>
+Gulp. That's a lot. The config on the router isn't very large at all so something seems off.
+</p>
+
+<p>
+Just reading the file I find 141523 lines from the huawei-fib model. It starts with:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">  &lt;<span style="color: #bc6ec5; font-weight: bold;">fib</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-fib"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAfs</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+...
+</pre>
+</div>
+
+<p>
+and continues like that. This is clearly some bug. We are seeing a long list of
+entries but there is no data populated in each entry. We don't have 141k routes
+configured on this router (more like 1 static) and so I suspect that I'm
+getting back operational data, despite only asking for config data with
+get-config. This has happened with Huawei before so I find it entirely possible
+it is happening again.
+</p>
+
+<p>
+If we ignore that though we can see if we can validate the rest of the data
+using the same principles as in the previous post. Using yang2dsdl, that is:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf *.yang
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+Cannot translate submodules
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+Okay, a bunch of warnings and then an error at the end. I don't like seeing
+warnings (sometimes they later lead to errors) so let's start with those. Line
+75 of huawei-pub-type.yang is the pattern line:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">typedef</span> <span style="color: #ce537a; font-weight: bold;">ipv4Address</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">length</span> <span style="color: #2d9574;">"0..255"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">pattern</span> <span style="color: #2d9574;">"((([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))"</span>;
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">description</span>
+    <span style="color: #2d9574;">"An IPV4 address in dotted decimal notation"</span>;
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+<code>\.</code> is used in the middle to mean a literal <code>.</code>. This is fine but as the
+warning messages tells us, doing escapes in a double quoted string is not safe.
+Simply changing the pattern to use single quotes removes the warning and stays
+true to the intent of the pattern.
+</p>
+
+<p>
+With that fixed we are left with the error about submodules which is simply
+because we are telling yang2dsdl to validate an instance data document using a
+submodule. That's simply wrong and not valid. The correct thing to do is to
+validate using the module which naturally includes the submodule, thus we need
+to filter our submodules. All submodules include the statement <code>belongs-to</code> to
+point out which module they belong to.
+</p>
+
+<p>
+This grep will thus yield all the submodules in the directory (-l displays
+files with matches but not the matching line itself):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep -l belongs-to *.yang
+</pre>
+</div>
+
+<p>
+What we are looking for is all modules that are NOT submodules, thus we list
+everything and then do a inverse grep on that, like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls *.yang | grep -vf &lt;<span style="color: #4f97d7;">(</span>grep -l belongs-to *.yang<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+<code>grep -f</code> takes a file as input for things to grep after and so we use a bash
+trick using <code>&lt;()</code> to let the output of a sub-shell look like a file to the
+current command. The <code>-v</code> is to invert the match. This yields the list of files
+we want, now we give it to yang2dsdl by using a sub-shell for expansion:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">243:</span> /usr/bin/yang2dsdl: xsltproc: not found
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">76:</span> /usr/bin/yang2dsdl: xsltproc: not found
+kll@lingloi:~/vrp-netconf/yang$ xsltproc
+The program <span style="color: #2d9574;">'xsltproc'</span> is currently not installed. You can install it by typing:
+sudo apt install xsltproc
+kll@lingloi:~/vrp-netconf/yang$ sudo apt install xsltproc
+</pre>
+</div>
+
+<p>
+Whops! I'm normally validating YANG etc on a computer in our lab but I'm now
+using the same computer which I'm writing this post on and I'm apparently
+missing some tools. I'll include it since you are likely to run into the same
+problem. Just install xsltproc and try again
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+warning: failed to load external entity <span style="color: #2d9574;">"/usr/local/share/yang/xslt/basename.xsl"</span>
+cannot parse /usr/local/share/yang/xslt/basename.xsl
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+warning: failed to load external entity <span style="color: #2d9574;">"schema-dir"</span>
+cannot parse schema-dir
+</pre>
+</div>
+
+<p>
+My yang2dsdl is looking in /usr/local/share instad of /usr/share. Dunno why.
+Don't think I saw problem this on my other computer. Anyway, I just copied
+those files:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ sudo cp -a /usr/share/yang /usr/local/share/yang
+</pre>
+</div>
+
+<p>
+And run again:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./huawei-aaa_huawei-acl_huawei-bfd_huawei-bgp_huawei-dcn_huawei-devm_huawei-dgmp_huawei-dhcpv6_huawei-dns_huawei-ethernet_huawei-extension_huawei-hwtacacs_huawei-ifmatm_huawei-ifmbundle_huawei-ifmcpostrunk_huawei-ifmima_huawei-ifmlag_huawei-ifmmp_huawei-ifmpostrunk_huawei-ifmtrunk_huawei-ifm_huawei-ipsec_huawei-isiscomm_huawei-l2tpv3_huawei-l3vpn_huawei-mcastbase_huawei-nd_huawei-netconf_huawei-ntp_huawei-pim_huawei-pub-type_huawei-qos_huawei-rm_huawei-rsa_huawei-rtp_huawei-snmp_huawei-sshc_huawei-sshs_huawei-staticrt_huawei-syslog_huawei-system_huawei-timerange_huawei-tty_huawei-vlan_huawei-vty_huawei-wdm_huawei-y1731_ietf-inet-types_ietf-yang-types-data.rng'</span>
+I/O error : Filename too long
+I/O error : Filename too long
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Blargh. Okay, too many modules which yields too long of a name since yang2dsdl
+per default concatenates the names of all the modules in its intermediate
+output (it writes a single large schema file that is then used for validation).
+We can specify a basename to use with <code>-b</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                                
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">103:</span> /usr/bin/yang2dsdl: xmllint: not found
+</pre>
+</div>
+
+<p>
+Okay, install xmllint too!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ xmllint
+The program <span style="color: #2d9574;">'xmllint'</span> is currently not installed. You can install it by typing:
+sudo apt install libxml2-utils
+kll@lingloi:~/vrp-netconf/yang$ sudo apt-get install -qy libxml2-utils
+Reading package lists...
+Building dependency tree...
+...
+</pre>
+</div>
+
+<p>
+And now!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:2: element rpc-reply: Relax-NG validity error : Expecting element data, got rpc-reply
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+Not quite :/ yang2dsdl defaults to assuming it's a "data" file we want to
+validate but this is the response from a get-config query and so the "data"
+element is wrapped inside a rpc-reply. We can inform yang2dsdl with <code>-t</code> that
+it is a get-config-reply:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                      
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:1976: element mac: Relax-NG validity error : Element data has extra content: mac
+../config-from-netconf fails to validate
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Now we are getting somewhere. We found a data inconsistency on line 1976 which
+tells us that at least 1975 lines actuallt passed validation! What's on line 1976?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">mac</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-mac"</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;300&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;enable&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;false&lt;/<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;0&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;1&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;3&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">mac</span>&gt;
+</pre>
+</div>
+
+<p>
+Looking at our YANG modules, there is none that define a namespace of huawei-mac:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep huawei-mac *
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+this isn't wrong per se as NETCONF allows the return of data that we don't have
+YANG model for and thus can't validate. The NETCONF client should just ignore
+this data. This might seem strange and first but this is actually how upgrades
+are handled, i.e. if a client is using an older YANG model or simply doesn't
+understand all YANG models supported by the device, that is ok, since we just
+ignore the data. However, the yang2dsdl tool is a little more strict and
+complains about it. For the sake of progress, I'll remove that part and
+continue. After this, I actually found eight other namespaces that I did not
+have YANG models for and thus just removed the corresponding instance data for
+the sake of progressing with my testing.
+</p>
+
+<p>
+Next error we run into is related to the qos config:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+Relax-NG validity error : Extra element qos<span style="color: #4f97d7; font-weight: bold;"> in</span> interleave
+../config-from-netconf:5156: element qos: Relax-NG validity error : Element data failed to validate content
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+The validation is achieved by parsing the YANG models and producing a RelaxNG
+schema which in turn is used to validate the data. This means that at
+validation we no longer have an understanding of YANG, which I presume (I don't
+know that much about RelaxNG) leads to a loss of data. Unfortunately this
+results in an overly sparse error message.
+</p>
+
+<p>
+Fortunately I have some experience in reading YANG models and after reading
+through a bit of the huawei-qos.yang model and its sub-modules I find that
+instances of non-presence containers containing mandatory leaf nodes. This is
+quite the anti-pattern of YANG module writing and this isn't the first time
+I've seen it.
+</p>
+
+
+<p>
+There are two flavours of containers in YANG; presence and non-presence
+containers. Non-presence containers are the default and these containers do not
+themselves carry any explicit meaning and are used merely to organise data by
+providing structure. By adding the <code>presence</code> keyword under a container we can
+turn it into a presence container which means the existance of the container
+itself carries meaning.
+</p>
+
+<p>
+Let's take a short example:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+With this model, the foo container, which is a non-presence container, MUST
+exist and there MUST be a bar leaf in it, since mandatory is set. I've seen
+this pattern in a lot of cases where the intention is to make the leaf bar
+mandatory but only when the container foo is present as a consequence of
+enabling the "foo" feature. To achieve that, we can use a presence container,
+like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #2d9574;">"Enables feature foo"</span>;
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+Now the presence of the whole container foo is optional but if it exists then
+the bar leaf MUST be set (again, due to the mandatory statement).
+</p>
+
+<p>
+Huawei's YANG models contain a bunch of places where they have rather deep
+nesting of containers and finally we find a leaf with <code>mandatory true</code>. When
+all of this data is missing in the instance data the validation fails with that
+extremely sparse message. I modified the YANG modules and added in <code>presence</code>
+statements on a couple of containers to make them optional, again to be able to
+make progress with my evaluation.
+</p>
+
+<p>
+This type of problem is in fact so widespread that I had to find a better way
+of finding problematic instances. By looking at the output of <code>pyang -f tree</code>
+and then filtering this I could quickly find mandatory leaf nodes under
+containers. I started by removing all read-only data. I do this with vi and
+<code>:g/+--ro /d</code>. Second I can remove all leaves that are optional with <code>:g/+--rw
+[A-Za-z0-9]\+?/d</code>. We are now down to containers, lists and mandatory leaves.
+Here's an exceprt from the routing policy model:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">module: huawei-rtp
+    +--rw rtp
+       +--rw asPathFilters
+       |  +--rw asPathFilter* [index]
+       |     +--rw index                string
+       |     +--rw asPathFilterNodes
+       |        +--rw asPathFilterNode* [nodeSequence]
+       |           +--rw nodeSequence    uint32
+       |           +--rw matchMode       rtpMatchMode
+       |           +--rw regular         string
+</pre>
+</div>
+
+<p>
+We can see how asPathFilters is a container that holds a single list, "index"
+is the key of that list and nex to it we find another container and in it a
+second list which wholds the members of the filter. That inner list is keyed on
+nodeSequence, which is fine and the matchMode and regular seems fine too, I
+guess the regular is the actual value and it's called "regular" because it's a
+regular expression. This structure seems fine.
+</p>
+
+<p>
+However, if we move on down we get to the route policies themselves:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">+--rw routePolicys
+|  +--rw routePolicy* [name]
+|     +--rw name                string
+|     +--rw routePolicyNodes
+|        +--rw routePolicyNode* [nodeSequence]
+|           +--rw nodeSequence      uint32
+|           +--rw matchMode         rtpMatchMode
+|           +--rw matchCondition
+|           |  +--rw matchCosts
+|           |  |  +--rw matchCost
+|           |  |     +--rw costValue    uint32
+|           |  +--rw matchInterfaces
+|           |  |  +--rw matchInterface* [ifName]
+|           |  |     +--rw ifName    pub-type:ifName
+|           |  +--rw matchRouteTypes
+|           |  |  +--rw matchRouteType* [routeType]
+|           |  |     +--rw routeType    rtpMchRtType
+|           |  +--rw matchTags
+|           |  |  +--rw matchTag
+|           |  |     +--rw tagValue    uint32
+|           |  +--rw matchMplsLabels
+|           |  |  +--rw matchMplsLabel
+|           |  |     +--rw mplsLabel    boolean
+...
+</pre>
+</div>
+<p>
+the model continues for another 150 lines just for the routePlicy list but I
+won't list it all here.  We can see how there are a bunch of mandatory leaves
+here and they are tucked into two containers, like matchCosts/matchCost is a
+container in a container and inside we have the leaf costValue which is
+mandatory. The way the model is written it means pretty much all potential ways
+of matching things in the policy are mandatory. That can't be right!
+</p>
+
+<p>
+As far as I've understood, Huawei generates their models from an internal
+representation so while I've found a whole bunch of instances with the same
+type of error, it doesn't actually mean fixing it is very hard. All they need
+to do is patch the logic that outputs the YANG model and all faulty occurences
+can be fixed in one swift go.
+</p>
+
+<p>
+I found a couple of other instances of bugs but won't bore you with all the
+details as they are conceptually the same. I've brought it all up with Huawei
+who are committed to resolving them and improve the quality of their NETCONF /
+YANG interface.
+</p>
+
+<p>
+I would like to thank Huawei for providing us with early access software and
+working with us on improving their NETCONF / YANG support as well as for the
+opportunity to publish this post and show how some of these things work.
+</p>
+
+<p>
+Reach out to me on Twitter (see footer) if you have questions!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
+<div class="post-date">29 Jun 2017</div><h1 class="post-title"><a href="2017-06-29-automating-git.html">GitBot - automating boring git operations with CI</a></h1>
+<p>
+Git is super useful for anyone doing a bit of development work or just trying to keep track of a bunch of text files. However as your project grows you might find yourself doing lots of boring repetitive work just around git itself. At least that's what happened to me and so I automated boring git stuff using our CI system.
+</p>
+
+<p>
+There are probably all sorts of use cases for automating various git operations but I'll talk about a few that I've encountered. We're using GitLab and GitLab CI so that's what my examples will include but most of the concepts should apply to other systems as well.
+</p>
+
+
+<div id="outline-container-orga637af3" class="outline-2">
+<h2 id="orga637af3"><span class="section-number-2">1</span> Automatic rebase</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We have some git repos with code that we receive from vendors, who we can think of as our <code>upstream</code>. We don't actually share a git repo with the vendor but rather we get a tar ball every now and then. The tar ball is extracted into a git repository, on the <code>master</code> branch which thus tracks the software as it is received from upstream. In a perfect world the software we receive would be feature complete and bug free and so we would be done, but that's usually not the case. We do find bugs and if they are blocking we might decide to implement a patch to fix them ourselves. The same is true for new features where we might not want to wait for the vendor to implement it.
+</p>
+
+<p>
+The result is that we have some local patches to apply. We commit such patches to a separate branch, commonly named <code>ts</code> (for TeraStream), to keep them separate from the official software. Whenever a new software version is released, we extract its content to <code>master</code> and then rebase our <code>ts</code> branch onto <code>master</code> so we get all the new official features together with our patches. Once we've implemented something we usually send it upstream to the vendor for inclusion. Sometimes they include our patches verbatim so that the next version of the code will include our exact patch, in which case a rebase will simply skip our patch. Other times there are slight or major (it might be a completely different design) changes to the patch and then someone typically needs to sort out the patches manually. Mostly though, rebasing works just fine and we don't end up with conflicts.
+</p>
+
+<p>
+Now, this whole rebasing process gets a tad boring and repetitive after a while, especially considering we have a dozen of repositories with the setup described above. What I recently did was to automate this using our CI system.
+</p>
+
+<p>
+The workflow thus looks like:
+</p>
+<ul class="org-ul">
+<li>human extracts zip file, git add + git commit on <code>master</code> + git push</li>
+<li>CI runs for <code>master</code> branch
+<ul class="org-ul">
+<li>clones a copy of itself into a new working directory</li>
+<li>checks out <code>ts</code> branch (the one with our patches) in working directory</li>
+<li>rebases <code>ts</code> onto <code>master</code></li>
+<li>push <code>ts</code> back to <code>origin</code></li>
+</ul></li>
+<li>this will now trigger a CI build for the <code>ts</code> branch</li>
+<li>when CI runs for the <code>ts</code> branch, it will compile, test and save the binary
+output as "build artifacts", which can be included in other repositories</li>
+<li>GitLab CI, which is what we use, has a CI_PIPELINE_ID that we use to version
+built container images or artifacts</li>
+</ul>
+
+<p>
+To do this, all you need is a few lines in a .gitlab-ci.yml file, essentially;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">stages</span>:
+  - build
+  - git-robot
+
+<span style="color: #2aa1ae; background-color: #292e34;">...</span> build jobs ...
+
+<span style="color: #7590db;">git-rebase-ts</span>:
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - master
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+  <span style="color: #7590db;">before_script</span>:
+    - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+    - eval $(ssh-agent -s)
+    - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+    - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+    - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+    - mkdir -p ~/.ssh
+    - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+  <span style="color: #7590db;">script</span>:
+    - git clone git@gitlab.dev.terastrm.net:${CI_PROJECT_PATH}.git
+    - cd ${CI_PROJECT_NAME}
+    - git checkout ts
+    - git rebase master
+    - git push --force origin ts
+</pre>
+</div>
+
+<p>
+We'll go through it a few lines at a time. Some basic knowledge about GitLab CI is assumed.
+</p>
+
+<p>
+This first part lists the stages of our pipeline.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">stages</span>:
+  - build
+  - git-robot
+</pre>
+</div>
+
+<p>
+We have two stages, first the <code>build</code> stage, which does whatever you want it to do (ours compiles stuff, runs a few unit tests and packages it all up), then the git-robot stage which is where we perform the rebase.
+</p>
+
+<p>
+Then there's:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">git-rebase-ts</span>:
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - master
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+</pre>
+</div>
+
+<p>
+We define the stage in which we run followed by the <code>only</code> statement which limits CI jobs to run only on the specified branch(es), in this case <code>master</code>.
+</p>
+
+<p>
+<code>allow_failure</code> simply allows the CI job to fail but still passing the pipeline.
+</p>
+
+<p>
+Since we are going to clone a copy of ourselves (the repository checked out in CI) we need SSH and SSH keys setup. We'll use ssh-agent with a password-less key to authenticate. Generate a key using ssh-keygen, for example:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">ssh-keygen 
+
+kll@machine ~ $ ssh-keygen -f foo
+Generating public/private rsa key pair.
+Enter passphrase <span style="color: #4f97d7;">(</span>empty for no passphrase<span style="color: #4f97d7;">)</span>:
+Enter same passphrase again:
+Your identification has been saved<span style="color: #4f97d7; font-weight: bold;"> in</span> foo.
+Your public key has been saved<span style="color: #4f97d7; font-weight: bold;"> in</span> foo.pub.
+The key fingerprint is:
+SHA256:6s15MZJ1/kUsDU/PF2WwRGA963m6ZSwHvEJJdsRzmaA kll@machine
+The key<span style="color: #2d9574;">'s randomart image is:</span>
+<span style="color: #2d9574;">+---[RSA 2048]----+</span>
+<span style="color: #2d9574;">|            o**.*|</span>
+<span style="color: #2d9574;">|           ..o**o|</span>
+<span style="color: #2d9574;">|           Eo o%o|</span>
+<span style="color: #2d9574;">|          .o.+o O|</span>
+<span style="color: #2d9574;">|        So oo.o+.|</span>
+<span style="color: #2d9574;">|       .o o.. o+o|</span>
+<span style="color: #2d9574;">|      .  . o..o+=|</span>
+<span style="color: #2d9574;">|     . o ..  .o= |</span>
+<span style="color: #2d9574;">|      . +.    .. |</span>
+<span style="color: #2d9574;">+----[SHA256]-----+</span>
+<span style="color: #2d9574;">kll@machine ~ $</span>
+</pre>
+</div>
+
+<p>
+Add the public key as a deploy key under Project Settings -&gt; Repository -&gt; Deploy Keys. Make sure you enable write access or you won't be able to have your git robot push commits. We then need to hand over the private key so that it can be accessed from within the CI job. We'll use a secret environment variable for that, which you can define under Project Settings -&gt; Pipelines -&gt; Environment variables). I'll use the environment variable <code>GIT_SSH_PRIV_KEY</code> for this.
+</p>
+
+<p>
+Next part is the before_script:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">before_script</span>:
+  - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+  - eval $(ssh-agent -s)
+  - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+  - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+  - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+  - mkdir -p ~/.ssh
+  - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+</pre>
+</div>
+
+<p>
+First ssh-agent is installed if it isn't already. We then start up ssh-agent and add the key stored in the environment variable <code>GIT_SSH_PRIV_KEY</code> (which we setup previously). The git user information is set and we finally create .ssh and add the known host information about our GitLab server to our known_hosts file. You can generate the <code>gitlab-known-hosts</code> file using the following command:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">ssh-keyscan my-gitlab-machine &gt;&gt; gitlab-known-hosts
+</pre>
+</div>
+
+<p>
+As the name implies the before_script is run before the main <code>script</code> part and the ssh-agent we started in the before_script will also continue to run for the duration of the job. The ssh-agent information is stored in some environment variables which are carried across from the before_script into the main script, enabling it to work. It's also possible to put this SSH setup in the main script, I just thought it looked cleaner splitting it up between before_script and script. Note however that it appears that after_script behaves differently so while it's possible to pass environment vars from before_script to script, they do not appear to be passed to after_script. Thus, if you want to do git magic in the after_script you also need to perform the SSH setup in the after_script.
+</p>
+
+<p>
+This brings us to the main script. In GitLab CI we already have a checked out clone of our project but that was automatically checked out by the CI system through the use of magic (it actually happens in a container previous to the one we are operating in, that has some special credentials) so we can't really use it, besides, checking out other branches and stuff would be really weird as it disrupts the code we are using to do this, since that's available in the git repository that's checked out. It's all rather meta.
+</p>
+
+<p>
+Anyway, we'll be checking out a new git repository where we'll do our work, then change the current directory to the newly checked out repository after which we'll check out the <code>ts</code> branch, do the rebase and push it back to the origin remote.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml">- git clone git@gitlab.dev.terastrm.net:${CI_PROJECT_PATH}.git
+- cd ${CI_PROJECT_NAME}
+- git checkout ts
+- git rebase master
+- git push --force origin ts
+</pre>
+</div>
+
+<p>
+&#x2026; and that's it. We've now automated the rebasing of a branch. Occasionally it will fail due to problems rebasing (most commonly merge conflicts) but then you can just step in and do the above steps manually and be interactively prompted on how to handle conflicts.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org8f887d7" class="outline-2">
+<h2 id="org8f887d7"><span class="section-number-2">2</span> Automatic merge requests</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+All the repositories I mentioned in the previous section are NEDs, a form of driver for how to communicate with a certain type of device, for Cisco NSO (a network orchestration system). We package up Cisco NSO, together with these NEDs and our own service code, in a container image. The build of that image is performed in CI and we use a repository called <code>nso-ts</code> to control that work.
+</p>
+
+<p>
+The NEDs are compiled in CI from their own repository and the binaries are saved as build artifacts. Those artifacts can then be pulled in the CI build of <code>nso-ts</code>. The reference to which artifact to include is the name of the NED as well as the build version. The version number of the NED is nothing more than the pipeline id (which you'll access in CI as <code>${CI_PIPELINE_ID}</code>) and by including a specific version of the NED, rather than just use "latest" we gain a much more consistent and reproducible build.
+</p>
+
+<p>
+Whenever a NED is updated a new build is run that produces new binary artifacts. We probably want to use the new version but not before we test it out in CI. The actual versions of NEDs to use is stored in a file in the <code>nso-ts</code> repository and follows a simple format, like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">ned-iosxr-yang=1234
+ned-junos-yang=4567
+...
+</pre>
+</div>
+
+<p>
+Thus, updating the version to use is a simple job to just rewrite this text file and replace the version number with a given CI_PIPELINE_ID version number. Again, while NED updates are more seldom than updates to <code>nso-ts</code>, they do occur and handling it is bloody boring. Enter automation!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">git-open-mr</span>:
+  <span style="color: #7590db;">image</span>: gitlab.dev.terastrm.net:4567/terastream/cisco-nso/ci-cisco-nso:4.2.3
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - ts
+  <span style="color: #7590db;">tags</span>:
+    - no-docker
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+  <span style="color: #7590db;">before_script</span>:
+    - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+    - eval $(ssh-agent -s)
+    - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+    - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+    - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+    - mkdir -p ~/.ssh
+    - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+  <span style="color: #7590db;">script</span>:
+    - git clone git@gitlab.dev.terastrm.net:TeraStream/nso-ts.git
+    - cd nso-ts
+    - git checkout -b robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID}
+    - for LIST_FILE in $(ls ../ned-package-list.* | xargs -n1 basename); do NED_BUILD=$(cat ../${LIST_FILE}); sed -i packages/${LIST_FILE} -e <span style="color: #2d9574;">"s/^${CI_PROJECT_NAME}.*/${CI_PROJECT_NAME}=${NED_BUILD}/"</span>; done
+    - git diff
+    - git commit -a -m <span style="color: #2d9574;">"Use ${CI_PROJECT_NAME} artifacts from pipeline ${CI_PIPELINE_ID}"</span>
+    - git push origin robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID}
+    - HOST=${CI_PROJECT_URL} CI_COMMIT_REF_NAME=robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID} CI_PROJECT_NAME=TeraStream/nso-ts GITLAB_USER_ID=${GITLAB_USER_ID} PRIVATE_TOKEN=${PRIVATE_TOKEN} ../open-mr.sh
+</pre>
+</div>
+
+<p>
+So this time around we check out a git repository into a separate working directory again, it's just that it's not the same git repository as we are running on simply because we are trying to do changes to a repository that is using the output of the repository we are running on. It doesn't make much of a difference in terms of our process. At the end, once we've modified the files we are interested in, we also open up a merge request on the target repository. Here we can see the MR (which is merged already) to use a new version of the NED <code>ned-snabbaftr-yang</code>.
+</p>
+
+
+<figure>
+<img src="images/gitbot-ned-update-mr.png" alt="gitbot-ned-update-mr.png">
+
+</figure>
+
+<p>
+What we end up with is that whenever there is a new version of a NED, a merge request is opened on our <code>nso-ts</code> repository to start using the new NED. That merge request is using changes on a new branch and CI will obviously run for <code>nso-ts</code> on this new branch, which will then test all of our code using the new version of the NED. We get a form of version pinning, with the form of explicit changes that it entails, yet it's a rather convenient and non-cumbersome environment to work with thanks to all the automation.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd6efa88" class="outline-2">
+<h2 id="orgd6efa88"><span class="section-number-2">3</span> Getting fancy</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+While automatically opening an MR is sweet&#x2026; we can do <del>better</del> fancier. Our <code>nso-ts</code> repository is based on Cisco NSO (Tail-F NCS), or actually the <code>nso-ts</code> docker image is based on a <code>cisco-nso</code> docker image that we build in a separate repository. We put the version of NSO as the tag of the <code>cisco-nso</code> docker image, so <code>cisco-nso:4.2.3</code> means Cisco NSO 4.2.3. This is what the <code>nso-ts</code> Dockerfile will use in its <code>FROM</code> line.
+</p>
+
+<p>
+Upgrading to a new version of NCS is thus just a matter of rewriting the tag&#x2026; but what version of NCS should we use? There's 4.2.4, 4.3.3, 4.4.2 and 4.4.3 available and I'm sure there's some other version that will pop up its evil head soon enough. How do I know which version to pick? And will our current code work with the new version?
+</p>
+
+<p>
+To help myself in the choice of NCS version I implemented a script that gets the README file of a new NCS version and cross references the list of fixed issues with the issues that we currently have open in the Tail-F issue tracker. The output of this is included in the merge request description so when I look at the merge request I immediately know what bugs are fixed or new features are implemented by moving to a specific version. Having this automatically generated for us is&#x2026; well, it's just damn convenient. Together with actually testing our code with the new version of NCS gives us confidence that an upgrade will be smooth.
+</p>
+
+<p>
+Here are the merge requests currently opened by our GitBot
+</p>
+
+
+<figure>
+<img src="images/gitbot-list-of-mrs.png" alt="gitbot-list-of-mrs.png">
+
+</figure>
+
+<p>
+We can see how the system have generated MRs to move to all the different versions of NSO currently available. As we are currently on NSO v4.2.3 there's no underlying branch for that one leading to an errored build. For the other versions though, there is a branch per version that executes the CI pipeline to make sure all our code runs with this version of NSO.
+</p>
+
+<p>
+As there have been a few commits today, these branches are behind by 6 commits but will be rebased this night so we get an up to date picture if they work or not with our latest code.
+</p>
+
+
+<figure>
+<img src="images/gitbot-nso-branches.png" alt="gitbot-nso-branches.png">
+
+</figure>
+
+<p>
+If we go back and look at one of these merge requests, we can see how the description includes information about what issues that we currently have open with Cisco / Tail-F would be solved by moving to this version.
+</p>
+
+
+<figure>
+<img src="images/gitbot-nso-mr-description-424.png" alt="gitbot-nso-mr-description-424.png">
+
+</figure>
+
+<p>
+This is from v4.2.4 and as we are currently on v4.2.3 we can see that there are only a few fixed issues.
+</p>
+
+<p>
+If we instead look at v4.4.3 we can see that the list is significantly longer.
+<img src="images/gitbot-nso-mr-description-443.png" alt="gitbot-nso-mr-description-443.png">
+</p>
+
+<p>
+Pretty sweet, huh? :)
+</p>
+
+<p>
+As this involves a bit more code I've put the relevant files in a <a href="https://gist.github.com/plajjan/42592665afd5ae045ee36220e19919aa">GitHub gist</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1b73a0e" class="outline-2">
+<h2 id="org1b73a0e"><span class="section-number-2">4</span> This is the end</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+If you are reading this, chances are you already have your reasons for why you want to automate some git operation. Hopefully I've provided some inspiration for how to do it.
+</p>
+
+<p>
+If not or if you just want to discuss the topic in general or have more specific questions about our setup, please do reach out to me on Twitter.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-git.html">git</a> <a href="tag-automation.html">automation</a> </div>
+<div class="post-date">15 Mar 2017</div><h1 class="post-title"><a href="2017-03-15-validating-data-with-YANG.html">Validating data with YANG</a></h1>
+<p>
+Every now and then I hear about how difficult it is to use YANG to actually validate any data (we call this instance data). Since we in the TeraStream team do this quite a lot I thought I'd share how it can be done. This is using a process that we also employ in our CI pipeline.
+</p>
+
+<p>
+Let's first write a simple YANG model:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+We all know the Internet is full of cats so I created a list under the <code>internet</code> container so we can fill it up with cats. The only valid leaf value of each cat list entry is its name.
+</p>
+
+<p>
+Let's start off by actually making sure that our YANG model is valid. We can use the tool called <code>pyang</code> to do this. If you don't have pyang installed you can install it with <code>pip install pyang</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ pyang tubecats.yang
+kll@kll:~/yang-test$ pyang --ietf tubecats.yang
+tubecats.yang:1: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.1:</span> the module name should start with one of the strings <span style="color: #2d9574;">"ietf-"</span> or <span style="color: #2d9574;">"iana-"</span>
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"contact"</span> substatement
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"organization"</span> substatement
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:2: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.8:</span> namespace value should be <span style="color: #2d9574;">"urn:ietf:params:xml:ns:yang:tubecats"</span>
+tubecats.yang:5: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"revision"</span> must have a <span style="color: #2d9574;">"reference"</span> substatement
+tubecats.yang:9: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"container"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:10: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"list"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:12: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"leaf"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+</pre>
+</div>
+
+<p>
+The <code>--ietf</code> argument makes pyang a little more strict and adheres to a bunch of IETF guidelines on how to write YANG models. Since we aren't writing an IETF model and don't have an IETF namespace for it, we'll get some warnings and errors. Anyway, our model is sound since it succeeded without <code>--ietf</code>.
+</p>
+
+<p>
+Ok, so we have a valid model, let's write some data that adheres to it:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+And now, to validate we use yang2dsdl which is shipped together with pyang:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+data.xml validates
+
+== Adding default values... done.
+
+== Validating semantic constraints ...
+No errors found.
+kll@kll:~/yang-test$
+</pre>
+</div>
+
+<p>
+To make sure that our toolchain is working here we'll introduce an error in our
+data file, namely a second node under one of the cat list entries:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;bar&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+lo and behold as this time around it complains loudly:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+data.xml:8: element foo: Relax-NG validity error : Did not expect element foo there
+data.xml fails to validate
+kll@kll:~/yang-test$
+</pre>
+</div>
+
+<p>
+So that's how you can validate your instance data with a YANG model!
+</p>
+
+<p>
+The <code>&lt;data&gt;</code> tag at the root of the XML document is part of many NETCONF commands. It's also possible to ask it to validate data that is wrapped in other nodes like edit-config, get-reply etc. If you are just trying to write some data on your own and don't want to think about NETCONF you do still have to add that extra <code>&lt;data&gt;</code> tag at the root to get validation to complete&#x2026; it is a bit NETCONF centric after all.
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

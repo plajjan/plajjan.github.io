@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>YANG versioning and backwards (in)compatibility</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<div class="post-date">04 Jul 2016</div><h1 class="post-title"><a href="2016-07-04-YANG-versioning.html">YANG versioning and backwards (in)compatibility</a></h1>
+<div class="abstract">
+<p>
+A suggestion for how to handle backwards compatibility in a YANG modeled world.
+</p>
+
+</div>
+
+<p>
+YANG comes with a fairly strict set of rules for allowed modifications between model revision, so how do you make changes to your API while abiding to these rules?
+</p>
+
+<p>
+If you've written YANG models yourself you might have ended up in the situation that you wanted to make backwards incompatible changes. If you are a user of YANG models you might have been bitten by someone else, like a vendor, producing YANG models with backwards incompatible changes between revision.
+</p>
+
+<p>
+How do you keep a backwards compatible YANG modeled API while allowing for changes?
+</p>
+
+<div id="outline-container-orga1f6789" class="outline-2">
+<h2 id="orga1f6789"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+YANG is defined in RFC6020, which has a <a href="https://tools.ietf.org/html/rfc6020#section-10">section</a> on what changes are allowed between revisions of a YANG model. 
+</p>
+
+<p>
+The whole idea with having a model describing data is to leave a sort of "contract" to another party on what data is accepted. The rules in RFC6020 are defined such that you cannot break that contract.
+</p>
+
+<p>
+For example, the first revision of model <code>foo</code> has the leaf <code>/bar</code>. If we realise this leaf isn't actually needed we cannot remove it in the second revision of the model since anyone with the first revision of the model might try to set a value for the <code>/bar</code> leaf.  Deleting the leaf would break the "contract".
+</p>
+
+<p>
+I won't list all the rules here but they essentially boil down to only allowing additions. You cannot remove nodes or make changes that reduce the value space for a leaf.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org4379a2f" class="outline-2">
+<h2 id="org4379a2f"><span class="section-number-2">2</span> Offenders</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+I think one of the more clear examples of YANG compatibility breakage is Cisco's IOS XR as can be witnessed by the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr/">XR YANG models published on GitHub.</a>
+</p>
+
+<p>
+Cisco doesn't even try to hide that they are breaking YANG rules (kudos for that, I suppose), in fact there is a section in the README file of each subdirectory that reads:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">It should be noted that some of the modules released in
+IOX-XR 6.0.1 break the backwards compatibility guidelines
+defined in RFC 6020 when compared to the same modules
+released in IOS-XR 6.0.1. This is because the "native" YANG
+modules for IOS-XR are generated from internal schema files
+that are an integral part of the implementation, and, as
+such, these can change in ways that break backwards
+compatibility per RFC 6020 guidelines when new features are
+introduced or when bugs are fixed. Thus, while we rigorously
+review the changes that impact the external YANG schema,
+Cisco cannot guarantee full backwards compatibility of these
+modules across releases.
+
+However, when new versions of the native models are
+released, the check-models.sh script, in conjunction with
+pyang 1.6, can be used to determine what technically
+incompatible changes have occurred. Please run check.sh from
+this directory with pyang 1.5 or greater on your path thus:
+</pre>
+</div>
+
+<p>
+If you run the suggested commands you will see that there are incompatible changes between the majority of revisions:
+</p>
+
+<ul class="org-ul">
+<li>5.3.0 -&gt; 5.3.1 fails</li>
+<li>5.3.1 -&gt; 5.3.2 fails</li>
+<li>5.3.2 -&gt; 5.3.3 fails</li>
+<li>5.3.3 -&gt; 6.0.0 fails</li>
+<li>6.0.0 -&gt; 6.0.1 works ok, I'm guessing because they didn't make any (or much)
+changes to the models at all</li>
+</ul>
+
+<p>
+If you happen to be using Cisco NSO (formerly Tail-F NCS) you might have noticed that you can't load the same module / namespace multiple times. You are supposed to load the latest revision, which will work (to a certain extent) with older models, or if you are using an older revision of the model you are still able to work with the leaves it contains. However, this only holds true if you stick to the YANG revision compatibility rules, which Cisco aren't.
+</p>
+
+<p>
+With NSO you compile the YANG models into .fxs files which are then loaded by NSO. ncsc is the NSO compiler that takes care of the compilation step and it actually has an option relevant to this, namely <code>--lax-revision-merge</code>;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">--lax-revision-merge    When we have multiple revisions of
+  the same module, the ncsc command to import the module
+  will fail if a YANG module does not follow the YANG
+  module upgrade rules. See RFC 6020. This option makes
+  ncsc ignore those strict rules. Use with extreme care,
+  the end result may be that NCS is incompatible with the
+  managed devices.
+</pre>
+</div>
+
+<p>
+However, in the case of merging XR 5.1 and XR 5.3 models, it does not work as warned by the man page.
+</p>
+
+<p>
+It's rather ironic how two Cisco products aren't compatible with each other while other products, such as JUNOS, works great together with Cisco NSO, even across different versions. Never buy more than one product from Cisco? ;)
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgdd71411" class="outline-2">
+<h2 id="orgdd71411"><span class="section-number-2">3</span> Solution?</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The simple solution is of course that Cisco stops breaking YANG rules. However, I can understand it's difficult with their development process and sometimes you just have to make backwards incompatible changes. Besides, it's an industry wide problem and not just related to Cisco.
+</p>
+
+<p>
+Let's first look at semver and then how we might merge the concept of semver with YANG versioning scheme that allows for backwards incompatibility.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgddd8285" class="outline-2">
+<h2 id="orgddd8285"><span class="section-number-2">4</span> Semantic versioning</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<a href="http://semver.org/">Semantic versioning</a> (semver for short) is a fairly widely accepted versioning scheme where the version is described as MAJOR.MINOR.PATCH. In essence, increment the:
+</p>
+
+<ul class="org-ul">
+<li>MAJOR version when you make incompatible API changes,</li>
+<li>MINOR version when you add functionality in a backwards-compatible manner, and</li>
+<li>PATCH version when you make backwards-compatible bug fixes.</li>
+</ul>
+
+<p>
+YANG however doesn't follow semver but I believe the same concept can be applied.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgbef62a7" class="outline-2">
+<h2 id="orgbef62a7"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The suggestion is simple:
+</p>
+
+<blockquote>
+<p>
+Let the MAJOR version form part of the model name and namespace and let the revisions of a YANG model represent the MINOR and PATCH versions.
+</p>
+</blockquote>
+
+<p>
+Following semver this means all the backwards <b>compatible</b> changes are made within the same YANG model with the addition of new revisions. Backwards <b>incompatible</b> changes however results in the MAJOR version being bumped and as the MAJOR version is part of the model name and namespace it means we effectively create a new YANG model.
+</p>
+
+<ul class="org-ul">
+<li>for backwards <b>compatible</b> changes
+<ul class="org-ul">
+<li>keep MAJOR version, thus:
+<ul class="org-ul">
+<li>we keep the YANG module name &amp; namespace</li>
+</ul></li>
+<li>bump MINOR or PATCH version, thus:
+<ul class="org-ul">
+<li>add new revision in current YANG module</li>
+</ul></li>
+</ul></li>
+<li>for backwards <b>incompatible</b> changes
+<ul class="org-ul">
+<li>bump MAJOR version, thus:
+<ul class="org-ul">
+<li>create a new YANG module name &amp; namespace based on new MAJOR version</li>
+</ul></li>
+<li>add a new revision to the new YANG module</li>
+<li>let the old YANG module remain with the older MAJOR version, thus
+maintaining backwards compatibility</li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org30f377c" class="outline-2">
+<h2 id="org30f377c"><span class="section-number-2">6</span> An example</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Let's say we have a module we wish to name <code>foo</code>. The first public release of it, keeping in line with semver, is v1.0.0. The module would thus be called <code>foo-v1</code> and with a namespace that also includes the <code>-v1</code> part, like <code>http://example.com/ns/yang/foo-v1</code>.
+</p>
+
+<p>
+A bug fix is made, fixing a regexp for one of the leaves, but keeping inline with RFC6020 rules it does not decrease the allowed value space. Since it's a bug fix, we increase to semver v1.0.1. The YANG module will still be called <code>foo-v1</code> but we add a revision explaining the bug fix.
+</p>
+
+<p>
+Similarly if we add a leaf, it is classified as a minor feature, thus bumping the semver MINOR version to v1.1.0. We still keep the module name <code>foo-v1</code> and add a revision, just as for the bug fix.
+</p>
+
+<p>
+Now, if we decide to completely restructure a part of the module, including removing some containers and their leaves, we have made a backwards incompatible change and must bump the MAJOR version. The module will now be v2.0.0 and thus the name changes to <code>foo-v2</code> and the same change is reflected in the namespace. For the sake of clarity we can keep all the revisions from the v1 "line" of the module. We now have two modules; <code>foo-v1</code> and <code>foo-v2</code>.
+</p>
+
+<p>
+Further bug fixes and minor feature additions can be made to both, or if you choose to only one (likely the v2). The v1 line will eventuelly be deprecated and the exact timeline for that is mosty the result of how long your organisation can or want to maintain multiple versions in parallel.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd6c894e" class="outline-2">
+<h2 id="orgd6c894e"><span class="section-number-2">7</span> YANG revision label</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+The "label" used in the revision statement in YANG models is an ISO 8601 date. This could potentially be replaced with a semver version but I don't believe it obviates the need to put the major version in the model name. If a backwards incompatible change is made we might want to support both MAJOR version 1 and 2 at the same time and thus need to load two versions of the model. How are we to do that if both versions have the same name? How do we store two different YANG modules on disk if the filename doesn't reflect the MAJOR version?
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2493e89" class="outline-2">
+<h2 id="org2493e89"><span class="section-number-2">8</span> Thoughts?</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+There are probably more aspects to consider associated with this suggestion. For example, YANG models can refer to each other, through imports or submodules. If a large number of models are "intertwined" through reference it might not be apparent which of these models can or should be upgraded in a MAJOR version bump.
+</p>
+
+<p>
+Do you have any thoughts? Don't hesitate in reaching out to me (contact details in the page footer).
+</p>
+
+<p>
+Incidentally, just a few days after I wrote the first draft of this post I noticed that Brocade had put a <code>-v1</code> in the name of their YANG models. I'm not sure about their rationale but I suspect it is rather similar to what I've outlined here.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
+<div id="postamble" class="status"><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Configure your 100G DWDM linecard for interop!</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<div class="post-date">23 Sep 2016</div><h1 class="post-title"><a href="2016-09-23-100G-dwdm-configuration.html">Configure your 100G DWDM linecard for interop!</a></h1>
+<p>
+This is how you configure your shiny new 100G router port for interoperability according to <a href="file:///assets/docs/standards/100G-long-haul.pdf"><i>the standard</i></a>. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///pictures-from-100G-dwdm-interop-lab">pretty pictures from our 100G interop lab</a>.
+</p>
+
+<p>
+The interface number is naturally an example and you need to fill in yours. The same is true for channel / frequency / wavelength and output power. I have however shown a configuration here that is the equivalent for each platform, i.e. we use a frequency if 193.4THz, which is channel 34 on Nokia, channel 54 on Huawei and wavelength 1550.12nm on Juniper. Output power is -10dBm but this is expressed in different ways, some platforms use dBm while other work in units of 0.1 dBm which means that -10dBm is equivalent to a value of -100.
+</p>
+
+<div id="outline-container-orgb5c536d" class="outline-2">
+<h2 id="orgb5c536d"><span class="section-number-2">1</span> Cisco</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Cisco IOS XR configuration for the ASR9k. Already XML formatted so you can punt
+it over the NETCONF interface and have your router configured!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">interface-configurations</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">interface-configuration</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">active</span>&gt;act&lt;/<span style="color: #bc6ec5; font-weight: bold;">active</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">interface-name</span>&gt;dwdm0/1/0/20/0&lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-name</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">dwdm</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://cisco.com/ns/yang/Cisco-IOS-XR-dwdm-ui-cfg"</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">g709</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                    &lt;<span style="color: #bc6ec5; font-weight: bold;">fec-mode</span>&gt;high-gain-multivendor-hd&lt;/<span style="color: #bc6ec5; font-weight: bold;">fec-mode</span>&gt;
+                &lt;/<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">enable</span>&gt;true&lt;/<span style="color: #bc6ec5; font-weight: bold;">enable</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">g709</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wave-channel</span>&gt;19340&lt;/<span style="color: #bc6ec5; font-weight: bold;">wave-channel</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wave-channel-number</span>&gt;channel-frequency&lt;/<span style="color: #bc6ec5; font-weight: bold;">wave-channel-number</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">transport-admin-state</span>&gt;in-service-config-allowed&lt;/<span style="color: #bc6ec5; font-weight: bold;">transport-admin-state</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">transmit-power</span>&gt;-100&lt;/<span style="color: #bc6ec5; font-weight: bold;">transmit-power</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">dwdm</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-configuration</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-configurations</span>&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga5bb261" class="outline-2">
+<h2 id="orga5bb261"><span class="section-number-2">2</span> Huawei</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+CLI conf for Huawei since their NETCONF interface is currently an abomination.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">controller Wdm 1/0/0
+ fec enhanced
+#
+interface 100GE 1/0/0
+ optical-tx-power target -100
+ wavelength-channel 54
+#
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7132c4c" class="outline-2">
+<h2 id="org7132c4c"><span class="section-number-2">3</span> Juniper</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can send over a NETCONF interface!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">configuration</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://xml.juniper.net/xnm/1.1/xnm"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">interfaces</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">interface</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;et-10/0/0&lt;/<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">optics-options</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;1550.12&lt;/<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">tx-power</span>&gt;-10&lt;/<span style="color: #bc6ec5; font-weight: bold;">tx-power</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">optics-options</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">otn-options</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">laser-enable</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;hgfec&lt;/<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">rate</span>&gt;otu4&lt;/<span style="color: #bc6ec5; font-weight: bold;">rate</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">otn-options</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">interface</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">interfaces</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">configuration</span>&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3d72c05" class="outline-2">
+<h2 id="org3d72c05"><span class="section-number-2">4</span> Nokia</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Here's how to configure a port on Nokia SROS. "interop2" is the magic name for the interoperable FEC and bit mapping:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">port 1/2/3
+    otu
+    dwdm
+        channel 34
+        coherent
+            channel 34
+            compatibility interop2
+            target-power -10
+</pre>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div></div>
+<div id="postamble" class="status"><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>

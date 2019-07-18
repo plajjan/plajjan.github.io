@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<h1 class="title">Posts tagged "XR":</h1>
+<div class="post-date">19 May 2016</div><h1 class="post-title"><a href="2016-05-19-bootstrapping-virtual-XR.html">Bootstrapping virtual Cisco XR routers</a></h1>
+<p>
+Cisco IOS XR virtual routers support something called CVAC which allows passing the initial configuration of the router via a virtual drive. It's rather similar to Cloud-init, if you are familiar with that, or with what Juniper calls config-drive.
+</p>
+
+<p>
+It's fairly simple, you create one or two config files, bake them into an ISO file and mount that ISO as a CD-ROM drive when you start the VM. XR will check if there's a CD-ROM attached and if so it'll do the equivalent of `copy CONFIG_FILE running-config`.
+</p>
+
+<p>
+The two potential config files are
+</p>
+
+<ul class="org-ul">
+<li>iosxr_config.txt - normal XR config file</li>
+<li>iosxr_config_admin.txt - admin mode config file</li>
+</ul>
+
+<p>
+Create them like you would any other config file. In my case I just want to bootstrap the image with a mgmt-IP, NETCONF server running and some initial user credentials.
+</p>
+
+<p>
+<code>iosxr_config.txt</code>:
+</p>
+<div class="org-src-container">
+<pre class="src src-text">hostname router-{0:0&gt;2}
+interface MgmtEth0/0/CPU0/0
+ ipv4 address 10.0.0.{0}/24
+ ipv6 address 2001:db8:0::{0}/64
+ no shutdown
+ !
+ssh server v2
+ssh server netconf port 830
+netconf agent ssh
+end
+</pre>
+</div>
+
+<p>
+<code>iosxr_config_admin.txt</code>:
+</p>
+<div class="org-src-container">
+<pre class="src src-text">username my-user
+ group root-system
+ secret 5 $1$p00f$r3aLlyS3crEt.Yo
+ !
+end
+</pre>
+</div>
+
+<p>
+The above config is for XR 5.1.1.54U-terastream. For 5.3.3.51U-terastream I need to modify the SSH &amp; NETCONF configuration for it to work.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">ssh server v2
+ssh server netconf vrf default
+netconf-yang agent ssh
+end
+</pre>
+</div>
+
+<p>
+YMMV depending on what version you are on. I have a Python script doing all of this, which explains the use of {0} for formatting/substitution.
+</p>
+
+<p>
+Anyway, once you have the config files, bake them into an ISO with mkisofs:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">mkisofs -output vms/<span style="color: #4f97d7;">{</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">}</span>-config.iso -l -input-charset iso8859-1 -V config-1 --relaxed-filenames --iso-level <span style="color: #a45bad;">2</span> iosxr_config.txt iosxr_config_admin.txt
+</pre>
+</div>
+
+<p>
+You don't have to use both config files if you don't want to.
+</p>
+
+<p>
+Now start the VM with the ISO attached as a CD. I boot the whole thing using good ol' qemu - no fancy libvirt (for now) - so for me it's:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">qemu-system-x86_64 -enable-kvm <span style="color: #2d9574;">\</span>
+  -display none -daemonize -m <span style="color: #a45bad;">4096</span> <span style="color: #2d9574;">\</span>
+  -serial telnet:127.0.0.1:1040,server,nowait <span style="color: #2d9574;">\</span>
+  -hda vms/40.qcow2 -cdrom vms/40-config.iso
+  ... <span style="color: #4f97d7;">(</span>followed by LOTS of NICs - snipped out for brevity<span style="color: #4f97d7;">)</span> ...
+</pre>
+</div>
+
+<p>
+There's an alternative syntax for qemu using -drive and if you are using libvirt you need to edit the XML config. See <a href="http://www.cisco.com/c/en/us/td/docs/routers/virtual-routers/configuration/guide/b-xrv9k-cg/b-xrv9k-cg_chapter_0110.html#concept_35D723DC31054FA4AFC1125EDD7281C1">this Cisco page</a> for some examples.
+</p>
+
+<p>
+While this takes care of mgmt IP, starting the NETCONF server and creating an initial user, it doesn't generate SSH keys and since we can only pass a config file via CVAC it's a bit tricky to ask the box to generate keys. It is actually possible to put "do crypto key generate" in the config file and it will run this in operational mode. Unfortunately XR will interactively prompt for the key length so this method doesn't work out. On IOS it is possible to specify the key length on the command line so if you are on IOS (or XE) you are in luck.
+</p>
+
+<p>
+Since I'm doing all this for a CI environment, it's not very important to have unique keys, the virtual routers aren't reachable from anything but the CI runner VM anyway, so I decided to pre-seed the base image with a key.
+</p>
+
+<p>
+I don't want to modify the original image I got from Cisco, so I moved it aside and used it as base for my new image.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">mv iosxrv-k9-demo-5.1.1.54U.vmdk original-iosxrv-k9-demo-5.1.1.54U.vmdk
+qemu-img create -f qcow2 -b original-iosxrv-k9-demo-5.1.1.54U.vmdk iosxrv-k9-demo-5.1.1.54U.vmdk
+... start VM with iosxrv-k9-demo-5.1.1.54U.vmdk image ...
+</pre>
+</div>
+
+<p>
+XR will prompt you to configure the root-system username the first time i starts, which I did, I then run <code>crypto key generate rsa</code> after which I wipe the configuration clean:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">ios con0/0/CPU0 is now available
+
+
+
+Press RETURN to get started.
+
+!!!!!!!!!!!!!!!!!!!! NO root-system username is configured. Need to configure root-system username. !!!!!!!!!!!!!!!!!!!!
+
+         --- Administrative User Dialog ---
+
+
+  Enter root-system username: my-user
+  Enter secret:
+
+... snip ...
+
+User Access Verification
+
+Username: my-user
+Password:
+
+
+RP/0/0/CPU0:ios#crypto key generate rsa
+Thu May 19 10:22:47.611 UTC
+The name for the keys will be: the_default
+  Choose the size of the key modulus in the range of 512 to 4096 for your General Purpose Keypair. Choosing a key modulus greater than 512 may take a few minutes.
+
+How many bits in the modulus [1024]: 4096
+Generating RSA keys ...
+Done w/ crypto generate keypair
+[OK]
+RP/0/0/CPU0:ios#configure
+Thu May 19 10:24:28.884 UTC
+RP/0/0/CPU0:ios(config)#commit replace best-effort
+Thu May 19 10:24:33.474 UTC
+
+This commit will replace or remove the entire running configuration. This
+operation can be service affecting.
+Do you wish to proceed? [no]: yes
+RP/0/0/CPU0:ios(config)#exit
+RP/0/0/CPU0:ios#admin
+Thu May 19 10:24:37.633 UTC
+RP/0/0/CPU0:ios(admin)#config
+Thu May 19 10:24:40.823 UTC
+RP/0/0/CPU0:ios(admin-config)#commit replace best-effort
+Thu May 19 10:24:45.583 UTC
+
+This commit will replace or remove the entire admin running configuration. This
+operation can be service affecting.
+Do you wish to proceed? [no]: yes
+RP/0/0/CPU0:ios(admin-config)#exit
+RP/0/0/CPU0:ios(admin)#exit
+RP/0/0/CPU0:ios#exit
+</pre>
+</div>
+
+<p>
+and you'll be back to where it prompts you to go through the initial config of root-system username - i.e. "factory reset" but with a SSH key loaded.
+</p>
+
+<p>
+Do you know of way to generate a key through CVAC or similar? Please reach out to me (contact details in the page footer)!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-xr.html">XR</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

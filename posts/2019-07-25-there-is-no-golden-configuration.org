@@ -1,0 +1,55 @@
+#+TITLE: There is no golden configuration - using Cisco NSO services for everything
+#+SUBTITLE: Using Cisco NSO services for everything
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2019-07-25 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: NSO, NCS, network automation
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+
+#+BEGIN_abstract
+Using services in Cisco NSO to enable management of the full life cycle of configuration.
+#+END_abstract
+
+#+TOC: headlines 2
+
+* TL;DR;
+Use services in Cisco NSO for everything you configure on your devices.
+
+
+* Golden configuration
+
+  If you've been in the networking business for some time you'll likely be familiar with the term "golden configuration". A sort of master template for how configuration should look. It brings associations to something that is perfect - like a golden statue on a pedestal.
+  
+  [[file:images/Golden_statue_on_Pont_Alexandre_III_1.jpg]]
+  
+  
+
+ It is however a flawed idea. There is no such thing as a perfect configuration. Times change and so needs the configuration.
+  
+  Somewhat similarly is the concept of day 0 or day 1 (ah, an off-by-one error!?) configuration. It's the idea of a configuration you put on the device when you initially configure it. There's usually nothing defined for managing the life cycle of this "day 0" or "initial" configuration and so it becomes outdated on devices that were installed a long time ago.
+  
+  The name "day 0" has a temporal association as the name implies it is something you only do on the first day whereas in reality it is something you must configure on many days - to be precise; every day that you change that configuration! I prefer to call this "base configuration" as it removes that connotation of "configure once on first day". The device base configuration is a living thing and you must manage its life cycle.
+
+  We have to be able to manage the life cycle of configuration, like:
+  - adding new leaves
+  - changing value of leaves, lists etc
+  - removing leaves, list entries etc
+  
+  For example, today we configure DNS servers:
+  - ~8.8.8.8~
+  - ~1.1.1.1~
+  
+  Tomorrow we realize we don't want neither ~8.8.8.8~ nor ~1.1.1.1~. We want to replace those entries (in a list) with our own DNS ~192.0.2.1~. Changing the golden day 0 configuration on disk is simple, we just edit the file and remove two entries and add another but we must then synchronize this change to the device in our network. We must keep track of what we have added in the past so we can send the configuration delta.
+  
+
+* FASTMAP and reference counting in Cisco NSO
+  
+  Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the ~create~ function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declarative define what the configuration should look like and the system will figure out the rest.
+  
+  In contrast, using device templates, we won't get reference counting which means that removing leaves won't happen automatically. If we have set leaf X in our golden configuration today, pushed it to a thousand devices and want to remove it tomorrow, we have to do that manually.
+
+  There seems to be a trend to use device templates for this day 0 / golden configuration style use cases in Cisco NSO and I quite frankly don't understand why. The only reason I see for using device templates at all is because they could be easier to work with, depending on your perspective. Device templates live as part of the configuration in NSO and so it is editable from the NSO CLI. For people with a networking background, this is probably more intuitive than using services and their configuration templates as one has to edit files, create NSO packages etc. However, using Cisco NSO without using services is a complete waste of potential. Get over the hurdle and start writing services for all!
+  
+  Enable the power of FASTMAP. Use services for everything you configure on your devices.

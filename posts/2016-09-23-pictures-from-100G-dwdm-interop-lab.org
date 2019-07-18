@@ -1,0 +1,77 @@
+#+TITLE: Pictures from the 100G DWDM interop lab
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2016-09-23 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: TeraStream, 100G DWDM
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+These are some pictures from the coherent 100G DWDM interoperability tests performed in the TeraStream lab. Read the [[/interoperable-100G][full story]] and look at the [[/100G-dwdm-configuration][router configuration]].
+
+* 1500km fiber test path
+
+  All tests have been completed over a DWDM system in our lab. It can be slightly reconfigured but have been at least 1500km in all the tests.
+  
+  The logical topology of our 1600km fiber path [[file:images/terastream-lab-1600km-fiber-link-topology.jpg]]
+  
+  It's amplified with these EDFAs every 80km:
+  [[file:images/terastream-lab-1600km-fiber-link-dwdm-amps.jpg]]
+  
+  No RAMANs! Here's the whole amp rack:
+  #+ATTR_HTML: :width 880px
+  [[file:images/terastream-lab-1600km-fiber-link-dwdm-rack.jpg]]
+  
+  The 1600km of fiber rolls
+  #+ATTR_HTML: :width 880px
+  [[file:images/terastream-lab-1600km-fiber-link-fiber-rack.jpg]]
+  
+  In a previous, slightly less carrier-grade, incarnation:
+  #+ATTR_HTML: :width 880px
+  [[file:images/terastream-lab-1600km-fiber-link-old-dwdm-fiber.jpg]]
+
+
+* Router DWDM linecards
+
+
+** Juniper
+The first Juniper implementation was a pure beta build with the optical parts in a separate chassis and grey 100G-SR10 link back to the MX960. It looks more like a transponder but management happened exclusively from the router and the components could later simply be integrated on a linecard instead of in a separate chassis. I believe four of these were built all in all of which +two+ three (one broke, so we got a replacement) ended up with us.
+[[file:images/terastream-lab-juniper-100G-beta-box.jpg]]
+
+Juniper have since released a proper linecard. It's a single port 100G card and instead of utilizing a CFP they have shrunk it down to a CFP2. Specifically CFP2-ACO which means it's analog and all the DSP magic is happening on the linecard unlike the earlier CFP which had pretty beefy DSPs of its own.
+
+[[file:images/terastream-lab-juniper-1port-dwdm.jpg]]
+
+We still have one of the first generation "transponders" from Juniper in use as part of a PNI (private peering link) with NorduNet (AS2603). NorduNet is running Juniper routers and they have it connected to their router in Hamburg which is then linked over a piece of metro dark fibre to a TeraStream Nokia 7750 router.
+
+** Nokia
+Nokia, previously Alcatel-Lucent (previously TiMetra), were one of the early partners behind the 100G DWDM standard and were also early with putting together a line card for their 7750 router:
+
+[[file:images/terastream-lab-alu-dwdm-frontplate.jpg]]
+
+They are now also rolling new 2-port cards for the 7950, which we're about to
+install. Here's me with one of those cards:
+
+[[file:images/me-holding-nokia-100G-linecard.png]]
+
+And installed in router (the one on the left - the right one is for grey optics):
+
+[[file:images/terastream-lab-nokia-7950-dwdm.jpg]]
+
+** Cisco
+Cisco has a couple of different generations. Here's one of the first for the ASR9000 router, which has since been discontinued:
+
+[[file:images/terastream-lab-cisco-dwdm-linecards.jpg]]
+
+There is also a transponder for the ONS15454 that integrates with the router, much like the Juniper solution, so the DWDM configuration can be managed by the router but the optical components are situated in a ONS15454 chassis. I don't currently have a picture of this however.
+
+Laserbeak is Cisco's latest addition to the family of 100G cards that support /the standard/, here in the middle (also with 20x10GE ports);
+
+[[file:images/terastream-lab-cisco-laserbeak.jpg]]
+
+The Laserbeak card also uses the more modern CFP2-ACO optical modules.
+
+** Huawei
+Last but not least we have stack of Huawei routers. The 2-port card in the first two slots is the 100G card:
+[[file:images/terastream-lab-huawei-ne40e_1.jpg]]

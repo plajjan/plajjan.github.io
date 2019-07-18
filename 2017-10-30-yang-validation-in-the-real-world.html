@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>YANG validation in the real world</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<div class="post-date">30 Oct 2017</div><h1 class="post-title"><a href="2017-10-30-yang-validation-in-the-real-world.html">YANG validation in the real world</a></h1>
+<p>
+Some time ago I wrote an [introductory post on how to validate data using YANG](/validating-data-with-YANG).  A simple example as it were, it can be difficult to apply to the real world as there are some blanks to fill in. This time around we'll follow up and use the same tools to validate if the NETCONF / YANG interface of a Huawei router is sound and adheres to standards.
+</p>
+
+<p>
+Evaluating whether NETCONF / YANG interfaces are RFC compliant is something I
+do on a rather frequent basis. Unfortunately I can't share all the YANG models
+or our configuration as both are secret or private in one way or another. I
+could perhaps have censored but that would likely have required much more time
+than I was willing to spend on this post.
+</p>
+
+<p>
+The Huawei router is running a software build that is compiled for us
+(TeraStream) so you can't currently download or get your hands on this (unless
+you ask Huawei nicely to compile one for you too, I guess).
+</p>
+
+<p>
+I got the YANG models separately from Huawei;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls
+huawei-aaa-action.yang
+huawei-aaa-lam-action.yang
+huawei-aaa-lam-type.yang
+huawei-aaa-lam.yang
+huawei-aaa-type.yang
+huawei-aaa.yang
+huawei-acl-action.yang
+huawei-acl-type.yang
+huawei-acl.yang
+huawei-bfd-action.yang
+huawei-bfd-type.yang
+huawei-bfd.yang
+huawei-bgp-action.yang
+huawei-bgp-bgpcomm-action.yang
+huawei-bgp-bgpcomm.yang
+huawei-bgp-bgpmultiinstcomm.yang
+huawei-bgp-type.yang
+huawei-bgp.yang
+huawei-dcn-action.yang
+huawei-dcn-dscpremark.yang
+huawei-dcn-type.yang
+huawei-dcn.yang
+huawei-devm-action.yang
+huawei-devm-type.yang
+huawei-devm.yang
+huawei-dgmp-type.yang
+huawei-dgmp.yang
+huawei-dhcpv6-action.yang
+huawei-dhcpv6-relay-action.yang
+huawei-dhcpv6-relay-type.yang
+huawei-dhcpv6-relay.yang
+huawei-dhcpv6-server-action.yang
+huawei-dhcpv6-server-type.yang
+huawei-dhcpv6-server.yang
+huawei-dhcpv6-type.yang
+huawei-dhcpv6.yang
+huawei-dns-action.yang
+huawei-dns-type.yang
+huawei-dns.yang
+huawei-ethernet-action.yang
+huawei-ethernet-stacking.yang
+huawei-ethernet-type.yang
+huawei-ethernet.yang
+huawei-extension.yang
+huawei-hwtacacs-action.yang
+huawei-hwtacacs-type.yang
+huawei-hwtacacs.yang
+huawei-ifm-action.yang
+huawei-ifmatm-type.yang
+huawei-ifmatm.yang
+huawei-ifmbundle-type.yang
+huawei-ifmbundle.yang
+huawei-ifmcpostrunk-type.yang
+huawei-ifmcpostrunk.yang
+huawei-ifm-flowalarm.yang
+huawei-ifm-fr-type.yang
+huawei-ifm-fr.yang
+huawei-ifm-hdlc-type.yang
+huawei-ifm-hdlc.yang
+huawei-ifmima-type.yang
+huawei-ifmima.yang
+huawei-ifmlag-action.yang
+huawei-ifmlag-type.yang
+huawei-ifmlag.yang
+huawei-ifmmp-type.yang
+huawei-ifmmp.yang
+huawei-ifmpostrunk-type.yang
+huawei-ifmpostrunk.yang
+huawei-ifm-pppbase-type.yang
+huawei-ifm-pppbase.yang
+huawei-ifmtrunk-action.yang
+huawei-ifmtrunk-type.yang
+huawei-ifmtrunk.yang
+huawei-ifm-type.yang
+huawei-ifm.yang
+huawei-ipsec-action.yang
+huawei-ipsec-ike-action.yang
+huawei-ipsec-ike-type.yang
+huawei-ipsec-ike.yang
+huawei-ipsec-type.yang
+huawei-ipsec.yang
+huawei-isiscomm-action.yang
+huawei-isiscomm-type.yang
+huawei-isiscomm.yang
+huawei-l2tpv3-action.yang
+huawei-l2tpv3-type.yang
+huawei-l2tpv3.yang
+huawei-l3vpn-action.yang
+huawei-l3vpn-l3vpncomm-type.yang
+huawei-l3vpn-l3vpncomm.yang
+huawei-l3vpn-mpls-type.yang
+huawei-l3vpn-mpls.yang
+huawei-l3vpn-netslice.yang
+huawei-l3vpn-qos-action.yang
+huawei-l3vpn-qos-type.yang
+huawei-l3vpn-qos.yang
+huawei-l3vpn-staticfrr.yang
+huawei-l3vpn-tnl-type.yang
+huawei-l3vpn-tnl.yang
+huawei-l3vpn-type.yang
+huawei-l3vpn.yang
+huawei-mcastbase-type.yang
+huawei-mcastbase.yang
+huawei-nd-action.yang
+huawei-nd-type.yang
+huawei-nd.yang
+huawei-netconf-authorization-type.yang
+huawei-netconf-authorization.yang
+huawei-netconf-notification-type.yang
+huawei-netconf-notification.yang
+huawei-netconf-type.yang
+huawei-netconf.yang
+huawei-ntp-type.yang
+huawei-ntp.yang
+huawei-pim-pimafspro-type.yang
+huawei-pim-pimafspro.yang
+huawei-pim-type.yang
+huawei-pim.yang
+huawei-pub-type.yang
+huawei-qos-action.yang
+huawei-qos-cbqos-type.yang
+huawei-qos-cbqos.yang
+huawei-qos-hqos-type.yang
+huawei-qos-hqos.yang
+huawei-qos-type.yang
+huawei-qos-vllpipe.yang
+huawei-qos-wred.yang
+huawei-qos.yang
+huawei-rm-action.yang
+huawei-rm-l3vpn-labelstack.yang
+huawei-rm-rmbase-type.yang
+huawei-rm-rmbase.yang
+huawei-rm.yang
+huawei-rsa-type.yang
+huawei-rsa.yang
+huawei-rtp-action.yang
+huawei-rtp-type.yang
+huawei-rtp.yang
+huawei-snmp-action.yang
+huawei-snmp-type.yang
+huawei-snmp.yang
+huawei-sshc-action.yang
+huawei-sshc-type.yang
+huawei-sshc.yang
+huawei-sshs-action.yang
+huawei-sshs-type.yang
+huawei-sshs.yang
+huawei-staticrt-staticmrt-type.yang
+huawei-staticrt-staticmrt.yang
+huawei-staticrt-staticrtbase-type.yang
+huawei-staticrt-staticrtbase.yang
+huawei-staticrt.yang
+huawei-syslog-action.yang
+huawei-syslog-type.yang
+huawei-syslog.yang
+huawei-system-action.yang
+huawei-system-type.yang
+huawei-system.yang
+huawei-timerange-type.yang
+huawei-timerange.yang
+huawei-tty-type.yang
+huawei-tty.yang
+huawei-vlan-action.yang
+huawei-vlan-type.yang
+huawei-vlan.yang
+huawei-vty-action.yang
+huawei-vty-type.yang
+huawei-vty.yang
+huawei-wdm-type.yang
+huawei-wdm.yang
+huawei-y1731-action.yang
+huawei-y1731-dtools-action.yang
+huawei-y1731-dtools-type.yang
+huawei-y1731-dtools.yang
+huawei-y1731-type.yang
+huawei-y1731.yang
+ietf-inet-types.yang
+ietf-yang-types.yang
+</pre>
+</div>
+
+<p>
+Quite a few models!
+</p>
+
+<p>
+Before this point we've had numerous issues with the NETCONF server but most of
+them seem to have been resolved so that we can get the config using NETCONFs
+get-config RPC. We use netconf-console to do this but you can use whatever
+NETCONF client you might have handy, like ncclient (which is kinda a personal
+favourite of mine).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf$ netconf-console -u test -p secr3tpassw0rd --proto ssh --port <span style="color: #a45bad;">830</span> --host my-vrp-lab-router --get-config &gt; config-from-netconf
+kll@lingloi:~/vrp-netconf$ wc -l config-from-netconf
+<span style="color: #a45bad;">205780</span> config-from-netconf
+</pre>
+</div>
+
+<p>
+Gulp. That's a lot. The config on the router isn't very large at all so something seems off.
+</p>
+
+<p>
+Just reading the file I find 141523 lines from the huawei-fib model. It starts with:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">  &lt;<span style="color: #bc6ec5; font-weight: bold;">fib</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-fib"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAfs</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+...
+</pre>
+</div>
+
+<p>
+and continues like that. This is clearly some bug. We are seeing a long list of
+entries but there is no data populated in each entry. We don't have 141k routes
+configured on this router (more like 1 static) and so I suspect that I'm
+getting back operational data, despite only asking for config data with
+get-config. This has happened with Huawei before so I find it entirely possible
+it is happening again.
+</p>
+
+<p>
+If we ignore that though we can see if we can validate the rest of the data
+using the same principles as in the previous post. Using yang2dsdl, that is:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf *.yang
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+Cannot translate submodules
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+Okay, a bunch of warnings and then an error at the end. I don't like seeing
+warnings (sometimes they later lead to errors) so let's start with those. Line
+75 of huawei-pub-type.yang is the pattern line:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">typedef</span> <span style="color: #ce537a; font-weight: bold;">ipv4Address</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">length</span> <span style="color: #2d9574;">"0..255"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">pattern</span> <span style="color: #2d9574;">"((([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))"</span>;
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">description</span>
+    <span style="color: #2d9574;">"An IPV4 address in dotted decimal notation"</span>;
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+<code>\.</code> is used in the middle to mean a literal <code>.</code>. This is fine but as the
+warning messages tells us, doing escapes in a double quoted string is not safe.
+Simply changing the pattern to use single quotes removes the warning and stays
+true to the intent of the pattern.
+</p>
+
+<p>
+With that fixed we are left with the error about submodules which is simply
+because we are telling yang2dsdl to validate an instance data document using a
+submodule. That's simply wrong and not valid. The correct thing to do is to
+validate using the module which naturally includes the submodule, thus we need
+to filter our submodules. All submodules include the statement <code>belongs-to</code> to
+point out which module they belong to.
+</p>
+
+<p>
+This grep will thus yield all the submodules in the directory (-l displays
+files with matches but not the matching line itself):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep -l belongs-to *.yang
+</pre>
+</div>
+
+<p>
+What we are looking for is all modules that are NOT submodules, thus we list
+everything and then do a inverse grep on that, like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls *.yang | grep -vf &lt;<span style="color: #4f97d7;">(</span>grep -l belongs-to *.yang<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+<code>grep -f</code> takes a file as input for things to grep after and so we use a bash
+trick using <code>&lt;()</code> to let the output of a sub-shell look like a file to the
+current command. The <code>-v</code> is to invert the match. This yields the list of files
+we want, now we give it to yang2dsdl by using a sub-shell for expansion:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">243:</span> /usr/bin/yang2dsdl: xsltproc: not found
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">76:</span> /usr/bin/yang2dsdl: xsltproc: not found
+kll@lingloi:~/vrp-netconf/yang$ xsltproc
+The program <span style="color: #2d9574;">'xsltproc'</span> is currently not installed. You can install it by typing:
+sudo apt install xsltproc
+kll@lingloi:~/vrp-netconf/yang$ sudo apt install xsltproc
+</pre>
+</div>
+
+<p>
+Whops! I'm normally validating YANG etc on a computer in our lab but I'm now
+using the same computer which I'm writing this post on and I'm apparently
+missing some tools. I'll include it since you are likely to run into the same
+problem. Just install xsltproc and try again
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+warning: failed to load external entity <span style="color: #2d9574;">"/usr/local/share/yang/xslt/basename.xsl"</span>
+cannot parse /usr/local/share/yang/xslt/basename.xsl
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+warning: failed to load external entity <span style="color: #2d9574;">"schema-dir"</span>
+cannot parse schema-dir
+</pre>
+</div>
+
+<p>
+My yang2dsdl is looking in /usr/local/share instad of /usr/share. Dunno why.
+Don't think I saw problem this on my other computer. Anyway, I just copied
+those files:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ sudo cp -a /usr/share/yang /usr/local/share/yang
+</pre>
+</div>
+
+<p>
+And run again:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./huawei-aaa_huawei-acl_huawei-bfd_huawei-bgp_huawei-dcn_huawei-devm_huawei-dgmp_huawei-dhcpv6_huawei-dns_huawei-ethernet_huawei-extension_huawei-hwtacacs_huawei-ifmatm_huawei-ifmbundle_huawei-ifmcpostrunk_huawei-ifmima_huawei-ifmlag_huawei-ifmmp_huawei-ifmpostrunk_huawei-ifmtrunk_huawei-ifm_huawei-ipsec_huawei-isiscomm_huawei-l2tpv3_huawei-l3vpn_huawei-mcastbase_huawei-nd_huawei-netconf_huawei-ntp_huawei-pim_huawei-pub-type_huawei-qos_huawei-rm_huawei-rsa_huawei-rtp_huawei-snmp_huawei-sshc_huawei-sshs_huawei-staticrt_huawei-syslog_huawei-system_huawei-timerange_huawei-tty_huawei-vlan_huawei-vty_huawei-wdm_huawei-y1731_ietf-inet-types_ietf-yang-types-data.rng'</span>
+I/O error : Filename too long
+I/O error : Filename too long
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Blargh. Okay, too many modules which yields too long of a name since yang2dsdl
+per default concatenates the names of all the modules in its intermediate
+output (it writes a single large schema file that is then used for validation).
+We can specify a basename to use with <code>-b</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                                
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">103:</span> /usr/bin/yang2dsdl: xmllint: not found
+</pre>
+</div>
+
+<p>
+Okay, install xmllint too!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ xmllint
+The program <span style="color: #2d9574;">'xmllint'</span> is currently not installed. You can install it by typing:
+sudo apt install libxml2-utils
+kll@lingloi:~/vrp-netconf/yang$ sudo apt-get install -qy libxml2-utils
+Reading package lists...
+Building dependency tree...
+...
+</pre>
+</div>
+
+<p>
+And now!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:2: element rpc-reply: Relax-NG validity error : Expecting element data, got rpc-reply
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+Not quite :/ yang2dsdl defaults to assuming it's a "data" file we want to
+validate but this is the response from a get-config query and so the "data"
+element is wrapped inside a rpc-reply. We can inform yang2dsdl with <code>-t</code> that
+it is a get-config-reply:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                      
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:1976: element mac: Relax-NG validity error : Element data has extra content: mac
+../config-from-netconf fails to validate
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Now we are getting somewhere. We found a data inconsistency on line 1976 which
+tells us that at least 1975 lines actuallt passed validation! What's on line 1976?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">mac</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-mac"</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;300&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;enable&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;false&lt;/<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;0&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;1&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;3&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">mac</span>&gt;
+</pre>
+</div>
+
+<p>
+Looking at our YANG modules, there is none that define a namespace of huawei-mac:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep huawei-mac *
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+this isn't wrong per se as NETCONF allows the return of data that we don't have
+YANG model for and thus can't validate. The NETCONF client should just ignore
+this data. This might seem strange and first but this is actually how upgrades
+are handled, i.e. if a client is using an older YANG model or simply doesn't
+understand all YANG models supported by the device, that is ok, since we just
+ignore the data. However, the yang2dsdl tool is a little more strict and
+complains about it. For the sake of progress, I'll remove that part and
+continue. After this, I actually found eight other namespaces that I did not
+have YANG models for and thus just removed the corresponding instance data for
+the sake of progressing with my testing.
+</p>
+
+<p>
+Next error we run into is related to the qos config:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+Relax-NG validity error : Extra element qos<span style="color: #4f97d7; font-weight: bold;"> in</span> interleave
+../config-from-netconf:5156: element qos: Relax-NG validity error : Element data failed to validate content
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+The validation is achieved by parsing the YANG models and producing a RelaxNG
+schema which in turn is used to validate the data. This means that at
+validation we no longer have an understanding of YANG, which I presume (I don't
+know that much about RelaxNG) leads to a loss of data. Unfortunately this
+results in an overly sparse error message.
+</p>
+
+<p>
+Fortunately I have some experience in reading YANG models and after reading
+through a bit of the huawei-qos.yang model and its sub-modules I find that
+instances of non-presence containers containing mandatory leaf nodes. This is
+quite the anti-pattern of YANG module writing and this isn't the first time
+I've seen it.
+</p>
+
+
+<p>
+There are two flavours of containers in YANG; presence and non-presence
+containers. Non-presence containers are the default and these containers do not
+themselves carry any explicit meaning and are used merely to organise data by
+providing structure. By adding the <code>presence</code> keyword under a container we can
+turn it into a presence container which means the existance of the container
+itself carries meaning.
+</p>
+
+<p>
+Let's take a short example:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+With this model, the foo container, which is a non-presence container, MUST
+exist and there MUST be a bar leaf in it, since mandatory is set. I've seen
+this pattern in a lot of cases where the intention is to make the leaf bar
+mandatory but only when the container foo is present as a consequence of
+enabling the "foo" feature. To achieve that, we can use a presence container,
+like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #2d9574;">"Enables feature foo"</span>;
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+Now the presence of the whole container foo is optional but if it exists then
+the bar leaf MUST be set (again, due to the mandatory statement).
+</p>
+
+<p>
+Huawei's YANG models contain a bunch of places where they have rather deep
+nesting of containers and finally we find a leaf with <code>mandatory true</code>. When
+all of this data is missing in the instance data the validation fails with that
+extremely sparse message. I modified the YANG modules and added in <code>presence</code>
+statements on a couple of containers to make them optional, again to be able to
+make progress with my evaluation.
+</p>
+
+<p>
+This type of problem is in fact so widespread that I had to find a better way
+of finding problematic instances. By looking at the output of <code>pyang -f tree</code>
+and then filtering this I could quickly find mandatory leaf nodes under
+containers. I started by removing all read-only data. I do this with vi and
+<code>:g/+--ro /d</code>. Second I can remove all leaves that are optional with <code>:g/+--rw
+[A-Za-z0-9]\+?/d</code>. We are now down to containers, lists and mandatory leaves.
+Here's an exceprt from the routing policy model:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">module: huawei-rtp
+    +--rw rtp
+       +--rw asPathFilters
+       |  +--rw asPathFilter* [index]
+       |     +--rw index                string
+       |     +--rw asPathFilterNodes
+       |        +--rw asPathFilterNode* [nodeSequence]
+       |           +--rw nodeSequence    uint32
+       |           +--rw matchMode       rtpMatchMode
+       |           +--rw regular         string
+</pre>
+</div>
+
+<p>
+We can see how asPathFilters is a container that holds a single list, "index"
+is the key of that list and nex to it we find another container and in it a
+second list which wholds the members of the filter. That inner list is keyed on
+nodeSequence, which is fine and the matchMode and regular seems fine too, I
+guess the regular is the actual value and it's called "regular" because it's a
+regular expression. This structure seems fine.
+</p>
+
+<p>
+However, if we move on down we get to the route policies themselves:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">+--rw routePolicys
+|  +--rw routePolicy* [name]
+|     +--rw name                string
+|     +--rw routePolicyNodes
+|        +--rw routePolicyNode* [nodeSequence]
+|           +--rw nodeSequence      uint32
+|           +--rw matchMode         rtpMatchMode
+|           +--rw matchCondition
+|           |  +--rw matchCosts
+|           |  |  +--rw matchCost
+|           |  |     +--rw costValue    uint32
+|           |  +--rw matchInterfaces
+|           |  |  +--rw matchInterface* [ifName]
+|           |  |     +--rw ifName    pub-type:ifName
+|           |  +--rw matchRouteTypes
+|           |  |  +--rw matchRouteType* [routeType]
+|           |  |     +--rw routeType    rtpMchRtType
+|           |  +--rw matchTags
+|           |  |  +--rw matchTag
+|           |  |     +--rw tagValue    uint32
+|           |  +--rw matchMplsLabels
+|           |  |  +--rw matchMplsLabel
+|           |  |     +--rw mplsLabel    boolean
+...
+</pre>
+</div>
+<p>
+the model continues for another 150 lines just for the routePlicy list but I
+won't list it all here.  We can see how there are a bunch of mandatory leaves
+here and they are tucked into two containers, like matchCosts/matchCost is a
+container in a container and inside we have the leaf costValue which is
+mandatory. The way the model is written it means pretty much all potential ways
+of matching things in the policy are mandatory. That can't be right!
+</p>
+
+<p>
+As far as I've understood, Huawei generates their models from an internal
+representation so while I've found a whole bunch of instances with the same
+type of error, it doesn't actually mean fixing it is very hard. All they need
+to do is patch the logic that outputs the YANG model and all faulty occurences
+can be fixed in one swift go.
+</p>
+
+<p>
+I found a couple of other instances of bugs but won't bore you with all the
+details as they are conceptually the same. I've brought it all up with Huawei
+who are committed to resolving them and improve the quality of their NETCONF /
+YANG interface.
+</p>
+
+<p>
+I would like to thank Huawei for providing us with early access software and
+working with us on improving their NETCONF / YANG support as well as for the
+opportunity to publish this post and show how some of these things work.
+</p>
+
+<p>
+Reach out to me on Twitter (see footer) if you have questions!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
+<div id="postamble" class="status"><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>

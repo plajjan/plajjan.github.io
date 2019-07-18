@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>TL;DR; reasonable NETCONF / YANG requirements - beyond the RFCs</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<div class="post-date">29 Sep 2017</div><h1 class="post-title"><a href="2017-09-29-reasonable-netconf.html">TL;DR; reasonable NETCONF / YANG requirements - beyond the RFCs</a></h1>
+<p>
+In the TeraStream project, we continuously evaluate NETCONF server implementations and review YANG models. This can be rather time consuming, so to save the rest of y'all some trouble, I thought I'd jot down what constitutes a reasonable NETCONF / YANG server implementation. I'll start with the TL;DR; list and continue with some motivation and further explanation.
+</p>
+
+<p>
+If you are a vendor, then please make sure you support this. If you're someone buying network gear, try putting this in your RFQ to save yourself from future headaches.
+</p>
+
+<div id="outline-container-orgf115fe8" class="outline-2">
+<h2 id="orgf115fe8"><span class="section-number-2">1</span> TL;DR; Reasonable NETCONF / YANG requirements</h2>
+<div class="outline-text-2" id="text-1">
+<ol class="org-ol">
+<li>Devices MUST implement NETCONF 1.1 [RFC6241] or 1.0 [RFC4741]. It is not acceptable with a partial implementation of the mandatory parts of NETCONF. At least one of the capabilities :candidate, :writable-running, or :startup MUST be implemented.</li>
+<li>The :validate capability SHOULD be implemented.</li>
+<li>If :candidate is supported, :confirmed-commit SHOULD be implemented.</li>
+<li>NETCONF over SSH [RFC6242] or [RFC4742] MUST be implemented.</li>
+<li>The With-defaults capability [RFC6243] MUST be implemented.</li>
+<li>Data model discovery and download as defined in [RFC6022] SHOULD be implemented.</li>
+<li>NETCONF Event Notifications [RFC5277] SHOULD be implemented.</li>
+<li>All data models MUST be defined in YANG [RFC6020], and the mapping to NETCONF MUST follow the rules defined in this RFC.</li>
+<li>The data model upgrade rules defined in [RFC6020] section 10 MUST be followed.</li>
+<li>There MUST NOT be any ordering dependencies for NETCONF edit-config operations. For example, it should be possible to write a configuration where an ACL is configured on an interface before the definition of the ACL itself. That is, the device needs to recognize that it needs to reorder this and create the ACL before it attaches it to an interface. The same is true for additions, deletions as well as modifications of configuration.</li>
+<li>Values should be returned by get and get-config the exact same way as they were written with the exception of hashed passwords.</li>
+<li>Obfuscated passwords are NOT hashed, for example Cisco type 7 or JUNOS 9 type passwords are encrypted by the device using a well known key. This MUST NOT happen. Such value should be set in clear text and returned by get &amp; get-config in clear text.</li>
+</ol>
+</div>
+</div>
+
+
+<div id="outline-container-org972b788" class="outline-2">
+<h2 id="org972b788"><span class="section-number-2">2</span> What</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+I'll dig into motivating the requirements later on but more importantly is the
+reason for these requirement. What is the goal we are trying to reach?
+</p>
+
+
+
+<p>
+NETCONF is a rather old protocol by now. It was written in a time when the two
+large network operating systems were IOS and JUNOS, which is why the concepts of
+a running and startup config exists in NETCONF. Most modern 
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-netconf.html">NETCONF</a> <a href="tag-yang.html">YANG</a> </div></div>
+<div id="postamble" class="status"><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>

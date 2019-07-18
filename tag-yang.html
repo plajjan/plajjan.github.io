@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<h1 class="title">Posts tagged "YANG":</h1>
+<div class="post-date">30 Oct 2017</div><h1 class="post-title"><a href="2017-10-30-yang-validation-in-the-real-world.html">YANG validation in the real world</a></h1>
+<p>
+Some time ago I wrote an [introductory post on how to validate data using YANG](/validating-data-with-YANG).  A simple example as it were, it can be difficult to apply to the real world as there are some blanks to fill in. This time around we'll follow up and use the same tools to validate if the NETCONF / YANG interface of a Huawei router is sound and adheres to standards.
+</p>
+
+<p>
+Evaluating whether NETCONF / YANG interfaces are RFC compliant is something I
+do on a rather frequent basis. Unfortunately I can't share all the YANG models
+or our configuration as both are secret or private in one way or another. I
+could perhaps have censored but that would likely have required much more time
+than I was willing to spend on this post.
+</p>
+
+<p>
+The Huawei router is running a software build that is compiled for us
+(TeraStream) so you can't currently download or get your hands on this (unless
+you ask Huawei nicely to compile one for you too, I guess).
+</p>
+
+<p>
+I got the YANG models separately from Huawei;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls
+huawei-aaa-action.yang
+huawei-aaa-lam-action.yang
+huawei-aaa-lam-type.yang
+huawei-aaa-lam.yang
+huawei-aaa-type.yang
+huawei-aaa.yang
+huawei-acl-action.yang
+huawei-acl-type.yang
+huawei-acl.yang
+huawei-bfd-action.yang
+huawei-bfd-type.yang
+huawei-bfd.yang
+huawei-bgp-action.yang
+huawei-bgp-bgpcomm-action.yang
+huawei-bgp-bgpcomm.yang
+huawei-bgp-bgpmultiinstcomm.yang
+huawei-bgp-type.yang
+huawei-bgp.yang
+huawei-dcn-action.yang
+huawei-dcn-dscpremark.yang
+huawei-dcn-type.yang
+huawei-dcn.yang
+huawei-devm-action.yang
+huawei-devm-type.yang
+huawei-devm.yang
+huawei-dgmp-type.yang
+huawei-dgmp.yang
+huawei-dhcpv6-action.yang
+huawei-dhcpv6-relay-action.yang
+huawei-dhcpv6-relay-type.yang
+huawei-dhcpv6-relay.yang
+huawei-dhcpv6-server-action.yang
+huawei-dhcpv6-server-type.yang
+huawei-dhcpv6-server.yang
+huawei-dhcpv6-type.yang
+huawei-dhcpv6.yang
+huawei-dns-action.yang
+huawei-dns-type.yang
+huawei-dns.yang
+huawei-ethernet-action.yang
+huawei-ethernet-stacking.yang
+huawei-ethernet-type.yang
+huawei-ethernet.yang
+huawei-extension.yang
+huawei-hwtacacs-action.yang
+huawei-hwtacacs-type.yang
+huawei-hwtacacs.yang
+huawei-ifm-action.yang
+huawei-ifmatm-type.yang
+huawei-ifmatm.yang
+huawei-ifmbundle-type.yang
+huawei-ifmbundle.yang
+huawei-ifmcpostrunk-type.yang
+huawei-ifmcpostrunk.yang
+huawei-ifm-flowalarm.yang
+huawei-ifm-fr-type.yang
+huawei-ifm-fr.yang
+huawei-ifm-hdlc-type.yang
+huawei-ifm-hdlc.yang
+huawei-ifmima-type.yang
+huawei-ifmima.yang
+huawei-ifmlag-action.yang
+huawei-ifmlag-type.yang
+huawei-ifmlag.yang
+huawei-ifmmp-type.yang
+huawei-ifmmp.yang
+huawei-ifmpostrunk-type.yang
+huawei-ifmpostrunk.yang
+huawei-ifm-pppbase-type.yang
+huawei-ifm-pppbase.yang
+huawei-ifmtrunk-action.yang
+huawei-ifmtrunk-type.yang
+huawei-ifmtrunk.yang
+huawei-ifm-type.yang
+huawei-ifm.yang
+huawei-ipsec-action.yang
+huawei-ipsec-ike-action.yang
+huawei-ipsec-ike-type.yang
+huawei-ipsec-ike.yang
+huawei-ipsec-type.yang
+huawei-ipsec.yang
+huawei-isiscomm-action.yang
+huawei-isiscomm-type.yang
+huawei-isiscomm.yang
+huawei-l2tpv3-action.yang
+huawei-l2tpv3-type.yang
+huawei-l2tpv3.yang
+huawei-l3vpn-action.yang
+huawei-l3vpn-l3vpncomm-type.yang
+huawei-l3vpn-l3vpncomm.yang
+huawei-l3vpn-mpls-type.yang
+huawei-l3vpn-mpls.yang
+huawei-l3vpn-netslice.yang
+huawei-l3vpn-qos-action.yang
+huawei-l3vpn-qos-type.yang
+huawei-l3vpn-qos.yang
+huawei-l3vpn-staticfrr.yang
+huawei-l3vpn-tnl-type.yang
+huawei-l3vpn-tnl.yang
+huawei-l3vpn-type.yang
+huawei-l3vpn.yang
+huawei-mcastbase-type.yang
+huawei-mcastbase.yang
+huawei-nd-action.yang
+huawei-nd-type.yang
+huawei-nd.yang
+huawei-netconf-authorization-type.yang
+huawei-netconf-authorization.yang
+huawei-netconf-notification-type.yang
+huawei-netconf-notification.yang
+huawei-netconf-type.yang
+huawei-netconf.yang
+huawei-ntp-type.yang
+huawei-ntp.yang
+huawei-pim-pimafspro-type.yang
+huawei-pim-pimafspro.yang
+huawei-pim-type.yang
+huawei-pim.yang
+huawei-pub-type.yang
+huawei-qos-action.yang
+huawei-qos-cbqos-type.yang
+huawei-qos-cbqos.yang
+huawei-qos-hqos-type.yang
+huawei-qos-hqos.yang
+huawei-qos-type.yang
+huawei-qos-vllpipe.yang
+huawei-qos-wred.yang
+huawei-qos.yang
+huawei-rm-action.yang
+huawei-rm-l3vpn-labelstack.yang
+huawei-rm-rmbase-type.yang
+huawei-rm-rmbase.yang
+huawei-rm.yang
+huawei-rsa-type.yang
+huawei-rsa.yang
+huawei-rtp-action.yang
+huawei-rtp-type.yang
+huawei-rtp.yang
+huawei-snmp-action.yang
+huawei-snmp-type.yang
+huawei-snmp.yang
+huawei-sshc-action.yang
+huawei-sshc-type.yang
+huawei-sshc.yang
+huawei-sshs-action.yang
+huawei-sshs-type.yang
+huawei-sshs.yang
+huawei-staticrt-staticmrt-type.yang
+huawei-staticrt-staticmrt.yang
+huawei-staticrt-staticrtbase-type.yang
+huawei-staticrt-staticrtbase.yang
+huawei-staticrt.yang
+huawei-syslog-action.yang
+huawei-syslog-type.yang
+huawei-syslog.yang
+huawei-system-action.yang
+huawei-system-type.yang
+huawei-system.yang
+huawei-timerange-type.yang
+huawei-timerange.yang
+huawei-tty-type.yang
+huawei-tty.yang
+huawei-vlan-action.yang
+huawei-vlan-type.yang
+huawei-vlan.yang
+huawei-vty-action.yang
+huawei-vty-type.yang
+huawei-vty.yang
+huawei-wdm-type.yang
+huawei-wdm.yang
+huawei-y1731-action.yang
+huawei-y1731-dtools-action.yang
+huawei-y1731-dtools-type.yang
+huawei-y1731-dtools.yang
+huawei-y1731-type.yang
+huawei-y1731.yang
+ietf-inet-types.yang
+ietf-yang-types.yang
+</pre>
+</div>
+
+<p>
+Quite a few models!
+</p>
+
+<p>
+Before this point we've had numerous issues with the NETCONF server but most of
+them seem to have been resolved so that we can get the config using NETCONFs
+get-config RPC. We use netconf-console to do this but you can use whatever
+NETCONF client you might have handy, like ncclient (which is kinda a personal
+favourite of mine).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf$ netconf-console -u test -p secr3tpassw0rd --proto ssh --port <span style="color: #a45bad;">830</span> --host my-vrp-lab-router --get-config &gt; config-from-netconf
+kll@lingloi:~/vrp-netconf$ wc -l config-from-netconf
+<span style="color: #a45bad;">205780</span> config-from-netconf
+</pre>
+</div>
+
+<p>
+Gulp. That's a lot. The config on the router isn't very large at all so something seems off.
+</p>
+
+<p>
+Just reading the file I find 141523 lines from the huawei-fib model. It starts with:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">  &lt;<span style="color: #bc6ec5; font-weight: bold;">fib</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-fib"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAfs</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatistics</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibStatisticss</span>&gt;
+      &lt;/<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">uniAf</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoutes</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+          &lt;/<span style="color: #bc6ec5; font-weight: bold;">fibRoute</span>&gt;
+...
+</pre>
+</div>
+
+<p>
+and continues like that. This is clearly some bug. We are seeing a long list of
+entries but there is no data populated in each entry. We don't have 141k routes
+configured on this router (more like 1 static) and so I suspect that I'm
+getting back operational data, despite only asking for config data with
+get-config. This has happened with Huawei before so I find it entirely possible
+it is happening again.
+</p>
+
+<p>
+If we ignore that though we can see if we can validate the rest of the data
+using the same principles as in the previous post. Using yang2dsdl, that is:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf *.yang
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:75: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:146: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:271: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\-"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\."</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\("</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:434: warning: the escape sequence <span style="color: #2d9574;">"\)"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:449: warning: the escape sequence <span style="color: #2d9574;">"\s"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:464: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+huawei-pub-type.yang:472: warning: the escape sequence <span style="color: #2d9574;">"\d"</span> is unsafe<span style="color: #4f97d7; font-weight: bold;"> in</span> double quoted strings - pass the flag --lax-quote-checks to avoid this warning
+Cannot translate submodules
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+Okay, a bunch of warnings and then an error at the end. I don't like seeing
+warnings (sometimes they later lead to errors) so let's start with those. Line
+75 of huawei-pub-type.yang is the pattern line:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">typedef</span> <span style="color: #ce537a; font-weight: bold;">ipv4Address</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">length</span> <span style="color: #2d9574;">"0..255"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">pattern</span> <span style="color: #2d9574;">"((([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([1-9]?[0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))"</span>;
+  <span style="color: #bc6ec5;">}</span>
+  <span style="color: #4f97d7; font-weight: bold;">description</span>
+    <span style="color: #2d9574;">"An IPV4 address in dotted decimal notation"</span>;
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+<code>\.</code> is used in the middle to mean a literal <code>.</code>. This is fine but as the
+warning messages tells us, doing escapes in a double quoted string is not safe.
+Simply changing the pattern to use single quotes removes the warning and stays
+true to the intent of the pattern.
+</p>
+
+<p>
+With that fixed we are left with the error about submodules which is simply
+because we are telling yang2dsdl to validate an instance data document using a
+submodule. That's simply wrong and not valid. The correct thing to do is to
+validate using the module which naturally includes the submodule, thus we need
+to filter our submodules. All submodules include the statement <code>belongs-to</code> to
+point out which module they belong to.
+</p>
+
+<p>
+This grep will thus yield all the submodules in the directory (-l displays
+files with matches but not the matching line itself):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep -l belongs-to *.yang
+</pre>
+</div>
+
+<p>
+What we are looking for is all modules that are NOT submodules, thus we list
+everything and then do a inverse grep on that, like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ ls *.yang | grep -vf &lt;<span style="color: #4f97d7;">(</span>grep -l belongs-to *.yang<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+<code>grep -f</code> takes a file as input for things to grep after and so we use a bash
+trick using <code>&lt;()</code> to let the output of a sub-shell look like a file to the
+current command. The <code>-v</code> is to invert the match. This yields the list of files
+we want, now we give it to yang2dsdl by using a sub-shell for expansion:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">243:</span> /usr/bin/yang2dsdl: xsltproc: not found
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">76:</span> /usr/bin/yang2dsdl: xsltproc: not found
+kll@lingloi:~/vrp-netconf/yang$ xsltproc
+The program <span style="color: #2d9574;">'xsltproc'</span> is currently not installed. You can install it by typing:
+sudo apt install xsltproc
+kll@lingloi:~/vrp-netconf/yang$ sudo apt install xsltproc
+</pre>
+</div>
+
+<p>
+Whops! I'm normally validating YANG etc on a computer in our lab but I'm now
+using the same computer which I'm writing this post on and I'm apparently
+missing some tools. I'll include it since you are likely to run into the same
+problem. Just install xsltproc and try again
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+warning: failed to load external entity <span style="color: #2d9574;">"/usr/local/share/yang/xslt/basename.xsl"</span>
+cannot parse /usr/local/share/yang/xslt/basename.xsl
+== Generating RELAX NG schema <span style="color: #2d9574;">'./-data.rng'</span>
+warning: failed to load external entity <span style="color: #2d9574;">"schema-dir"</span>
+cannot parse schema-dir
+</pre>
+</div>
+
+<p>
+My yang2dsdl is looking in /usr/local/share instad of /usr/share. Dunno why.
+Don't think I saw problem this on my other computer. Anyway, I just copied
+those files:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ sudo cp -a /usr/share/yang /usr/local/share/yang
+</pre>
+</div>
+
+<p>
+And run again:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./huawei-aaa_huawei-acl_huawei-bfd_huawei-bgp_huawei-dcn_huawei-devm_huawei-dgmp_huawei-dhcpv6_huawei-dns_huawei-ethernet_huawei-extension_huawei-hwtacacs_huawei-ifmatm_huawei-ifmbundle_huawei-ifmcpostrunk_huawei-ifmima_huawei-ifmlag_huawei-ifmmp_huawei-ifmpostrunk_huawei-ifmtrunk_huawei-ifm_huawei-ipsec_huawei-isiscomm_huawei-l2tpv3_huawei-l3vpn_huawei-mcastbase_huawei-nd_huawei-netconf_huawei-ntp_huawei-pim_huawei-pub-type_huawei-qos_huawei-rm_huawei-rsa_huawei-rtp_huawei-snmp_huawei-sshc_huawei-sshs_huawei-staticrt_huawei-syslog_huawei-system_huawei-timerange_huawei-tty_huawei-vlan_huawei-vty_huawei-wdm_huawei-y1731_ietf-inet-types_ietf-yang-types-data.rng'</span>
+I/O error : Filename too long
+I/O error : Filename too long
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Blargh. Okay, too many modules which yields too long of a name since yang2dsdl
+per default concatenates the names of all the modules in its intermediate
+output (it writes a single large schema file that is then used for validation).
+We can specify a basename to use with <code>-b</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                                
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+/usr/bin/yang2dsdl: <span style="color: #a45bad;">103:</span> /usr/bin/yang2dsdl: xmllint: not found
+</pre>
+</div>
+
+<p>
+Okay, install xmllint too!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ xmllint
+The program <span style="color: #2d9574;">'xmllint'</span> is currently not installed. You can install it by typing:
+sudo apt install libxml2-utils
+kll@lingloi:~/vrp-netconf/yang$ sudo apt-get install -qy libxml2-utils
+Reading package lists...
+Building dependency tree...
+...
+</pre>
+</div>
+
+<p>
+And now!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:2: element rpc-reply: Relax-NG validity error : Expecting element data, got rpc-reply
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+Not quite :/ yang2dsdl defaults to assuming it's a "data" file we want to
+validate but this is the response from a get-config query and so the "data"
+element is wrapped inside a rpc-reply. We can inform yang2dsdl with <code>-t</code> that
+it is a get-config-reply:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>                                                                                                                                                                                                                                                                                                                                                      
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+../config-from-netconf:1976: element mac: Relax-NG validity error : Element data has extra content: mac
+../config-from-netconf fails to validate
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+
+<p>
+Now we are getting somewhere. We found a data inconsistency on line 1976 which
+tells us that at least 1975 lines actuallt passed validation! What's on line 1976?
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">mac</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://www.huawei.com/netconf/vrp/huawei-mac"</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;300&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgingTime</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;enable&lt;/<span style="color: #bc6ec5; font-weight: bold;">macAgeTimeEnable</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;false&lt;/<span style="color: #bc6ec5; font-weight: bold;">synenable</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macSynchronize</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">globalAttribute</span>&gt;
+  &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;0&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;1&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;3&lt;/<span style="color: #bc6ec5; font-weight: bold;">slot</span>&gt;
+      &lt;<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;90&lt;/<span style="color: #bc6ec5; font-weight: bold;">macThreshold</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsage</span>&gt;
+  &lt;/<span style="color: #bc6ec5; font-weight: bold;">macUsages</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">mac</span>&gt;
+</pre>
+</div>
+
+<p>
+Looking at our YANG modules, there is none that define a namespace of huawei-mac:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ grep huawei-mac *
+kll@lingloi:~/vrp-netconf/yang$
+</pre>
+</div>
+<p>
+this isn't wrong per se as NETCONF allows the return of data that we don't have
+YANG model for and thus can't validate. The NETCONF client should just ignore
+this data. This might seem strange and first but this is actually how upgrades
+are handled, i.e. if a client is using an older YANG model or simply doesn't
+understand all YANG models supported by the device, that is ok, since we just
+ignore the data. However, the yang2dsdl tool is a little more strict and
+complains about it. For the sake of progress, I'll remove that part and
+continue. After this, I actually found eight other namespaces that I did not
+have YANG models for and thus just removed the corresponding instance data for
+the sake of progressing with my testing.
+</p>
+
+<p>
+Next error we run into is related to the qos config:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@lingloi:~/vrp-netconf/yang$ yang2dsdl -t get-config-reply -b hejohoj -v ../config-from-netconf $<span style="color: #4f97d7;">(</span><span style="color: #fa8072;">ls</span> *.yang | grep -vf &lt;<span style="color: #bc6ec5;">(</span>grep -l belongs-to *<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+== Generating RELAX NG schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./hejohoj-get-config-reply.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+Relax-NG validity error : Extra element qos<span style="color: #4f97d7; font-weight: bold;"> in</span> interleave
+../config-from-netconf:5156: element qos: Relax-NG validity error : Element data failed to validate content
+../config-from-netconf fails to validate
+</pre>
+</div>
+
+<p>
+The validation is achieved by parsing the YANG models and producing a RelaxNG
+schema which in turn is used to validate the data. This means that at
+validation we no longer have an understanding of YANG, which I presume (I don't
+know that much about RelaxNG) leads to a loss of data. Unfortunately this
+results in an overly sparse error message.
+</p>
+
+<p>
+Fortunately I have some experience in reading YANG models and after reading
+through a bit of the huawei-qos.yang model and its sub-modules I find that
+instances of non-presence containers containing mandatory leaf nodes. This is
+quite the anti-pattern of YANG module writing and this isn't the first time
+I've seen it.
+</p>
+
+
+<p>
+There are two flavours of containers in YANG; presence and non-presence
+containers. Non-presence containers are the default and these containers do not
+themselves carry any explicit meaning and are used merely to organise data by
+providing structure. By adding the <code>presence</code> keyword under a container we can
+turn it into a presence container which means the existance of the container
+itself carries meaning.
+</p>
+
+<p>
+Let's take a short example:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+<p>
+With this model, the foo container, which is a non-presence container, MUST
+exist and there MUST be a bar leaf in it, since mandatory is set. I've seen
+this pattern in a lot of cases where the intention is to make the leaf bar
+mandatory but only when the container foo is present as a consequence of
+enabling the "foo" feature. To achieve that, we can use a presence container,
+like so:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">foo</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #2d9574;">"Enables feature foo"</span>;
+  <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">bar</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+    <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+Now the presence of the whole container foo is optional but if it exists then
+the bar leaf MUST be set (again, due to the mandatory statement).
+</p>
+
+<p>
+Huawei's YANG models contain a bunch of places where they have rather deep
+nesting of containers and finally we find a leaf with <code>mandatory true</code>. When
+all of this data is missing in the instance data the validation fails with that
+extremely sparse message. I modified the YANG modules and added in <code>presence</code>
+statements on a couple of containers to make them optional, again to be able to
+make progress with my evaluation.
+</p>
+
+<p>
+This type of problem is in fact so widespread that I had to find a better way
+of finding problematic instances. By looking at the output of <code>pyang -f tree</code>
+and then filtering this I could quickly find mandatory leaf nodes under
+containers. I started by removing all read-only data. I do this with vi and
+<code>:g/+--ro /d</code>. Second I can remove all leaves that are optional with <code>:g/+--rw
+[A-Za-z0-9]\+?/d</code>. We are now down to containers, lists and mandatory leaves.
+Here's an exceprt from the routing policy model:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">module: huawei-rtp
+    +--rw rtp
+       +--rw asPathFilters
+       |  +--rw asPathFilter* [index]
+       |     +--rw index                string
+       |     +--rw asPathFilterNodes
+       |        +--rw asPathFilterNode* [nodeSequence]
+       |           +--rw nodeSequence    uint32
+       |           +--rw matchMode       rtpMatchMode
+       |           +--rw regular         string
+</pre>
+</div>
+
+<p>
+We can see how asPathFilters is a container that holds a single list, "index"
+is the key of that list and nex to it we find another container and in it a
+second list which wholds the members of the filter. That inner list is keyed on
+nodeSequence, which is fine and the matchMode and regular seems fine too, I
+guess the regular is the actual value and it's called "regular" because it's a
+regular expression. This structure seems fine.
+</p>
+
+<p>
+However, if we move on down we get to the route policies themselves:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">+--rw routePolicys
+|  +--rw routePolicy* [name]
+|     +--rw name                string
+|     +--rw routePolicyNodes
+|        +--rw routePolicyNode* [nodeSequence]
+|           +--rw nodeSequence      uint32
+|           +--rw matchMode         rtpMatchMode
+|           +--rw matchCondition
+|           |  +--rw matchCosts
+|           |  |  +--rw matchCost
+|           |  |     +--rw costValue    uint32
+|           |  +--rw matchInterfaces
+|           |  |  +--rw matchInterface* [ifName]
+|           |  |     +--rw ifName    pub-type:ifName
+|           |  +--rw matchRouteTypes
+|           |  |  +--rw matchRouteType* [routeType]
+|           |  |     +--rw routeType    rtpMchRtType
+|           |  +--rw matchTags
+|           |  |  +--rw matchTag
+|           |  |     +--rw tagValue    uint32
+|           |  +--rw matchMplsLabels
+|           |  |  +--rw matchMplsLabel
+|           |  |     +--rw mplsLabel    boolean
+...
+</pre>
+</div>
+<p>
+the model continues for another 150 lines just for the routePlicy list but I
+won't list it all here.  We can see how there are a bunch of mandatory leaves
+here and they are tucked into two containers, like matchCosts/matchCost is a
+container in a container and inside we have the leaf costValue which is
+mandatory. The way the model is written it means pretty much all potential ways
+of matching things in the policy are mandatory. That can't be right!
+</p>
+
+<p>
+As far as I've understood, Huawei generates their models from an internal
+representation so while I've found a whole bunch of instances with the same
+type of error, it doesn't actually mean fixing it is very hard. All they need
+to do is patch the logic that outputs the YANG model and all faulty occurences
+can be fixed in one swift go.
+</p>
+
+<p>
+I found a couple of other instances of bugs but won't bore you with all the
+details as they are conceptually the same. I've brought it all up with Huawei
+who are committed to resolving them and improve the quality of their NETCONF /
+YANG interface.
+</p>
+
+<p>
+I would like to thank Huawei for providing us with early access software and
+working with us on improving their NETCONF / YANG support as well as for the
+opportunity to publish this post and show how some of these things work.
+</p>
+
+<p>
+Reach out to me on Twitter (see footer) if you have questions!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
+<div class="post-date">15 Mar 2017</div><h1 class="post-title"><a href="2017-03-15-validating-data-with-YANG.html">Validating data with YANG</a></h1>
+<p>
+Every now and then I hear about how difficult it is to use YANG to actually validate any data (we call this instance data). Since we in the TeraStream team do this quite a lot I thought I'd share how it can be done. This is using a process that we also employ in our CI pipeline.
+</p>
+
+<p>
+Let's first write a simple YANG model:
+</p>
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+We all know the Internet is full of cats so I created a list under the <code>internet</code> container so we can fill it up with cats. The only valid leaf value of each cat list entry is its name.
+</p>
+
+<p>
+Let's start off by actually making sure that our YANG model is valid. We can use the tool called <code>pyang</code> to do this. If you don't have pyang installed you can install it with <code>pip install pyang</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ pyang tubecats.yang
+kll@kll:~/yang-test$ pyang --ietf tubecats.yang
+tubecats.yang:1: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.1:</span> the module name should start with one of the strings <span style="color: #2d9574;">"ietf-"</span> or <span style="color: #2d9574;">"iana-"</span>
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"contact"</span> substatement
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"organization"</span> substatement
+tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:2: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.8:</span> namespace value should be <span style="color: #2d9574;">"urn:ietf:params:xml:ns:yang:tubecats"</span>
+tubecats.yang:5: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"revision"</span> must have a <span style="color: #2d9574;">"reference"</span> substatement
+tubecats.yang:9: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"container"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:10: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"list"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+tubecats.yang:12: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"leaf"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
+</pre>
+</div>
+
+<p>
+The <code>--ietf</code> argument makes pyang a little more strict and adheres to a bunch of IETF guidelines on how to write YANG models. Since we aren't writing an IETF model and don't have an IETF namespace for it, we'll get some warnings and errors. Anyway, our model is sound since it succeeded without <code>--ietf</code>.
+</p>
+
+<p>
+Ok, so we have a valid model, let's write some data that adheres to it:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+And now, to validate we use yang2dsdl which is shipped together with pyang:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+data.xml validates
+
+== Adding default values... done.
+
+== Validating semantic constraints ...
+No errors found.
+kll@kll:~/yang-test$
+</pre>
+</div>
+
+<p>
+To make sure that our toolchain is working here we'll introduce an error in our
+data file, namely a second node under one of the cat list entries:
+</p>
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;bar&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+lo and behold as this time around it complains loudly:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
+Done.
+
+== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
+Done.
+
+== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
+Done.
+
+== Validating grammar and datatypes ...
+data.xml:8: element foo: Relax-NG validity error : Did not expect element foo there
+data.xml fails to validate
+kll@kll:~/yang-test$
+</pre>
+</div>
+
+<p>
+So that's how you can validate your instance data with a YANG model!
+</p>
+
+<p>
+The <code>&lt;data&gt;</code> tag at the root of the XML document is part of many NETCONF commands. It's also possible to ask it to validate data that is wrapped in other nodes like edit-config, get-reply etc. If you are just trying to write some data on your own and don't want to think about NETCONF you do still have to add that extra <code>&lt;data&gt;</code> tag at the root to get validation to complete&#x2026; it is a bit NETCONF centric after all.
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
+<div class="post-date">04 Jul 2016</div><h1 class="post-title"><a href="2016-07-04-YANG-versioning.html">YANG versioning and backwards (in)compatibility</a></h1>
+<div class="abstract">
+<p>
+A suggestion for how to handle backwards compatibility in a YANG modeled world.
+</p>
+
+</div>
+
+<p>
+YANG comes with a fairly strict set of rules for allowed modifications between model revision, so how do you make changes to your API while abiding to these rules?
+</p>
+
+<p>
+If you've written YANG models yourself you might have ended up in the situation that you wanted to make backwards incompatible changes. If you are a user of YANG models you might have been bitten by someone else, like a vendor, producing YANG models with backwards incompatible changes between revision.
+</p>
+
+<p>
+How do you keep a backwards compatible YANG modeled API while allowing for changes?
+</p>
+
+<div id="outline-container-orga1f6789" class="outline-2">
+<h2 id="orga1f6789"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+YANG is defined in RFC6020, which has a <a href="https://tools.ietf.org/html/rfc6020#section-10">section</a> on what changes are allowed between revisions of a YANG model. 
+</p>
+
+<p>
+The whole idea with having a model describing data is to leave a sort of "contract" to another party on what data is accepted. The rules in RFC6020 are defined such that you cannot break that contract.
+</p>
+
+<p>
+For example, the first revision of model <code>foo</code> has the leaf <code>/bar</code>. If we realise this leaf isn't actually needed we cannot remove it in the second revision of the model since anyone with the first revision of the model might try to set a value for the <code>/bar</code> leaf.  Deleting the leaf would break the "contract".
+</p>
+
+<p>
+I won't list all the rules here but they essentially boil down to only allowing additions. You cannot remove nodes or make changes that reduce the value space for a leaf.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org4379a2f" class="outline-2">
+<h2 id="org4379a2f"><span class="section-number-2">2</span> Offenders</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+I think one of the more clear examples of YANG compatibility breakage is Cisco's IOS XR as can be witnessed by the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr/">XR YANG models published on GitHub.</a>
+</p>
+
+<p>
+Cisco doesn't even try to hide that they are breaking YANG rules (kudos for that, I suppose), in fact there is a section in the README file of each subdirectory that reads:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">It should be noted that some of the modules released in
+IOX-XR 6.0.1 break the backwards compatibility guidelines
+defined in RFC 6020 when compared to the same modules
+released in IOS-XR 6.0.1. This is because the "native" YANG
+modules for IOS-XR are generated from internal schema files
+that are an integral part of the implementation, and, as
+such, these can change in ways that break backwards
+compatibility per RFC 6020 guidelines when new features are
+introduced or when bugs are fixed. Thus, while we rigorously
+review the changes that impact the external YANG schema,
+Cisco cannot guarantee full backwards compatibility of these
+modules across releases.
+
+However, when new versions of the native models are
+released, the check-models.sh script, in conjunction with
+pyang 1.6, can be used to determine what technically
+incompatible changes have occurred. Please run check.sh from
+this directory with pyang 1.5 or greater on your path thus:
+</pre>
+</div>
+
+<p>
+If you run the suggested commands you will see that there are incompatible changes between the majority of revisions:
+</p>
+
+<ul class="org-ul">
+<li>5.3.0 -&gt; 5.3.1 fails</li>
+<li>5.3.1 -&gt; 5.3.2 fails</li>
+<li>5.3.2 -&gt; 5.3.3 fails</li>
+<li>5.3.3 -&gt; 6.0.0 fails</li>
+<li>6.0.0 -&gt; 6.0.1 works ok, I'm guessing because they didn't make any (or much)
+changes to the models at all</li>
+</ul>
+
+<p>
+If you happen to be using Cisco NSO (formerly Tail-F NCS) you might have noticed that you can't load the same module / namespace multiple times. You are supposed to load the latest revision, which will work (to a certain extent) with older models, or if you are using an older revision of the model you are still able to work with the leaves it contains. However, this only holds true if you stick to the YANG revision compatibility rules, which Cisco aren't.
+</p>
+
+<p>
+With NSO you compile the YANG models into .fxs files which are then loaded by NSO. ncsc is the NSO compiler that takes care of the compilation step and it actually has an option relevant to this, namely <code>--lax-revision-merge</code>;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">--lax-revision-merge    When we have multiple revisions of
+  the same module, the ncsc command to import the module
+  will fail if a YANG module does not follow the YANG
+  module upgrade rules. See RFC 6020. This option makes
+  ncsc ignore those strict rules. Use with extreme care,
+  the end result may be that NCS is incompatible with the
+  managed devices.
+</pre>
+</div>
+
+<p>
+However, in the case of merging XR 5.1 and XR 5.3 models, it does not work as warned by the man page.
+</p>
+
+<p>
+It's rather ironic how two Cisco products aren't compatible with each other while other products, such as JUNOS, works great together with Cisco NSO, even across different versions. Never buy more than one product from Cisco? ;)
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgdd71411" class="outline-2">
+<h2 id="orgdd71411"><span class="section-number-2">3</span> Solution?</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The simple solution is of course that Cisco stops breaking YANG rules. However, I can understand it's difficult with their development process and sometimes you just have to make backwards incompatible changes. Besides, it's an industry wide problem and not just related to Cisco.
+</p>
+
+<p>
+Let's first look at semver and then how we might merge the concept of semver with YANG versioning scheme that allows for backwards incompatibility.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgddd8285" class="outline-2">
+<h2 id="orgddd8285"><span class="section-number-2">4</span> Semantic versioning</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<a href="http://semver.org/">Semantic versioning</a> (semver for short) is a fairly widely accepted versioning scheme where the version is described as MAJOR.MINOR.PATCH. In essence, increment the:
+</p>
+
+<ul class="org-ul">
+<li>MAJOR version when you make incompatible API changes,</li>
+<li>MINOR version when you add functionality in a backwards-compatible manner, and</li>
+<li>PATCH version when you make backwards-compatible bug fixes.</li>
+</ul>
+
+<p>
+YANG however doesn't follow semver but I believe the same concept can be applied.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgbef62a7" class="outline-2">
+<h2 id="orgbef62a7"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The suggestion is simple:
+</p>
+
+<blockquote>
+<p>
+Let the MAJOR version form part of the model name and namespace and let the revisions of a YANG model represent the MINOR and PATCH versions.
+</p>
+</blockquote>
+
+<p>
+Following semver this means all the backwards <b>compatible</b> changes are made within the same YANG model with the addition of new revisions. Backwards <b>incompatible</b> changes however results in the MAJOR version being bumped and as the MAJOR version is part of the model name and namespace it means we effectively create a new YANG model.
+</p>
+
+<ul class="org-ul">
+<li>for backwards <b>compatible</b> changes
+<ul class="org-ul">
+<li>keep MAJOR version, thus:
+<ul class="org-ul">
+<li>we keep the YANG module name &amp; namespace</li>
+</ul></li>
+<li>bump MINOR or PATCH version, thus:
+<ul class="org-ul">
+<li>add new revision in current YANG module</li>
+</ul></li>
+</ul></li>
+<li>for backwards <b>incompatible</b> changes
+<ul class="org-ul">
+<li>bump MAJOR version, thus:
+<ul class="org-ul">
+<li>create a new YANG module name &amp; namespace based on new MAJOR version</li>
+</ul></li>
+<li>add a new revision to the new YANG module</li>
+<li>let the old YANG module remain with the older MAJOR version, thus
+maintaining backwards compatibility</li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org30f377c" class="outline-2">
+<h2 id="org30f377c"><span class="section-number-2">6</span> An example</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Let's say we have a module we wish to name <code>foo</code>. The first public release of it, keeping in line with semver, is v1.0.0. The module would thus be called <code>foo-v1</code> and with a namespace that also includes the <code>-v1</code> part, like <code>http://example.com/ns/yang/foo-v1</code>.
+</p>
+
+<p>
+A bug fix is made, fixing a regexp for one of the leaves, but keeping inline with RFC6020 rules it does not decrease the allowed value space. Since it's a bug fix, we increase to semver v1.0.1. The YANG module will still be called <code>foo-v1</code> but we add a revision explaining the bug fix.
+</p>
+
+<p>
+Similarly if we add a leaf, it is classified as a minor feature, thus bumping the semver MINOR version to v1.1.0. We still keep the module name <code>foo-v1</code> and add a revision, just as for the bug fix.
+</p>
+
+<p>
+Now, if we decide to completely restructure a part of the module, including removing some containers and their leaves, we have made a backwards incompatible change and must bump the MAJOR version. The module will now be v2.0.0 and thus the name changes to <code>foo-v2</code> and the same change is reflected in the namespace. For the sake of clarity we can keep all the revisions from the v1 "line" of the module. We now have two modules; <code>foo-v1</code> and <code>foo-v2</code>.
+</p>
+
+<p>
+Further bug fixes and minor feature additions can be made to both, or if you choose to only one (likely the v2). The v1 line will eventuelly be deprecated and the exact timeline for that is mosty the result of how long your organisation can or want to maintain multiple versions in parallel.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd6c894e" class="outline-2">
+<h2 id="orgd6c894e"><span class="section-number-2">7</span> YANG revision label</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+The "label" used in the revision statement in YANG models is an ISO 8601 date. This could potentially be replaced with a semver version but I don't believe it obviates the need to put the major version in the model name. If a backwards incompatible change is made we might want to support both MAJOR version 1 and 2 at the same time and thus need to load two versions of the model. How are we to do that if both versions have the same name? How do we store two different YANG modules on disk if the filename doesn't reflect the MAJOR version?
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2493e89" class="outline-2">
+<h2 id="org2493e89"><span class="section-number-2">8</span> Thoughts?</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+There are probably more aspects to consider associated with this suggestion. For example, YANG models can refer to each other, through imports or submodules. If a large number of models are "intertwined" through reference it might not be apparent which of these models can or should be upgraded in a MAJOR version bump.
+</p>
+
+<p>
+Do you have any thoughts? Don't hesitate in reaching out to me (contact details in the page footer).
+</p>
+
+<p>
+Incidentally, just a few days after I wrote the first draft of this post I noticed that Brocade had put a <code>-v1</code> in the name of their YANG models. I'm not sure about their rationale but I suspect it is rather similar to what I've outlined here.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
+<div class="post-date">19 Dec 2015</div><h1 class="post-title"><a href="2015-12-29-Cisco-IOS-XR-6-0-and-YANG.html">Cisco IOS XR 6.0 and YANG</a></h1>
+<p>
+IOS XR has featured a NETCONF interface for quite some time but it was only
+with the 5.3.0 release that Cisco coupled it with proper YANG modeled
+configuration and operational data. Before that they used XML Schema Definition
+(XSD) to describe the data transported over the XML agent / NETCONF interface.
+</p>
+
+<p>
+To be honest the difference between what Cisco calls XML agent and their NETCONF
+server is still a bit unclear to me. Maybe I'll dig through that sometime but
+I'm all focused on NETCONF/YANG and we know Cisco is headed in that direction
+so looking at the XML agent would be merely to satisfy my curiosity.
+</p>
+
+<p>
+Unlike JUNOS, which features one massive YANG model (it's over 250k lines),
+Cisco has opted to split the configuration into many smaller YANG models. When
+YANG models were introduced in 5.3.0 they shipped it with 61 models, totalling
+12451 lines. Naturally the number of models or lines in those models doesn't
+give an exact figure on coverage of configurational or operational data but I
+hope it gives a hint at least. The coverage of these 61 models was actually
+rather poor so in practice it wasn't usable for anything.
+</p>
+
+<p>
+5.3.1 bumped the number to 24812 lines over 99 models. Obviously an improvement
+but still pretty far from usable. For example, neither 5.3.0 or 5.3.1 featured
+any configuration of routing protocols. You could configure interfaces, IP
+addresses, some system settings and so forth but far from being usable to
+configure an entire router.
+</p>
+
+<p>
+5.3.2 brought along BGP, policy configuration, some file system stuff as well
+as a number of updates. The number of models only increased from 99 to 106 but
+lines went from 24812 to 45775 of which the lions share are from the BGP models
+and in particular the BGP operational model. Progress after all!
+</p>
+
+<p>
+There is a <a href="https://github.com/YangModels/yang">YangModels repository on GitHub</a>, where you can conveniently browse
+the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr">models available in XR</a> up to
+5.3.2.
+</p>
+
+<p>
+I work with the TeraStream project within Deutsche Telekom and we have been an
+early adopter of NETCONF and YANG. In fact, it's one of the foundational
+pillars of the network architecture. Everything MUST (RFC2119) support
+NETCONF/YANG. We have worked with Cisco for years and have private builds of XR
+featuring loads of YANG models (142575 lines spread over 242 models). As I
+spend a lot of time with NETCONF &amp; YANG in my every day work, a lot of people
+ask me about the state of the implementations and how they can use it. The
+conversations usually go down with me saying something like "NETCONF/YANG works
+great on XR&#x2026; bla bla &#x2026; as long as you have a private build with all YANG
+models". Unlike TeraStream, which is in some form of pilot state, most people
+run actual production networks and just want working solutions. Running a
+private test build isn't for them.
+</p>
+
+<p>
+Cisco released XR 6.0 yesterday and I <a href="https://upload.cisco.com/cgi-bin/swc/fileexg/main.cgi?CONTYPES=Cisco-IOS-XRv">downloaded a demo of XRv</a>
+today to have a look at the coverage of YANG models. Have a look at this (and
+sorry for the long output):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">
+kll@lab $ ssh <span style="color: #a45bad;">1.3.3.7</span> -p <span style="color: #a45bad;">830</span> -s netconf
+
+IMPORTANT:  READ CAREFULLY
+Welcome to the Demo Version of Cisco IOS XRv <span style="color: #4f97d7;">(</span>the <span style="color: #2d9574;">"Software"</span><span style="color: #4f97d7;">)</span><span style="color: #4f97d7;">.</span>
+The Software is subject to and governed by the terms and conditions
+of the End User License Agreement and the Supplemental End User
+License Agreement accompanying the product, made available at the
+<span style="color: #4f97d7; font-weight: bold;">time</span> of your order, or posted on the Cisco website at
+<span style="color: #bc6ec5; font-weight: bold;">www.cisco.com/go/terms</span> <span style="color: #4f97d7;">(</span>collectively, the <span style="color: #2d9574;">"Agreement"</span><span style="color: #4f97d7;">)</span><span style="color: #4f97d7;">.</span>
+As set forth more fully<span style="color: #4f97d7; font-weight: bold;"> in</span> the Agreement, use of the Software is
+strictly limited to internal use<span style="color: #4f97d7; font-weight: bold;"> in</span> a non-production environment
+solely for demonstration and evaluation purposes.  Downloading,
+installing, or using the Software constitutes acceptance of the
+Agreement, and you are binding yourself and the business entity
+that you represent to the Agreement.  If you do not agree to all
+of the terms of the Agreement, then Cisco is unwilling to license
+the Software to you and <span style="color: #4f97d7;">(</span>a<span style="color: #4f97d7;">)</span> you may not download, install or use the
+Software, and <span style="color: #4f97d7;">(</span>b<span style="color: #4f97d7;">)</span> you may return the Software as more fully set forth
+<span style="color: #4f97d7; font-weight: bold;">in</span> the Agreement.
+
+
+Please login with any configured user/password, or cisco/cisco
+
+kll@<span style="color: #a45bad;">1.3.3.7</span><span style="color: #2d9574;">'s password:</span>
+<span style="color: #2d9574;">&lt;hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"&gt;</span>
+<span style="color: #2d9574;"> &lt;capabilities&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:netconf:base:1.1&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:netconf:capability:candidate:1.0&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:netconf:capability:rollback-on-error:1.0&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:netconf:capability:validate:1.1&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:netconf:capability:confirmed-commit:1.1&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-admin-cfg?module=Cisco-IOS-XR-aaa-locald-admin-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-cfg?module=Cisco-IOS-XR-aaa-locald-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-oper?module=Cisco-IOS-XR-aaa-locald-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-protocol-radius-cfg?module=Cisco-IOS-XR-aaa-protocol-radius-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-protocol-radius-oper?module=Cisco-IOS-XR-aaa-protocol-radius-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-tacacs-cfg?module=Cisco-IOS-XR-aaa-tacacs-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-tacacs-oper?module=Cisco-IOS-XR-aaa-tacacs-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-bundlemgr-cfg?module=Cisco-IOS-XR-bundlemgr-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-bundlemgr-oper?module=Cisco-IOS-XR-bundlemgr-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-cdp-cfg?module=Cisco-IOS-XR-cdp-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-cdp-oper?module=Cisco-IOS-XR-cdp-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-clns-isis-cfg?module=Cisco-IOS-XR-clns-isis-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-clns-isis-datatypes?module=Cisco-IOS-XR-clns-isis-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-clns-isis-oper?module=Cisco-IOS-XR-clns-isis-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-common-acl-datatypes?module=Cisco-IOS-XR-common-acl-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-config-mda-cfg?module=Cisco-IOS-XR-config-mda-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-config-mibs-cfg?module=Cisco-IOS-XR-config-mibs-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-controller-optics-cfg?module=Cisco-IOS-XR-controller-optics-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-controller-optics-oper?module=Cisco-IOS-XR-controller-optics-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-controller-otu-cfg?module=Cisco-IOS-XR-controller-otu-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-controller-otu-oper?module=Cisco-IOS-XR-controller-otu-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-crypto-sam-cfg?module=Cisco-IOS-XR-crypto-sam-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-crypto-sam-oper?module=Cisco-IOS-XR-crypto-sam-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-crypto-ssh-cfg?module=Cisco-IOS-XR-crypto-ssh-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-crypto-ssh-oper?module=Cisco-IOS-XR-crypto-ssh-oper&amp;amp;revision=2015-06-02&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-drivers-media-eth-cfg?module=Cisco-IOS-XR-drivers-media-eth-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-drivers-media-eth-oper?module=Cisco-IOS-XR-drivers-media-eth-oper&amp;amp;revision=2015-10-14&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-cfm-cfg?module=Cisco-IOS-XR-ethernet-cfm-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-cfm-datatypes?module=Cisco-IOS-XR-ethernet-cfm-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-cfm-oper?module=Cisco-IOS-XR-ethernet-cfm-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-link-oam-cfg?module=Cisco-IOS-XR-ethernet-link-oam-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-link-oam-oper?module=Cisco-IOS-XR-ethernet-link-oam-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-lldp-cfg?module=Cisco-IOS-XR-ethernet-lldp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ethernet-lldp-oper?module=Cisco-IOS-XR-ethernet-lldp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-fib-common-oper?module=Cisco-IOS-XR-fib-common-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ha-eem-cfg?module=Cisco-IOS-XR-ha-eem-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ha-eem-oper?module=Cisco-IOS-XR-ha-eem-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-icpe-infra-cfg?module=Cisco-IOS-XR-icpe-infra-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-icpe-infra-oper?module=Cisco-IOS-XR-icpe-infra-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg?module=Cisco-IOS-XR-ifmgr-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper?module=Cisco-IOS-XR-ifmgr-oper&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-alarm-logger-cfg?module=Cisco-IOS-XR-infra-alarm-logger-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-alarm-logger-datatypes?module=Cisco-IOS-XR-infra-alarm-logger-datatypes&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-alarm-logger-oper?module=Cisco-IOS-XR-infra-alarm-logger-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-ceredundancymib-cfg?module=Cisco-IOS-XR-infra-ceredundancymib-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-dumper-cfg?module=Cisco-IOS-XR-infra-dumper-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-clock-cfg?module=Cisco-IOS-XR-infra-infra-clock-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-locale-cfg?module=Cisco-IOS-XR-infra-infra-locale-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-objmgr-cfg?module=Cisco-IOS-XR-infra-objmgr-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-objmgr-oper?module=Cisco-IOS-XR-infra-objmgr-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-policymgr-oper?module=Cisco-IOS-XR-infra-policymgr-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-rmf-oper?module=Cisco-IOS-XR-infra-rmf-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-rsi-cfg?module=Cisco-IOS-XR-infra-rsi-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-rsi-oper?module=Cisco-IOS-XR-infra-rsi-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-sla-cfg?module=Cisco-IOS-XR-infra-sla-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-sla-datatypes?module=Cisco-IOS-XR-infra-sla-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-sla-oper?module=Cisco-IOS-XR-infra-sla-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-cfg?module=Cisco-IOS-XR-infra-statsd-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-oper?module=Cisco-IOS-XR-infra-statsd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg?module=Cisco-IOS-XR-infra-syslog-cfg&amp;amp;revision=2015-10-08&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-oper?module=Cisco-IOS-XR-infra-syslog-oper&amp;amp;revision=2015-12-01&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-infra-systemmib-cfg?module=Cisco-IOS-XR-infra-systemmib-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-bfd-cfg?module=Cisco-IOS-XR-ip-bfd-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-bfd-oper?module=Cisco-IOS-XR-ip-bfd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg?module=Cisco-IOS-XR-ip-domain-cfg&amp;amp;revision=2015-05-13&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-oper?module=Cisco-IOS-XR-ip-domain-oper&amp;amp;revision=2015-09-29&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-iarm-datatypes?module=Cisco-IOS-XR-ip-iarm-datatypes&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-iep-cfg?module=Cisco-IOS-XR-ip-iep-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-iep-oper?module=Cisco-IOS-XR-ip-iep-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-ntp-admin-oper?module=Cisco-IOS-XR-ip-ntp-admin-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-ntp-cfg?module=Cisco-IOS-XR-ip-ntp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-ntp-oper?module=Cisco-IOS-XR-ip-ntp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-pfilter-cfg?module=Cisco-IOS-XR-ip-pfilter-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-pfilter-oper?module=Cisco-IOS-XR-ip-pfilter-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-rib-cfg?module=Cisco-IOS-XR-ip-rib-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-rib-ipv4-oper?module=Cisco-IOS-XR-ip-rib-ipv4-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-rib-ipv6-oper?module=Cisco-IOS-XR-ip-rib-ipv6-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-rsvp-cfg?module=Cisco-IOS-XR-ip-rsvp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-rsvp-oper?module=Cisco-IOS-XR-ip-rsvp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-static-cfg?module=Cisco-IOS-XR-ip-static-cfg&amp;amp;revision=2015-09-10&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-tcp-cfg?module=Cisco-IOS-XR-ip-tcp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-tcp-oper?module=Cisco-IOS-XR-ip-tcp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-udp-cfg?module=Cisco-IOS-XR-ip-udp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ip-udp-oper?module=Cisco-IOS-XR-ip-udp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-acl-cfg?module=Cisco-IOS-XR-ipv4-acl-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-acl-datatypes?module=Cisco-IOS-XR-ipv4-acl-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-acl-oper?module=Cisco-IOS-XR-ipv4-acl-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-arp-cfg?module=Cisco-IOS-XR-ipv4-arp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-arp-oper?module=Cisco-IOS-XR-ipv4-arp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-bgp-cfg?module=Cisco-IOS-XR-ipv4-bgp-cfg&amp;amp;revision=2015-08-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-bgp-datatypes?module=Cisco-IOS-XR-ipv4-bgp-datatypes&amp;amp;revision=2015-08-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-bgp-oper?module=Cisco-IOS-XR-ipv4-bgp-oper&amp;amp;revision=2015-08-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-io-cfg?module=Cisco-IOS-XR-ipv4-io-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-io-oper?module=Cisco-IOS-XR-ipv4-io-oper&amp;amp;revision=2015-10-20&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-ma-cfg?module=Cisco-IOS-XR-ipv4-ma-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-ma-oper?module=Cisco-IOS-XR-ipv4-ma-oper&amp;amp;revision=2015-10-20&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-ospf-cfg?module=Cisco-IOS-XR-ipv4-ospf-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-ospf-oper?module=Cisco-IOS-XR-ipv4-ospf-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-telnet-cfg?module=Cisco-IOS-XR-ipv4-telnet-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv4-telnet-mgmt-cfg?module=Cisco-IOS-XR-ipv4-telnet-mgmt-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-acl-cfg?module=Cisco-IOS-XR-ipv6-acl-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-acl-datatypes?module=Cisco-IOS-XR-ipv6-acl-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-acl-oper?module=Cisco-IOS-XR-ipv6-acl-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-io-cfg?module=Cisco-IOS-XR-ipv6-io-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-io-oper?module=Cisco-IOS-XR-ipv6-io-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-ma-cfg?module=Cisco-IOS-XR-ipv6-ma-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-ma-oper?module=Cisco-IOS-XR-ipv6-ma-oper&amp;amp;revision=2015-10-20&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-nd-cfg?module=Cisco-IOS-XR-ipv6-nd-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-nd-oper?module=Cisco-IOS-XR-ipv6-nd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-new-dhcpv6d-oper?module=Cisco-IOS-XR-ipv6-new-dhcpv6d-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-ospfv3-cfg?module=Cisco-IOS-XR-ipv6-ospfv3-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-ipv6-ospfv3-oper?module=Cisco-IOS-XR-ipv6-ospfv3-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-l2-eth-infra-cfg?module=Cisco-IOS-XR-l2-eth-infra-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-l2-eth-infra-datatypes?module=Cisco-IOS-XR-l2-eth-infra-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-l2-eth-infra-oper?module=Cisco-IOS-XR-l2-eth-infra-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-l2vpn-cfg?module=Cisco-IOS-XR-l2vpn-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-l2vpn-oper?module=Cisco-IOS-XR-l2vpn-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lib-keychain-cfg?module=Cisco-IOS-XR-lib-keychain-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lib-keychain-oper?module=Cisco-IOS-XR-lib-keychain-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lib-mpp-cfg?module=Cisco-IOS-XR-lib-mpp-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lib-mpp-oper?module=Cisco-IOS-XR-lib-mpp-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lpts-lib-cfg?module=Cisco-IOS-XR-lpts-lib-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-lpts-pre-ifib-cfg?module=Cisco-IOS-XR-lpts-pre-ifib-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-man-netconf-cfg?module=Cisco-IOS-XR-man-netconf-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-man-xml-ttyagent-cfg?module=Cisco-IOS-XR-man-xml-ttyagent-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-man-xml-ttyagent-oper?module=Cisco-IOS-XR-man-xml-ttyagent-oper&amp;amp;revision=2015-10-29&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-ldp-cfg-datatypes?module=Cisco-IOS-XR-mpls-ldp-cfg-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-ldp-cfg?module=Cisco-IOS-XR-mpls-ldp-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-ldp-oper-datatypes?module=Cisco-IOS-XR-mpls-ldp-oper-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-ldp-oper?module=Cisco-IOS-XR-mpls-ldp-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-lsd-cfg?module=Cisco-IOS-XR-mpls-lsd-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-lsd-oper?module=Cisco-IOS-XR-mpls-lsd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-oam-cfg?module=Cisco-IOS-XR-mpls-oam-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-static-cfg?module=Cisco-IOS-XR-mpls-static-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-static-oper?module=Cisco-IOS-XR-mpls-static-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-te-cfg?module=Cisco-IOS-XR-mpls-te-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-te-datatypes?module=Cisco-IOS-XR-mpls-te-datatypes&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-mpls-te-oper?module=Cisco-IOS-XR-mpls-te-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-nto-misc-shprocmem-oper?module=Cisco-IOS-XR-nto-misc-shprocmem-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-parser-cfg?module=Cisco-IOS-XR-parser-cfg&amp;amp;revision=2015-06-02&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-pfi-im-cmd-oper?module=Cisco-IOS-XR-pfi-im-cmd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-plat-chas-invmgr-oper?module=Cisco-IOS-XR-plat-chas-invmgr-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-pmengine-cfg?module=Cisco-IOS-XR-pmengine-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-pmengine-oper?module=Cisco-IOS-XR-pmengine-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-policy-repository-cfg?module=Cisco-IOS-XR-policy-repository-cfg&amp;amp;revision=2015-08-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-policy-repository-oper?module=Cisco-IOS-XR-policy-repository-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-qos-ma-oper?module=Cisco-IOS-XR-qos-ma-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-rgmgr-cfg?module=Cisco-IOS-XR-rgmgr-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-rgmgr-oper?module=Cisco-IOS-XR-rgmgr-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-segment-routing-ms-cfg?module=Cisco-IOS-XR-segment-routing-ms-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-segment-routing-ms-oper?module=Cisco-IOS-XR-segment-routing-ms-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg?module=Cisco-IOS-XR-shellutil-cfg&amp;amp;revision=2015-10-12&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-filesystem-oper?module=Cisco-IOS-XR-shellutil-filesystem-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-oper?module=Cisco-IOS-XR-shellutil-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-agent-cfg?module=Cisco-IOS-XR-snmp-agent-cfg&amp;amp;revision=2015-10-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-agent-oper?module=Cisco-IOS-XR-snmp-agent-oper&amp;amp;revision=2015-10-08&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-entitymib-cfg?module=Cisco-IOS-XR-snmp-entitymib-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-entstatemib-cfg?module=Cisco-IOS-XR-snmp-entstatemib-cfg&amp;amp;revision=2015-07-27&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-frucontrolmib-cfg?module=Cisco-IOS-XR-snmp-frucontrolmib-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-ifmib-cfg?module=Cisco-IOS-XR-snmp-ifmib-cfg&amp;amp;revision=2015-05-14&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-ifmib-oper?module=Cisco-IOS-XR-snmp-ifmib-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-snmp-syslogmib-cfg?module=Cisco-IOS-XR-snmp-syslogmib-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-traffmon-netflow-cfg?module=Cisco-IOS-XR-traffmon-netflow-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-management-cfg?module=Cisco-IOS-XR-tty-management-cfg&amp;amp;revision=2015-09-25&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-management-cmd-oper?module=Cisco-IOS-XR-tty-management-cmd-oper&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-management-datatypes?module=Cisco-IOS-XR-tty-management-datatypes&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-management-oper?module=Cisco-IOS-XR-tty-management-oper&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-server-cfg?module=Cisco-IOS-XR-tty-server-cfg&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-server-oper?module=Cisco-IOS-XR-tty-server-oper&amp;amp;revision=2015-07-30&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-tty-vty-cfg?module=Cisco-IOS-XR-tty-vty-cfg&amp;amp;revision=2015-01-07&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/cisco-xr-types?module=Cisco-IOS-XR-types&amp;amp;revision=2015-06-29&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/Cisco-IOS-XR-wd-cfg?module=Cisco-IOS-XR-wd-cfg&amp;amp;revision=2015-11-09&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:xml:ns:yang:ietf-inet-types?module=ietf-inet-types&amp;amp;revision=2013-07-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;urn:ietf:params:xml:ns:yang:ietf-yang-types?module=ietf-yang-types&amp;amp;revision=2013-07-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/bgp?module=bgp&amp;amp;revision=2015-05-15&amp;amp;deviation=cisco-xr-bgp-deviations&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/bgp-multiprotocol?module=bgp-multiprotocol&amp;amp;revision=2015-05-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/bgp-operational?module=bgp-operational&amp;amp;revision=2015-05-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/bgp-policy?module=bgp-policy&amp;amp;revision=2015-05-15&amp;amp;deviation=cisco-xr-bgp-policy-deviations&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/bgp-types?module=bgp-types&amp;amp;revision=2015-05-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/routing-policy?module=routing-policy&amp;amp;revision=2015-05-15&amp;amp;deviation=cisco-xr-routing-policy-deviations&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://openconfig.net/yang/policy-types?module=policy-types&amp;amp;revision=2015-05-15&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/cisco-xr-bgp-deviations?module=cisco-xr-bgp-deviations&amp;amp;revision=2015-09-16&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/cisco-xr-bgp-policy-deviations?module=cisco-xr-bgp-policy-deviations&amp;amp;revision=2015-09-16&lt;/capability&gt;</span>
+<span style="color: #2d9574;">  &lt;capability&gt;http://cisco.com/ns/yang/cisco-xr-routing-policy-deviations?module=cisco-xr-routing-policy-deviations&amp;amp;revision=2015-09-16&lt;/capability&gt;</span>
+<span style="color: #2d9574;"> &lt;/capabilities&gt;</span>
+<span style="color: #2d9574;"> &lt;session-id&gt;2506367397&lt;/session-id&gt;</span>
+<span style="color: #2d9574;">&lt;/hello&gt;</span>
+<span style="color: #2d9574;">]]&gt;]]&gt;</span>
+</pre>
+</div>
+
+<p>
+Would you look at that! 184 models. I haven't fetched the models from the box
+just yet but I recognize a few from our private build, like clns-isis for IS-IS
+config. At the end of the output you can see that Cisco has included a few
+OpenConfig models as well! They have previously announced this, both privately
+and <a href="http://blogs.cisco.com/sp/software-innovations-for-cloud-scale-networking#more-182229">publically</a>
+but it's always nice to see it actually happen, especially as I am involved in
+the OpenConfig working group, representing the interests of DT/TeraStream.
+</p>
+
+<p>
+I'll be trying this out and comparing it to our private builds but I think it's
+safe to say that Cisco has finally included enough YANG models to make it
+possible to use NETCONF &amp; YANG as the primary interface to configure and
+operate your XR box!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-xr,.html">XR,</a> <a href="tag-yang.html">YANG</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

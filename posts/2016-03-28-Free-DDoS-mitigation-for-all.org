@@ -1,0 +1,67 @@
+#+TITLE: Free DDoS mitigation for all!
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2016-03-28 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: DDoS, Snabb
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+The number of DDoS attacks and the size of those attacks are ever-increasing and poses a threat to the Internet and in extension, our society. Without in-depth knowledge or prior experience, anyone can rent a DDoS botnet for tens of dollars an hour and attack anyone they wish with enough traffic to bring down the vast majority of potential targets on the Internet.
+
+At the same time we have two movements going on; the convergence of all services to the Internet and the importance of those services in our everyday life.
+
+I'm not just talking about people using the Internet to a greater extent so that they can share pictures of their children or cats. More and more functions of our society are being handled over the Internet. You need the Internet to do your online banking, fill in tax forms or maybe we'll see an 911 style app for emergencies.
+
+Some argue that operators should separate important traffic, such as VoIP, so that it is still possible to call 112 or 911 in the event of DDoS attacks or other issues with an Internet network. I fundamentally don't believe in this approach. Technical evolution and market economy pushes operators to converge on the Internet as the single bearer of all services. Gone are the days when there was a dedicated network for telephony and another for TV. Operators are today, or will shortly be, using the same IP network to carry all those services together with Internet. There's also nothing to say that those services wouldn't be attacked just because they are moved to separate infrastructure. Compare it to IPX, which had some delusional concept of being a secure network, as if there was an evil bit. Nonsense.
+
+* Internet > *
+
+There are examples of when the Internet actually works better than classic networks, like during the recent events in Belgium when Alexander De Croo, deputy prime minister of Belgium, tweeted that standard mobile connections in Brussels were overloaded as a result of people trying to reach one another following the attacks. De Croo urged people to avoid using standard services like phone calls and text messages, saying that residents should use Facebook, WhatsApp and Twitter via Wi-Fi connections instead.
+
+The Internet is important. It's the one network over which all services will converge and it needs to work for everyone and all the time. 
+
+DDoS attacks is probably the biggest threat to the Internet. Not necessarily for the infrastructure that makes up the Internet - we've already seen plenty of really large attacks and while it might overload a couple of links here and there it is generally not the infrastructure itself that takes the biggest hit - it's the end hosts.
+
+Media focuses on the large attacks, you've all seen the 200Gbps attacks, the 300Gbps one, the 400Gbps one and so forth. What never gets much attention are the attacks towards residential customers.
+
+I never thought I'd say this but I have to give some credit to Arbor. I've met with them numerous times over my career and their sales pitch often center around that you don't know about the attacks going on in your network. I often shook this off with the rationale that if there were attacks going on that I need worry about I would see congested links in my network. Naturally there were attacks where you'd see the impact on your backbone links but what I learned after having installed my first Arbor system was that those attacks were just the tip of an iceberg. In addition to these larger attacks there are an order of magnitude, or maybe two orders, more attacks that are in the hundreds of megabit or few gigabits per second.
+
+The first time I started monitoring residential customers and seeing these attacks I was perplexed. I saw tens of attacks, if not hundreds, per day. Were they just legitimate (rather fast) downloads? Nope, analysis of the traffic showed typical DDoS patterns; fragmentation attacks, UDP amplification via NTP, SNMP, chargen, DNS or similar. Why are there so many attacks towards residential customers? And they often lasted for just a couple of minutes. After some time we realised that for many of the targets, the legitimate traffic flowing in parallel to the attack was some kind of online gaming traffic. People are using DDoS as a tool in bringing down opponents in online games. I think this comes to prove that DDoS attacks are utterly ubiquitous when it is so cheap and easy to launch one that you would do it to win an online game.
+
+So might you might think; who cares about a few gamers? People using the Internet for serious things like online banking aren't playing games. Obviously that's not true. Internet connections are often shared and the 15-year old of the household could cause mommy to not reach her bank online. Maybe she does banking with her iPhone, which has its own 4G connection and isn't depending on that fixed connection of the home? There are certainly workarounds but in the end it really doesn't matter, the Internet is important enough for it to work.
+
+There's another aspect of it as well, namely collateral damage. The way operator networks are built, a large portion of the infrastructure is shared by many customers. An attack on one customer could congest a metro network affecting thousands of other customers. Or the central nodes of a mobile network, like firewalls, CGN (ugh) or packet gateways, could be hit and affect thousands if not millions of other customers.
+
+With all of this in mind, I think the conclusion is rather obvious; Operators need to mitigate volumetric DDoS attacks for their customers and do so for free!
+
+#+BEGIN_QUOTE
+DDoS mitigation should be regarded as an integral part of delivering Internet service. Much like an e-mail service without a SPAM filter is close to unimaginable, Internet without DDoS mitigation should be unimaginable.
+#+END_QUOTE
+
+To do this, ISPs need tools and unfortunately most tools available on the market are in excess of a million dollars. I believe we need free and open source tools to empower operators to protect themselves and their customers from these attacks.
+
+This was what [[/NFV-style-DDoS-mitigation-using-Snabb-Switch/][I wanted to do back when I wrote the first proof of concept DDoS mitigation program using Snabb Switch]].
+
+With attacks happening so frequently and with such short duration it is imperative to handle them automatically both from an efficiency standpoint as well as from a cost perspective.
+
+Not all attacks are possible to deal with in an automated fashion. We usually divide DDoS attacks into one of two categories, roughly described as;
+
+ * Volumetric attacks, that are dumb but very very large in volume (thus "volumetric"). They seek to render a service unusable by congesting network links or similar. 
+ * Application layer attacks, like an HTTP flood. Often consumes the CPU resources on the target system by attacking some weakness, thereby rendering the service unusable using vastly less network resources than a volumetric attack.
+
+In practice some attacks fall in between these two categories, showing traits of both types. Just think of these as two extremes on a scale. Due to their size, volumetric attacks are usually easy to spot and their simplistic nature often make them fairly easy to filter using stateless filtering functionality in routers. This is the end of the scale that we want to target with automated mitigations.
+
+On the other end of the scale we could have an HTTP flood. For example, a dynamic web page could be attacked by finding the slowest operation, like a form submit that in turn triggers a database update. Even a moderate amount of requests for such a page could render the site unusable.
+
+The best defense against application layer attacks is simply to develop robust and secure applications. Developers must be aware of how application attacks work and build software defenses right into their applications. Since application attacks are typically small in terms of volume, there is no benefit in trying to solve them on the ISP side and thus our free DDoS mitigation system can focus exclusively on the much simpler volumetric attacks.
+
+In summary, we need a solution that:
+
+ * can mitigate volumetric attacks
+ * automatically trigger mitigations
+ * is free and open source
+ * is cheap to implement using standard x86 servers
+
+And this is why I will be spending the 7th of April, together with Lukas Garberg, at the Tele2 Hackday to test new ideas around automagic DDoS mitigation using Snabb Switch! If you have ideas or comments, [[https://twitter.com/plajjan][tweet me!]].

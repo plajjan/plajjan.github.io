@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<h1 class="title">Posts tagged "NSO,":</h1>
+<div class="post-date">25 Jul 2019</div><h1 class="post-title"><a href="2019-07-25-there-is-no-golden-configuration.html">There is no golden configuration - using Cisco NSO services for everything</a></h1>
+<div class="abstract">
+<p>
+Using services in Cisco NSO to enable management of the full life cycle of configuration.
+</p>
+
+</div>
+
+<nav id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgd3465da">1. TL;DR;</a></li>
+<li><a href="#orgd79e83c">2. Golden configuration</a></li>
+<li><a href="#org6ddb8ce">3. FASTMAP and reference counting in Cisco NSO</a></li>
+</ul>
+</div>
+</nav>
+
+<div id="outline-container-orgd3465da" class="outline-2">
+<h2 id="orgd3465da"><span class="section-number-2">1</span> TL;DR;</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Use services in Cisco NSO for everything you configure on your devices.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd79e83c" class="outline-2">
+<h2 id="orgd79e83c"><span class="section-number-2">2</span> Golden configuration</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+If you've been in the networking business for some time you'll likely be familiar with the term "golden configuration". A sort of master template for how configuration should look. It brings associations to something that is perfect - like a golden statue on a pedestal.
+</p>
+
+
+<figure>
+<img src="images/Golden_statue_on_Pont_Alexandre_III_1.jpg" alt="Golden_statue_on_Pont_Alexandre_III_1.jpg">
+
+</figure>
+
+
+
+<p>
+It is however a flawed idea. There is no such thing as a perfect configuration. Times change and so needs the configuration.
+</p>
+
+<p>
+Somewhat similarly is the concept of day 0 or day 1 (ah, an off-by-one error!?) configuration. It's the idea of a configuration you put on the device when you initially configure it. There's usually nothing defined for managing the life cycle of this "day 0" or "initial" configuration and so it becomes outdated on devices that were installed a long time ago.
+</p>
+
+<p>
+The name "day 0" has a temporal association as the name implies it is something you only do on the first day whereas in reality it is something you must configure on many days - to be precise; every day that you change that configuration! I prefer to call this "base configuration" as it removes that connotation of "configure once on first day". The device base configuration is a living thing and you must manage its life cycle.
+</p>
+
+<p>
+We have to be able to manage the life cycle of configuration, like:
+</p>
+<ul class="org-ul">
+<li>adding new leaves</li>
+<li>changing value of leaves, lists etc</li>
+<li>removing leaves, list entries etc</li>
+</ul>
+
+<p>
+For example, today we configure DNS servers:
+</p>
+<ul class="org-ul">
+<li><code>8.8.8.8</code></li>
+<li><code>1.1.1.1</code></li>
+</ul>
+
+<p>
+Tomorrow we realize we don't want neither <code>8.8.8.8</code> nor <code>1.1.1.1</code>. We want to replace those entries (in a list) with our own DNS <code>192.0.2.1</code>. Changing the golden day 0 configuration on disk is simple, we just edit the file and remove two entries and add another but we must then synchronize this change to the device in our network. We must keep track of what we have added in the past so we can send the configuration delta.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org6ddb8ce" class="outline-2">
+<h2 id="org6ddb8ce"><span class="section-number-2">3</span> FASTMAP and reference counting in Cisco NSO</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the <code>create</code> function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declarative define what the configuration should look like and the system will figure out the rest.
+</p>
+
+<p>
+In contrast, using device templates, we won't get reference counting which means that removing leaves won't happen automatically. If we have set leaf X in our golden configuration today, pushed it to a thousand devices and want to remove it tomorrow, we have to do that manually.
+</p>
+
+<p>
+There seems to be a trend to use device templates for this day 0 / golden configuration style use cases in Cisco NSO and I quite frankly don't understand why. The only reason I see for using device templates at all is because they could be easier to work with, depending on your perspective. Device templates live as part of the configuration in NSO and so it is editable from the NSO CLI. For people with a networking background, this is probably more intuitive than using services and their configuration templates as one has to edit files, create NSO packages etc. However, using Cisco NSO without using services is a complete waste of potential. Get over the hurdle and start writing services for all!
+</p>
+
+<p>
+Enable the power of FASTMAP. Use services for everything you configure on your devices.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div>
+<div class="post-date">13 Dec 2014</div><h1 class="post-title"><a href="2014-12-13-NFV-style-DDoS-mitigation-using-Snabb-Switch.html">NFV-Style DDoS mitigation using Snabb Switch</a></h1>
+<p>
+My employer arranged for a hack day last month. It meant anyone participating was free to hack on anything they wanted and at the end of the day we got to present our work during a 2 minute flash presentation to our colleagues as well as a number of students from KTH's (Royal institute of technology) computer science program.
+</p>
+
+<p>
+Together with my colleague, Johan Törnhult, we set out to build a simple DDoS mitigation application. I had previously looked at Snabb Switch and have followed the project, albeit from a distance, for quite some time. This was my chance to get acquainted with it and try out my programming skill set at Lua, a language I had never touched or even seen before.
+</p>
+
+<p>
+In its essence, Snabb Switch is a framework to offer developers or network engineers with some programming skills (like me) to build their own packet forwarding logic. Code is packaged into "apps" and multiple apps can be linked together in a graph. You can't call Snabb a router or a switch because out of the box it neither routes or switches packets. With a minimal configuration you can have it forward packets (verbatim) from one port to another but as soon as you want to do something more advanced you would need an app.
+</p>
+
+<p>
+Snabb comes with a number of apps, ranging from very small apps to replicate incoming packets over multiple outputs or read a pcap file and send over the network to more complete implementations like a VPWS app to build L2VPNs over an IP network.
+</p>
+
+<p>
+There is definitely some room for improvement as far as the documentation for Snabb goes. It's a fast moving project, still in its relatively early life, which means some documentation is out of date while most of the documentation hasn't been written yet. Mostly by reading the code of other apps and some of the existing documentation I managed to forward my first packet through Snabb.
+</p>
+
+<p>
+My intention was to implement a source host blocking mechanism that would block any host sending over a specified amount of packets or bytes per second and a few hours after my first unsteady steps I had my first working implementation. Performance was horrendous and it wouldn't recognize IPv6 packets correctly instead assuming everything to be IPv4. I did manage to find a library to apply BPF filters (the same you use to specify a filter with tcpdump) on a packet which I used to define rules. A rule has a traffic pattern to match and a pps and bps threshold. Once a source host exceeds the threshold for a rule it will be completely blocked for a certain amount of time.
+</p>
+
+<p>
+The test machine used managed to push some 300Kpps of packets and over the next day or two I managed to tweak a few things to raise performance. One really comes to understand how crucial it is for performance to keep down the amount of code executed and the amount of data copied between various places. My first change was to use a library to parse the headers of the packet, first looking at the ethertype of the Ethernet header to determine if it was an IPv4 or IPv6 packet and after that to extract the source IP address from the packet. While I achieved support for IPv4 and IPv6, this parsing library proved to be fairly slow and instead I moved to just extracting the few bits that represent the ethertype and after that got the source IP address. Extracting the address used ntop (network to presentation) to convert 4 or 16 bytes to a string representation of the IP address. Again this is slow and simply having an IPv4 address represented as a uint32_t using Lua FFI (allowing C data structures within Lua) proved to be an order of magnitude faster.
+</p>
+
+<p>
+I'm now up to around 5Mpps in real packet forwarding on a single core, when the majority of packets are being blocked. A selftest on my laptop, which is a fair bit slower than the "real" test machine, does 10Mpps which is somewhat surprising. Instead of receiving packets on a NIC, processing using my logic and sending to the next NIC (or dropping) it will read packets from a pcap file and continuously loop those packets into my app. I wouldn't have guessed the overhead surrounding handling real NICs would be that large.
+</p>
+
+<p>
+Arbor implements something very similar in their TMS and Pravail series of products, which they call "Zombie Detection". 10Gbps/5Mpps of performance is in excess of $125k from Arbor while my x86 PC with 4 cores can do twice that for just under $2500 - that's two orders of magnitude cheaper, no surprise NFV is gaining traction. I know my comparison isn't fair but it just comes to show what can be done and what the future might hold.
+</p>
+
+<p>
+You can find the code for the DDoS source blocker at <a href="https://github.com/plajjan/snabbswitch/">GitHub/plajjan/snabbswitch</a>. Reach out to me on Twitter if you want to ask me anything about it or discuss how to take it further - I would love someone to collaborate with :)
+</p>
+
+<p>
+If you are interested in writing packet forwarding logic and haven't looked at Snabb Switch yet, I recommend you to do so - it is surprisingly easy to get going with!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

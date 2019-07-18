@@ -1,0 +1,39 @@
+#+TITLE: TL;DR; reasonable NETCONF / YANG requirements - beyond the RFCs
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2017-09-29 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: NETCONF YANG
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+In the TeraStream project, we continuously evaluate NETCONF server implementations and review YANG models. This can be rather time consuming, so to save the rest of y'all some trouble, I thought I'd jot down what constitutes a reasonable NETCONF / YANG server implementation. I'll start with the TL;DR; list and continue with some motivation and further explanation.
+
+If you are a vendor, then please make sure you support this. If you're someone buying network gear, try putting this in your RFQ to save yourself from future headaches.
+
+* TL;DR; Reasonable NETCONF / YANG requirements
+
+1. Devices MUST implement NETCONF 1.1 [RFC6241] or 1.0 [RFC4741]. It is not acceptable with a partial implementation of the mandatory parts of NETCONF. At least one of the capabilities :candidate, :writable-running, or :startup MUST be implemented.
+2. The :validate capability SHOULD be implemented.
+3. If :candidate is supported, :confirmed-commit SHOULD be implemented.
+4. NETCONF over SSH [RFC6242] or [RFC4742] MUST be implemented.
+5. The With-defaults capability [RFC6243] MUST be implemented.
+6. Data model discovery and download as defined in [RFC6022] SHOULD be implemented.
+7. NETCONF Event Notifications [RFC5277] SHOULD be implemented.
+8. All data models MUST be defined in YANG [RFC6020], and the mapping to NETCONF MUST follow the rules defined in this RFC.
+9. The data model upgrade rules defined in [RFC6020] section 10 MUST be followed.
+10. There MUST NOT be any ordering dependencies for NETCONF edit-config operations. For example, it should be possible to write a configuration where an ACL is configured on an interface before the definition of the ACL itself. That is, the device needs to recognize that it needs to reorder this and create the ACL before it attaches it to an interface. The same is true for additions, deletions as well as modifications of configuration.
+11. Values should be returned by get and get-config the exact same way as they were written with the exception of hashed passwords.
+12. Obfuscated passwords are NOT hashed, for example Cisco type 7 or JUNOS 9 type passwords are encrypted by the device using a well known key. This MUST NOT happen. Such value should be set in clear text and returned by get & get-config in clear text.
+    
+
+* What
+I'll dig into motivating the requirements later on but more importantly is the
+reason for these requirement. What is the goal we are trying to reach?
+
+ 
+
+NETCONF is a rather old protocol by now. It was written in a time when the two
+large network operating systems were IOS and JUNOS, which is why the concepts of
+a running and startup config exists in NETCONF. Most modern 

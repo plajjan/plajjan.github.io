@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<h1 class="title">Posts tagged "TeraStream,":</h1>
+<div class="post-date">15 Mar 2017</div><h1 class="post-title"><a href="2017-03-15-interoperable-100G-dwdm-equipment.html">Interoperable 100G DWDM equipment</a></h1>
+
+<div id="outline-container-org3175a11" class="outline-2">
+<h2 id="org3175a11"><span class="section-number-2">1</span> Interoperable coherent 100G DWDM</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This is a non-comprehensive list of interoperable coherent 100G DWDM equipment.
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Vendor</th>
+<th scope="col" class="org-left">Model</th>
+<th scope="col" class="org-left">Description</th>
+<th scope="col" class="org-left">Tested</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Juniper</td>
+<td class="org-left">MIC3-100G-DWDM</td>
+<td class="org-left">1x100GE IPoDWDM line card for MX</td>
+<td class="org-left">TS</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="outline-container-org2916556" class="outline-2">
+<h2 id="org2916556"><span class="section-number-2">2</span> Coherent 100G DWDM without interop</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+This is a non-comprehensive list of equipment that supports coherent 100G DWDM but does <b><b>NOT</b></b> support standardised FEC and mapping:
+</p>
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+
+<col  class="org-left">
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Vendor</th>
+<th scope="col" class="org-left">Model</th>
+<th scope="col" class="org-left">Description</th>
+<th scope="col" class="org-left">Tested</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Juniper</td>
+<td class="org-left">P1-PTX-2-100G-WDM</td>
+<td class="org-left">2x100G IPoDWDM module for PTX</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Juniper</td>
+<td class="org-left">PTX-5-100G-WDM</td>
+<td class="org-left">5x100G IPoDWDM module for PTX</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div>
+<div class="post-date">23 Sep 2016</div><h1 class="post-title"><a href="2016-09-23-pictures-from-100G-dwdm-interop-lab.html">Pictures from the 100G DWDM interop lab</a></h1>
+<p>
+These are some pictures from the coherent 100G DWDM interoperability tests performed in the TeraStream lab. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///100G-dwdm-configuration">router configuration</a>.
+</p>
+
+<div id="outline-container-orgd0b96af" class="outline-2">
+<h2 id="orgd0b96af"><span class="section-number-2">1</span> 1500km fiber test path</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+All tests have been completed over a DWDM system in our lab. It can be slightly reconfigured but have been at least 1500km in all the tests.
+</p>
+
+<p>
+The logical topology of our 1600km fiber path <img src="images/terastream-lab-1600km-fiber-link-topology.jpg" alt="terastream-lab-1600km-fiber-link-topology.jpg">
+</p>
+
+<p>
+It's amplified with these EDFAs every 80km:
+<img src="images/terastream-lab-1600km-fiber-link-dwdm-amps.jpg" alt="terastream-lab-1600km-fiber-link-dwdm-amps.jpg">
+</p>
+
+<p>
+No RAMANs! Here's the whole amp rack:
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-dwdm-rack.jpg" alt="terastream-lab-1600km-fiber-link-dwdm-rack.jpg" width="880px">
+
+</figure>
+
+<p>
+The 1600km of fiber rolls
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-fiber-rack.jpg" alt="terastream-lab-1600km-fiber-link-fiber-rack.jpg" width="880px">
+
+</figure>
+
+<p>
+In a previous, slightly less carrier-grade, incarnation:
+</p>
+
+<figure>
+<img src="images/terastream-lab-1600km-fiber-link-old-dwdm-fiber.jpg" alt="terastream-lab-1600km-fiber-link-old-dwdm-fiber.jpg" width="880px">
+
+</figure>
+</div>
+</div>
+
+
+<div id="outline-container-org5d3e6aa" class="outline-2">
+<h2 id="org5d3e6aa"><span class="section-number-2">2</span> Router DWDM linecards</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org074f610" class="outline-3">
+<h3 id="org074f610"><span class="section-number-3">2.1</span> Juniper</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+The first Juniper implementation was a pure beta build with the optical parts in a separate chassis and grey 100G-SR10 link back to the MX960. It looks more like a transponder but management happened exclusively from the router and the components could later simply be integrated on a linecard instead of in a separate chassis. I believe four of these were built all in all of which <del>two</del> three (one broke, so we got a replacement) ended up with us.
+<img src="images/terastream-lab-juniper-100G-beta-box.jpg" alt="terastream-lab-juniper-100G-beta-box.jpg">
+</p>
+
+<p>
+Juniper have since released a proper linecard. It's a single port 100G card and instead of utilizing a CFP they have shrunk it down to a CFP2. Specifically CFP2-ACO which means it's analog and all the DSP magic is happening on the linecard unlike the earlier CFP which had pretty beefy DSPs of its own.
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-juniper-1port-dwdm.jpg" alt="terastream-lab-juniper-1port-dwdm.jpg">
+
+</figure>
+
+<p>
+We still have one of the first generation "transponders" from Juniper in use as part of a PNI (private peering link) with NorduNet (AS2603). NorduNet is running Juniper routers and they have it connected to their router in Hamburg which is then linked over a piece of metro dark fibre to a TeraStream Nokia 7750 router.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8a114da" class="outline-3">
+<h3 id="org8a114da"><span class="section-number-3">2.2</span> Nokia</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Nokia, previously Alcatel-Lucent (previously TiMetra), were one of the early partners behind the 100G DWDM standard and were also early with putting together a line card for their 7750 router:
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-alu-dwdm-frontplate.jpg" alt="terastream-lab-alu-dwdm-frontplate.jpg">
+
+</figure>
+
+<p>
+They are now also rolling new 2-port cards for the 7950, which we're about to
+install. Here's me with one of those cards:
+</p>
+
+
+<figure>
+<img src="images/me-holding-nokia-100G-linecard.png" alt="me-holding-nokia-100G-linecard.png">
+
+</figure>
+
+<p>
+And installed in router (the one on the left - the right one is for grey optics):
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-nokia-7950-dwdm.jpg" alt="terastream-lab-nokia-7950-dwdm.jpg">
+
+</figure>
+</div>
+</div>
+
+<div id="outline-container-orgcae626e" class="outline-3">
+<h3 id="orgcae626e"><span class="section-number-3">2.3</span> Cisco</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Cisco has a couple of different generations. Here's one of the first for the ASR9000 router, which has since been discontinued:
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-cisco-dwdm-linecards.jpg" alt="terastream-lab-cisco-dwdm-linecards.jpg">
+
+</figure>
+
+<p>
+There is also a transponder for the ONS15454 that integrates with the router, much like the Juniper solution, so the DWDM configuration can be managed by the router but the optical components are situated in a ONS15454 chassis. I don't currently have a picture of this however.
+</p>
+
+<p>
+Laserbeak is Cisco's latest addition to the family of 100G cards that support <i>the standard</i>, here in the middle (also with 20x10GE ports);
+</p>
+
+
+<figure>
+<img src="images/terastream-lab-cisco-laserbeak.jpg" alt="terastream-lab-cisco-laserbeak.jpg">
+
+</figure>
+
+<p>
+The Laserbeak card also uses the more modern CFP2-ACO optical modules.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3bab0a5" class="outline-3">
+<h3 id="org3bab0a5"><span class="section-number-3">2.4</span> Huawei</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+Last but not least we have stack of Huawei routers. The 2-port card in the first two slots is the 100G card:
+<img src="images/terastream-lab-huawei-ne40e_1.jpg" alt="terastream-lab-huawei-ne40e_1.jpg">
+</p>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div>
+<div class="post-date">23 Sep 2016</div><h1 class="post-title"><a href="2016-09-23-100G-dwdm-configuration.html">Configure your 100G DWDM linecard for interop!</a></h1>
+<p>
+This is how you configure your shiny new 100G router port for interoperability according to <a href="file:///assets/docs/standards/100G-long-haul.pdf"><i>the standard</i></a>. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///pictures-from-100G-dwdm-interop-lab">pretty pictures from our 100G interop lab</a>.
+</p>
+
+<p>
+The interface number is naturally an example and you need to fill in yours. The same is true for channel / frequency / wavelength and output power. I have however shown a configuration here that is the equivalent for each platform, i.e. we use a frequency if 193.4THz, which is channel 34 on Nokia, channel 54 on Huawei and wavelength 1550.12nm on Juniper. Output power is -10dBm but this is expressed in different ways, some platforms use dBm while other work in units of 0.1 dBm which means that -10dBm is equivalent to a value of -100.
+</p>
+
+<div id="outline-container-orgb5c536d" class="outline-2">
+<h2 id="orgb5c536d"><span class="section-number-2">1</span> Cisco</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Cisco IOS XR configuration for the ASR9k. Already XML formatted so you can punt
+it over the NETCONF interface and have your router configured!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">interface-configurations</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">interface-configuration</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">active</span>&gt;act&lt;/<span style="color: #bc6ec5; font-weight: bold;">active</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">interface-name</span>&gt;dwdm0/1/0/20/0&lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-name</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">dwdm</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://cisco.com/ns/yang/Cisco-IOS-XR-dwdm-ui-cfg"</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">g709</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                    &lt;<span style="color: #bc6ec5; font-weight: bold;">fec-mode</span>&gt;high-gain-multivendor-hd&lt;/<span style="color: #bc6ec5; font-weight: bold;">fec-mode</span>&gt;
+                &lt;/<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">enable</span>&gt;true&lt;/<span style="color: #bc6ec5; font-weight: bold;">enable</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">g709</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wave-channel</span>&gt;19340&lt;/<span style="color: #bc6ec5; font-weight: bold;">wave-channel</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wave-channel-number</span>&gt;channel-frequency&lt;/<span style="color: #bc6ec5; font-weight: bold;">wave-channel-number</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">transport-admin-state</span>&gt;in-service-config-allowed&lt;/<span style="color: #bc6ec5; font-weight: bold;">transport-admin-state</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">transmit-power</span>&gt;-100&lt;/<span style="color: #bc6ec5; font-weight: bold;">transmit-power</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">dwdm</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-configuration</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">interface-configurations</span>&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga5bb261" class="outline-2">
+<h2 id="orga5bb261"><span class="section-number-2">2</span> Huawei</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+CLI conf for Huawei since their NETCONF interface is currently an abomination.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">controller Wdm 1/0/0
+ fec enhanced
+#
+interface 100GE 1/0/0
+ optical-tx-power target -100
+ wavelength-channel 54
+#
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7132c4c" class="outline-2">
+<h2 id="org7132c4c"><span class="section-number-2">3</span> Juniper</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can send over a NETCONF interface!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #bc6ec5; font-weight: bold;">configuration</span> <span style="color: #4f97d7;">xmlns</span>=<span style="color: #2d9574;">"http://xml.juniper.net/xnm/1.1/xnm"</span>&gt;
+    &lt;<span style="color: #bc6ec5; font-weight: bold;">interfaces</span>&gt;
+        &lt;<span style="color: #bc6ec5; font-weight: bold;">interface</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;et-10/0/0&lt;/<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">optics-options</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;1550.12&lt;/<span style="color: #bc6ec5; font-weight: bold;">wavelength</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">tx-power</span>&gt;-10&lt;/<span style="color: #bc6ec5; font-weight: bold;">tx-power</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">optics-options</span>&gt;
+            &lt;<span style="color: #bc6ec5; font-weight: bold;">otn-options</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">laser-enable</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;hgfec&lt;/<span style="color: #bc6ec5; font-weight: bold;">fec</span>&gt;
+                &lt;<span style="color: #bc6ec5; font-weight: bold;">rate</span>&gt;otu4&lt;/<span style="color: #bc6ec5; font-weight: bold;">rate</span>&gt;
+            &lt;/<span style="color: #bc6ec5; font-weight: bold;">otn-options</span>&gt;
+        &lt;/<span style="color: #bc6ec5; font-weight: bold;">interface</span>&gt;
+    &lt;/<span style="color: #bc6ec5; font-weight: bold;">interfaces</span>&gt;
+&lt;/<span style="color: #bc6ec5; font-weight: bold;">configuration</span>&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3d72c05" class="outline-2">
+<h2 id="org3d72c05"><span class="section-number-2">4</span> Nokia</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Here's how to configure a port on Nokia SROS. "interop2" is the magic name for the interoperable FEC and bit mapping:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">port 1/2/3
+    otu
+    dwdm
+        channel 34
+        coherent
+            channel 34
+            compatibility interop2
+            target-power -10
+</pre>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div>
+<div class="post-date">22 Sep 2016</div><h1 class="post-title"><a href="2016-09-22-interoperable-100G.html">Let there be light - interoperable 100G DWDM</a></h1>
+<p>
+This is the story of interoperable 100G DWDM - what we have accomplished and how
+we got here.
+</p>
+
+<p>
+During the summer of 2016 we, in the TeraStream team, performed a successful
+test of coherent 100G DWDM linecards between routers from Juniper and Huawei. It
+was the last of a long series of tests and with it, we have now verified
+interoperability of coherent 100G DWDM interfaces between all of the four major
+router vendors; Cisco, Huawei, Juniper and Nokia.
+</p>
+
+<p>
+The standardisation work laid down by the IEEE and ITU-T have long ensured
+interoperability in the networking industry, both for Ethernet (IEEE) and
+various SDH (ITU-T) interfaces. However, in the land of opto all has been
+dark&#x2026; since the inception of WDM networks, we have seen transponders with
+proprietary technology making vendors equipment incompatible with each others.
+Sometimes different ASIC generations even result in products from the same
+vendor being incompatible.
+</p>
+
+<p>
+Those days are now over. Cisco, Huawei, Juniper and Nokia now all produce line
+cards for their routers that follow the same standard for how to do long-haul
+coherent 100G DWDM.
+</p>
+
+<p>
+<i>You can skip directly to the <a href="file:///pictures-from-100G-dwdm-interop-lab">pretty pictures from our lab</a> or look at how to <a href="file:///100G-dwdm-configuration">configure your router interfaces for interop</a>!</i>
+</p>
+
+<div id="outline-container-org6fb740a" class="outline-2">
+<h2 id="org6fb740a"><span class="section-number-2">1</span> A word on optical line level codings</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+DP-QPSK is the (de-facto) standard for coherent 100G DWDM. All was fun and games in the days of 10G as OOK (On-Off Keying) was both cheap and good enough for long haul optics.
+</p>
+
+<p>
+The first generation of 40G DWDM equipment was largely based on 10G technology put into overdrive. Needless to say it didn't work very well. Following this we saw a number of encoding technologies pop up with each vendor pushing their own agenda. This didn't just lead to non-interoperable products but it also resulted in sky-high prices as everyone needed their own specialised components. Among the solutions there were some vendors pushing for coherent detection but as 40G was pushing technological boundaries on a 4x10G budget, this never really took off. Too little, too late and at too high a price.
+</p>
+
+<p>
+With 100G people had learnt the lesson. Coherent was the natural choice and by standardizing on a few things, like 25G lasers and gearboxes, vendors realised they would have much greater volumes and thus much lower component prices. Said and done, the Optical Internetworking Forum (OIF) declared that DP-QPSK would rule the world of 100G DWDM.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1956546" class="outline-2">
+<h2 id="org1956546"><span class="section-number-2">2</span> The FEC and mapping mess</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Unfortunately, using a few standardised components doesn't lead to interoperability. Here's a diagram of a coherent 100G DWDM CFP module. It's a slightly silly diagram as it shows the signal being transmitted an received by the same module but it illustrates the components both on the transmit and receive side.
+</p>
+
+<p>
+<a href="file:///images/coherent-dwdm-cfp-components.png">Coherent DWDM CFP components</a>
+</p>
+
+<p>
+The parts in green are standardised while red highlights proprietary components. Forward Error Correction (FEC), framing and bit mapping is performed by one or more DSPs, either located in the optical module or on the linecard and these are the areas where most proprietary algorithms take place. To achieve interoperability these algorithms needed to be defined!
+</p>
+
+<p>
+Enter <a href="file:///assets/docs/standards/100G-long-haul.pdf"><i>the standard</i></a>, which describes exactly those items.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc5c5c39" class="outline-2">
+<h2 id="orgc5c5c39"><span class="section-number-2">3</span> Hard Decision "Staircase" Forward Error Correction</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<i>The standard</i> describes a strong hard decision FEC algorithm, known as "Staircase FEC", designed by Cortina Networks (now part of Inphi).
+</p>
+
+<p>
+Cortina has submitted this FEC as a proposal for standardization into ITU-T for OTU4 and beyond 100G multi vendor activity. Furthermore, Cortina intends to propose a license and royalty free fee model for use by component vendors, system manufacturers, and service providers.
+</p>
+
+<p>
+There are other standardised FEC algorithms, most notably the Reed-Solomon 255,239 described in G.709 by ITU-T. While this FEC has seen widespread deployment on 10G and could potentially be used at 100G, it does not perform as well as the Cortina Staircase FEC, which would lead to a shorter reach.
+</p>
+
+<p>
+The Staircase FEC has the same 7% (actually 6.7%) overhead as RS(255,239) but achieves a higher net coding gain (NCG) of &gt;9.4dB compared to roughly 6dB of RS(255,239).
+</p>
+
+<p>
+It's a hard decision FEC which means it works with simple Analog-Digital Converters (ADCs) whereas a soft decision FECs requires multi-bit output from the ADC and much more processing power in the FEC DSP. Simple means less transistors which in turn translates to lower power consumption and higher production yields, thus lowering cost.
+</p>
+
+<p>
+Only 20µs of latency is introduced by the Staircase FEC and it has a very low error floor at 1e-22 leading to a practical reach in excess of 1500km.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org232978c" class="outline-2">
+<h2 id="org232978c"><span class="section-number-2">4</span> Standardised framing and bit mapping</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+A FEC operates on block of bits and does not really need to understand the meaning of those bits, which is where the framing part comes in, in this case a standard G.709 OTU4 framing. The framing defines the start and end of our payload and includes various "overhead bits" which can be used to signal defects.
+</p>
+
+<p>
+The mapping of the Staircase FEC's block of bits to G.709 OTUk frames is also defined through this standard. Through clever interleaving of bit "rows" the efficiency of the FEC is further improved by reducing the effects of "swaths of errored bits".
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org9d608f0" class="outline-2">
+<h2 id="org9d608f0"><span class="section-number-2">5</span> TeraStream and 100G DWDM</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Interoperable coherent 100G DWDM has been a corner stone of the TeraStream design and a requirement, based on this standard, to the vendors from day one.
+</p>
+
+<p>
+Deutsche Telekom, together with the vendors, have invested considerable resources over a number of years, in the standardisation and verification of this technology and it is with joy that we can say that our work has finally paid off.
+</p>
+
+<blockquote>
+<p>
+Through these last tests, performed during the summer of 2016, interoperability of coherent 100G DWDM between all four major router vendors has finally been achieved.
+</p>
+</blockquote>
+
+<p>
+It's been an arduous task with various technical issues delaying the process. For example, clock drift due to failure to read the sync signal from the correct end, leading to alignment errors, required modification to an optical module. That modification lead to a chip respin. Respins are on the order of half a year so even the most miniscule of differences can lead to considerable delays.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org89b22b9" class="outline-2">
+<h2 id="org89b22b9"><span class="section-number-2">6</span> Now what?</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+<b>So now we have interoperable 100G DWDM, now what? What do we do with it?</b>
+</p>
+
+<p>
+Having interoperable 100G DWDM is immensely useful. We have deployed 100G DWDM interfaces across the entire footprint of the TeraStream pilot networks, which includes Croatia and Germany, to enable a multi-vendor network without external DWDM components.
+</p>
+
+<p>
+Here's a diagram of the logical toplogy, with a rough correlation to physical fiber paths, used by the TeraStrem pilot in Germany which is carrying these standard 100G DWDM signals.
+</p>
+
+<p>
+<a href="file:///images/terastream-de-pilot-topology-2016.jpg">TeraStream DE pilot topology 2016</a>
+</p>
+
+<p>
+Synchronising the technology used within a network is difficult. Doing it between multiple networks, owned by different organisations, is close to impossible, which is why interoperable 100G DWDM is such a big deal. We can now use this technology to interconnect with external networks, for example to peering partners, at 100G. You can see a 100G DWDM peering connection in Hamburg where we meet NorduNet (AS2603). NorduNet has a Juniper MX router and there's a Nokia router on the TeraStream side.
+</p>
+
+<p>
+Deutsche Telekom is also part of the Telecom Infrastructure Project (TIP) initiated by Facebook and the standard 100G DWDM is now part of one of the working groups within TIP.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org1998ced" class="outline-2">
+<h2 id="org1998ced"><span class="section-number-2">7</span> 100G peering</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+The vast majority of peering links today are at 10G speed and using grey optics. Upgrading to 100G to meet increasing bandwidth demands presents challenges on the optical layer. While 10G is available as LR (10km), ER (40km) and ZR (80km), the selection of grey 100G optics is much more limited.
+</p>
+
+<p>
+With a standard 100G DWDM interface we can now switch to using DWDM for peering interconnects. The reach, even unamplified, of these 100G DWDM links is much better than grey optics, partly due to better lasers and receivers but also thanks to FEC.
+</p>
+
+<p>
+Another benefit of always having a FEC is early failure detection. With grey optics we can be dangerously close to the margin of what the receiver can detect yet have no packet loss.  Wiggling the connector or natural aging of the components can then introduce packet loss. With FEC, we know the pre-FEC BER, how many corrections we are making per second and how close to the limit of the FEC we are operating. This enables us to detect early on when we are approaching the limit and act proactively instead of reactively. In practice, it means we notify the routing system (IS-IS / BGP) of impending link failure and we can reroute traffic <b><b>before</b></b> we actually drop any packets.
+</p>
+
+<p>
+TeraStream is using 100G DWDM on peering links to external partners - a feat that would be practically impossible was it not for a standardised interface. Other use cases include data center interconnects, mobile backhaul, metro distribution and so forth. Anywhere you can deploy 100G you can use interop 100G DWDM.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org8388a14" class="outline-2">
+<h2 id="org8388a14"><span class="section-number-2">8</span> Are you ready?</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+Make sure you <b>never buy</b> a 100G linecard that <b>does not</b> support interoperability!
+</p>
+
+<p>
+What use case will you find for a standard 100G DWDM interface? While you ponder that, the TeraStream team will continue to push the limits for a harder, better, faster and stronger Internet.
+</p>
+
+<p>
+We have some pretty <a href="file:///pictures-from-100G-dwdm-interop-lab">pictures from our lab</a> and you can look at the <a href="file:///100G-dwdm-configuration">router configuration</a> of how to configure your line cards for interop.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

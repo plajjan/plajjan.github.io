@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status"><div class="header">
+  <a href="/">Network Automation ramblings by Kristian Larsson</a>
+</div></div>
+<div id="content">
+<h1 class="title">Posts tagged "git":</h1>
+<div class="post-date">29 Jun 2017</div><h1 class="post-title"><a href="2017-06-29-automating-git.html">GitBot - automating boring git operations with CI</a></h1>
+<p>
+Git is super useful for anyone doing a bit of development work or just trying to keep track of a bunch of text files. However as your project grows you might find yourself doing lots of boring repetitive work just around git itself. At least that's what happened to me and so I automated boring git stuff using our CI system.
+</p>
+
+<p>
+There are probably all sorts of use cases for automating various git operations but I'll talk about a few that I've encountered. We're using GitLab and GitLab CI so that's what my examples will include but most of the concepts should apply to other systems as well.
+</p>
+
+
+<div id="outline-container-orga637af3" class="outline-2">
+<h2 id="orga637af3"><span class="section-number-2">1</span> Automatic rebase</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We have some git repos with code that we receive from vendors, who we can think of as our <code>upstream</code>. We don't actually share a git repo with the vendor but rather we get a tar ball every now and then. The tar ball is extracted into a git repository, on the <code>master</code> branch which thus tracks the software as it is received from upstream. In a perfect world the software we receive would be feature complete and bug free and so we would be done, but that's usually not the case. We do find bugs and if they are blocking we might decide to implement a patch to fix them ourselves. The same is true for new features where we might not want to wait for the vendor to implement it.
+</p>
+
+<p>
+The result is that we have some local patches to apply. We commit such patches to a separate branch, commonly named <code>ts</code> (for TeraStream), to keep them separate from the official software. Whenever a new software version is released, we extract its content to <code>master</code> and then rebase our <code>ts</code> branch onto <code>master</code> so we get all the new official features together with our patches. Once we've implemented something we usually send it upstream to the vendor for inclusion. Sometimes they include our patches verbatim so that the next version of the code will include our exact patch, in which case a rebase will simply skip our patch. Other times there are slight or major (it might be a completely different design) changes to the patch and then someone typically needs to sort out the patches manually. Mostly though, rebasing works just fine and we don't end up with conflicts.
+</p>
+
+<p>
+Now, this whole rebasing process gets a tad boring and repetitive after a while, especially considering we have a dozen of repositories with the setup described above. What I recently did was to automate this using our CI system.
+</p>
+
+<p>
+The workflow thus looks like:
+</p>
+<ul class="org-ul">
+<li>human extracts zip file, git add + git commit on <code>master</code> + git push</li>
+<li>CI runs for <code>master</code> branch
+<ul class="org-ul">
+<li>clones a copy of itself into a new working directory</li>
+<li>checks out <code>ts</code> branch (the one with our patches) in working directory</li>
+<li>rebases <code>ts</code> onto <code>master</code></li>
+<li>push <code>ts</code> back to <code>origin</code></li>
+</ul></li>
+<li>this will now trigger a CI build for the <code>ts</code> branch</li>
+<li>when CI runs for the <code>ts</code> branch, it will compile, test and save the binary
+output as "build artifacts", which can be included in other repositories</li>
+<li>GitLab CI, which is what we use, has a CI_PIPELINE_ID that we use to version
+built container images or artifacts</li>
+</ul>
+
+<p>
+To do this, all you need is a few lines in a .gitlab-ci.yml file, essentially;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">stages</span>:
+  - build
+  - git-robot
+
+<span style="color: #2aa1ae; background-color: #292e34;">...</span> build jobs ...
+
+<span style="color: #7590db;">git-rebase-ts</span>:
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - master
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+  <span style="color: #7590db;">before_script</span>:
+    - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+    - eval $(ssh-agent -s)
+    - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+    - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+    - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+    - mkdir -p ~/.ssh
+    - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+  <span style="color: #7590db;">script</span>:
+    - git clone git@gitlab.dev.terastrm.net:${CI_PROJECT_PATH}.git
+    - cd ${CI_PROJECT_NAME}
+    - git checkout ts
+    - git rebase master
+    - git push --force origin ts
+</pre>
+</div>
+
+<p>
+We'll go through it a few lines at a time. Some basic knowledge about GitLab CI is assumed.
+</p>
+
+<p>
+This first part lists the stages of our pipeline.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">stages</span>:
+  - build
+  - git-robot
+</pre>
+</div>
+
+<p>
+We have two stages, first the <code>build</code> stage, which does whatever you want it to do (ours compiles stuff, runs a few unit tests and packages it all up), then the git-robot stage which is where we perform the rebase.
+</p>
+
+<p>
+Then there's:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">git-rebase-ts</span>:
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - master
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+</pre>
+</div>
+
+<p>
+We define the stage in which we run followed by the <code>only</code> statement which limits CI jobs to run only on the specified branch(es), in this case <code>master</code>.
+</p>
+
+<p>
+<code>allow_failure</code> simply allows the CI job to fail but still passing the pipeline.
+</p>
+
+<p>
+Since we are going to clone a copy of ourselves (the repository checked out in CI) we need SSH and SSH keys setup. We'll use ssh-agent with a password-less key to authenticate. Generate a key using ssh-keygen, for example:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">ssh-keygen 
+
+kll@machine ~ $ ssh-keygen -f foo
+Generating public/private rsa key pair.
+Enter passphrase <span style="color: #4f97d7;">(</span>empty for no passphrase<span style="color: #4f97d7;">)</span>:
+Enter same passphrase again:
+Your identification has been saved<span style="color: #4f97d7; font-weight: bold;"> in</span> foo.
+Your public key has been saved<span style="color: #4f97d7; font-weight: bold;"> in</span> foo.pub.
+The key fingerprint is:
+SHA256:6s15MZJ1/kUsDU/PF2WwRGA963m6ZSwHvEJJdsRzmaA kll@machine
+The key<span style="color: #2d9574;">'s randomart image is:</span>
+<span style="color: #2d9574;">+---[RSA 2048]----+</span>
+<span style="color: #2d9574;">|            o**.*|</span>
+<span style="color: #2d9574;">|           ..o**o|</span>
+<span style="color: #2d9574;">|           Eo o%o|</span>
+<span style="color: #2d9574;">|          .o.+o O|</span>
+<span style="color: #2d9574;">|        So oo.o+.|</span>
+<span style="color: #2d9574;">|       .o o.. o+o|</span>
+<span style="color: #2d9574;">|      .  . o..o+=|</span>
+<span style="color: #2d9574;">|     . o ..  .o= |</span>
+<span style="color: #2d9574;">|      . +.    .. |</span>
+<span style="color: #2d9574;">+----[SHA256]-----+</span>
+<span style="color: #2d9574;">kll@machine ~ $</span>
+</pre>
+</div>
+
+<p>
+Add the public key as a deploy key under Project Settings -&gt; Repository -&gt; Deploy Keys. Make sure you enable write access or you won't be able to have your git robot push commits. We then need to hand over the private key so that it can be accessed from within the CI job. We'll use a secret environment variable for that, which you can define under Project Settings -&gt; Pipelines -&gt; Environment variables). I'll use the environment variable <code>GIT_SSH_PRIV_KEY</code> for this.
+</p>
+
+<p>
+Next part is the before_script:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">before_script</span>:
+  - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+  - eval $(ssh-agent -s)
+  - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+  - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+  - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+  - mkdir -p ~/.ssh
+  - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+</pre>
+</div>
+
+<p>
+First ssh-agent is installed if it isn't already. We then start up ssh-agent and add the key stored in the environment variable <code>GIT_SSH_PRIV_KEY</code> (which we setup previously). The git user information is set and we finally create .ssh and add the known host information about our GitLab server to our known_hosts file. You can generate the <code>gitlab-known-hosts</code> file using the following command:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">ssh-keyscan my-gitlab-machine &gt;&gt; gitlab-known-hosts
+</pre>
+</div>
+
+<p>
+As the name implies the before_script is run before the main <code>script</code> part and the ssh-agent we started in the before_script will also continue to run for the duration of the job. The ssh-agent information is stored in some environment variables which are carried across from the before_script into the main script, enabling it to work. It's also possible to put this SSH setup in the main script, I just thought it looked cleaner splitting it up between before_script and script. Note however that it appears that after_script behaves differently so while it's possible to pass environment vars from before_script to script, they do not appear to be passed to after_script. Thus, if you want to do git magic in the after_script you also need to perform the SSH setup in the after_script.
+</p>
+
+<p>
+This brings us to the main script. In GitLab CI we already have a checked out clone of our project but that was automatically checked out by the CI system through the use of magic (it actually happens in a container previous to the one we are operating in, that has some special credentials) so we can't really use it, besides, checking out other branches and stuff would be really weird as it disrupts the code we are using to do this, since that's available in the git repository that's checked out. It's all rather meta.
+</p>
+
+<p>
+Anyway, we'll be checking out a new git repository where we'll do our work, then change the current directory to the newly checked out repository after which we'll check out the <code>ts</code> branch, do the rebase and push it back to the origin remote.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml">- git clone git@gitlab.dev.terastrm.net:${CI_PROJECT_PATH}.git
+- cd ${CI_PROJECT_NAME}
+- git checkout ts
+- git rebase master
+- git push --force origin ts
+</pre>
+</div>
+
+<p>
+&#x2026; and that's it. We've now automated the rebasing of a branch. Occasionally it will fail due to problems rebasing (most commonly merge conflicts) but then you can just step in and do the above steps manually and be interactively prompted on how to handle conflicts.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org8f887d7" class="outline-2">
+<h2 id="org8f887d7"><span class="section-number-2">2</span> Automatic merge requests</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+All the repositories I mentioned in the previous section are NEDs, a form of driver for how to communicate with a certain type of device, for Cisco NSO (a network orchestration system). We package up Cisco NSO, together with these NEDs and our own service code, in a container image. The build of that image is performed in CI and we use a repository called <code>nso-ts</code> to control that work.
+</p>
+
+<p>
+The NEDs are compiled in CI from their own repository and the binaries are saved as build artifacts. Those artifacts can then be pulled in the CI build of <code>nso-ts</code>. The reference to which artifact to include is the name of the NED as well as the build version. The version number of the NED is nothing more than the pipeline id (which you'll access in CI as <code>${CI_PIPELINE_ID}</code>) and by including a specific version of the NED, rather than just use "latest" we gain a much more consistent and reproducible build.
+</p>
+
+<p>
+Whenever a NED is updated a new build is run that produces new binary artifacts. We probably want to use the new version but not before we test it out in CI. The actual versions of NEDs to use is stored in a file in the <code>nso-ts</code> repository and follows a simple format, like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text">ned-iosxr-yang=1234
+ned-junos-yang=4567
+...
+</pre>
+</div>
+
+<p>
+Thus, updating the version to use is a simple job to just rewrite this text file and replace the version number with a given CI_PIPELINE_ID version number. Again, while NED updates are more seldom than updates to <code>nso-ts</code>, they do occur and handling it is bloody boring. Enter automation!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yaml"><span style="color: #7590db;">git-open-mr</span>:
+  <span style="color: #7590db;">image</span>: gitlab.dev.terastrm.net:4567/terastream/cisco-nso/ci-cisco-nso:4.2.3
+  <span style="color: #7590db;">stage</span>: git-robot
+  <span style="color: #7590db;">only</span>:
+    - ts
+  <span style="color: #7590db;">tags</span>:
+    - no-docker
+  <span style="color: #7590db;">allow_failure</span>: <span style="color: #a45bad;">true</span>
+  <span style="color: #7590db;">before_script</span>:
+    - <span style="color: #2d9574;">'which ssh-agent || ( apt-get update -y &amp;&amp; apt-get install openssh-client -y )'</span>
+    - eval $(ssh-agent -s)
+    - ssh-add &lt;(echo <span style="color: #2d9574;">"$GIT_SSH_PRIV_KEY"</span>)
+    - git config --global user.email <span style="color: #2d9574;">"kll@dev.terastrm.net"</span>
+    - git config --global user.name <span style="color: #2d9574;">"Mr. Robot"</span>
+    - mkdir -p ~/.ssh
+    - cat gitlab-known-hosts &gt;&gt; ~/.ssh/known_hosts
+  <span style="color: #7590db;">script</span>:
+    - git clone git@gitlab.dev.terastrm.net:TeraStream/nso-ts.git
+    - cd nso-ts
+    - git checkout -b robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID}
+    - for LIST_FILE in $(ls ../ned-package-list.* | xargs -n1 basename); do NED_BUILD=$(cat ../${LIST_FILE}); sed -i packages/${LIST_FILE} -e <span style="color: #2d9574;">"s/^${CI_PROJECT_NAME}.*/${CI_PROJECT_NAME}=${NED_BUILD}/"</span>; done
+    - git diff
+    - git commit -a -m <span style="color: #2d9574;">"Use ${CI_PROJECT_NAME} artifacts from pipeline ${CI_PIPELINE_ID}"</span>
+    - git push origin robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID}
+    - HOST=${CI_PROJECT_URL} CI_COMMIT_REF_NAME=robot-update-${CI_PROJECT_NAME}-${CI_PIPELINE_ID} CI_PROJECT_NAME=TeraStream/nso-ts GITLAB_USER_ID=${GITLAB_USER_ID} PRIVATE_TOKEN=${PRIVATE_TOKEN} ../open-mr.sh
+</pre>
+</div>
+
+<p>
+So this time around we check out a git repository into a separate working directory again, it's just that it's not the same git repository as we are running on simply because we are trying to do changes to a repository that is using the output of the repository we are running on. It doesn't make much of a difference in terms of our process. At the end, once we've modified the files we are interested in, we also open up a merge request on the target repository. Here we can see the MR (which is merged already) to use a new version of the NED <code>ned-snabbaftr-yang</code>.
+</p>
+
+
+<figure>
+<img src="images/gitbot-ned-update-mr.png" alt="gitbot-ned-update-mr.png">
+
+</figure>
+
+<p>
+What we end up with is that whenever there is a new version of a NED, a merge request is opened on our <code>nso-ts</code> repository to start using the new NED. That merge request is using changes on a new branch and CI will obviously run for <code>nso-ts</code> on this new branch, which will then test all of our code using the new version of the NED. We get a form of version pinning, with the form of explicit changes that it entails, yet it's a rather convenient and non-cumbersome environment to work with thanks to all the automation.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgd6efa88" class="outline-2">
+<h2 id="orgd6efa88"><span class="section-number-2">3</span> Getting fancy</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+While automatically opening an MR is sweet&#x2026; we can do <del>better</del> fancier. Our <code>nso-ts</code> repository is based on Cisco NSO (Tail-F NCS), or actually the <code>nso-ts</code> docker image is based on a <code>cisco-nso</code> docker image that we build in a separate repository. We put the version of NSO as the tag of the <code>cisco-nso</code> docker image, so <code>cisco-nso:4.2.3</code> means Cisco NSO 4.2.3. This is what the <code>nso-ts</code> Dockerfile will use in its <code>FROM</code> line.
+</p>
+
+<p>
+Upgrading to a new version of NCS is thus just a matter of rewriting the tag&#x2026; but what version of NCS should we use? There's 4.2.4, 4.3.3, 4.4.2 and 4.4.3 available and I'm sure there's some other version that will pop up its evil head soon enough. How do I know which version to pick? And will our current code work with the new version?
+</p>
+
+<p>
+To help myself in the choice of NCS version I implemented a script that gets the README file of a new NCS version and cross references the list of fixed issues with the issues that we currently have open in the Tail-F issue tracker. The output of this is included in the merge request description so when I look at the merge request I immediately know what bugs are fixed or new features are implemented by moving to a specific version. Having this automatically generated for us is&#x2026; well, it's just damn convenient. Together with actually testing our code with the new version of NCS gives us confidence that an upgrade will be smooth.
+</p>
+
+<p>
+Here are the merge requests currently opened by our GitBot
+</p>
+
+
+<figure>
+<img src="images/gitbot-list-of-mrs.png" alt="gitbot-list-of-mrs.png">
+
+</figure>
+
+<p>
+We can see how the system have generated MRs to move to all the different versions of NSO currently available. As we are currently on NSO v4.2.3 there's no underlying branch for that one leading to an errored build. For the other versions though, there is a branch per version that executes the CI pipeline to make sure all our code runs with this version of NSO.
+</p>
+
+<p>
+As there have been a few commits today, these branches are behind by 6 commits but will be rebased this night so we get an up to date picture if they work or not with our latest code.
+</p>
+
+
+<figure>
+<img src="images/gitbot-nso-branches.png" alt="gitbot-nso-branches.png">
+
+</figure>
+
+<p>
+If we go back and look at one of these merge requests, we can see how the description includes information about what issues that we currently have open with Cisco / Tail-F would be solved by moving to this version.
+</p>
+
+
+<figure>
+<img src="images/gitbot-nso-mr-description-424.png" alt="gitbot-nso-mr-description-424.png">
+
+</figure>
+
+<p>
+This is from v4.2.4 and as we are currently on v4.2.3 we can see that there are only a few fixed issues.
+</p>
+
+<p>
+If we instead look at v4.4.3 we can see that the list is significantly longer.
+<img src="images/gitbot-nso-mr-description-443.png" alt="gitbot-nso-mr-description-443.png">
+</p>
+
+<p>
+Pretty sweet, huh? :)
+</p>
+
+<p>
+As this involves a bit more code I've put the relevant files in a <a href="https://gist.github.com/plajjan/42592665afd5ae045ee36220e19919aa">GitHub gist</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1b73a0e" class="outline-2">
+<h2 id="org1b73a0e"><span class="section-number-2">4</span> This is the end</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+If you are reading this, chances are you already have your reasons for why you want to automate some git operation. Hopefully I've provided some inspiration for how to do it.
+</p>
+
+<p>
+If not or if you just want to discuss the topic in general or have more specific questions about our setup, please do reach out to me on Twitter.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-git.html">git</a> <a href="tag-automation.html">automation</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+#+TITLE: Validating data with YANG
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2017-03-15 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: YANG
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+Every now and then I hear about how difficult it is to use YANG to actually validate any data (we call this instance data). Since we in the TeraStream team do this quite a lot I thought I'd share how it can be done. This is using a process that we also employ in our CI pipeline.
+
+Let's first write a simple YANG model:
+#+BEGIN_SRC yang
+module tubecats {
+    namespace "http://plajjan.github.io/ns/yang/tubecats";
+    prefix tc;
+
+    revision 2017-03-15 {
+        description "First and only version";
+    }
+
+    container internet {
+        list cat {
+            key name;
+            leaf name {
+                type string;
+            }
+        }
+    }
+}
+#+END_SRC
+
+We all know the Internet is full of cats so I created a list under the ~internet~ container so we can fill it up with cats. The only valid leaf value of each cat list entry is its name.
+
+Let's start off by actually making sure that our YANG model is valid. We can use the tool called ~pyang~ to do this. If you don't have pyang installed you can install it with ~pip install pyang~.
+
+#+BEGIN_SRC shell
+kll@kll:~/yang-test$ pyang tubecats.yang
+kll@kll:~/yang-test$ pyang --ietf tubecats.yang
+tubecats.yang:1: warning: RFC 6087: 4.1: the module name should start with one of the strings "ietf-" or "iana-"
+tubecats.yang:1: error: RFC 6087: 4.7: statement "module" must have a "contact" substatement
+tubecats.yang:1: error: RFC 6087: 4.7: statement "module" must have a "organization" substatement
+tubecats.yang:1: error: RFC 6087: 4.7: statement "module" must have a "description" substatement
+tubecats.yang:2: warning: RFC 6087: 4.8: namespace value should be "urn:ietf:params:xml:ns:yang:tubecats"
+tubecats.yang:5: error: RFC 6087: 4.7: statement "revision" must have a "reference" substatement
+tubecats.yang:9: error: RFC 6087: 4.12: statement "container" must have a "description" substatement
+tubecats.yang:10: error: RFC 6087: 4.12: statement "list" must have a "description" substatement
+tubecats.yang:12: error: RFC 6087: 4.12: statement "leaf" must have a "description" substatement
+#+END_SRC
+
+The ~--ietf~ argument makes pyang a little more strict and adheres to a bunch of IETF guidelines on how to write YANG models. Since we aren't writing an IETF model and don't have an IETF namespace for it, we'll get some warnings and errors. Anyway, our model is sound since it succeeded without ~--ietf~.
+
+Ok, so we have a valid model, let's write some data that adheres to it:
+#+BEGIN_SRC xml
+<ns0:data xmlns:ns0="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <tc:internet xmlns:tc="http://plajjan.github.io/ns/yang/tubecats">
+        <tc:cat>
+            <tc:name>jingles</tc:name>
+        </tc:cat>
+        <tc:cat>
+            <tc:name>fluffy</tc:name>
+        </tc:cat>
+    </tc:internet>
+</ns0:data>
+#+END_SRC
+
+And now, to validate we use yang2dsdl which is shipped together with pyang:
+#+BEGIN_SRC shell
+kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema './tubecats-data.rng'
+Done.
+
+== Generating Schematron schema './tubecats-data.sch'
+Done.
+
+== Generating DSRL schema './tubecats-data.dsrl'
+Done.
+
+== Validating grammar and datatypes ...
+data.xml validates
+
+== Adding default values... done.
+
+== Validating semantic constraints ...
+No errors found.
+kll@kll:~/yang-test$
+#+END_SRC
+
+To make sure that our toolchain is working here we'll introduce an error in our
+data file, namely a second node under one of the cat list entries:
+#+BEGIN_SRC xml
+<ns0:data xmlns:ns0="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <tc:internet xmlns:tc="http://plajjan.github.io/ns/yang/tubecats">
+        <tc:cat>
+            <tc:name>jingles</tc:name>
+        </tc:cat>
+        <tc:cat>
+            <tc:name>fluffy</tc:name>
+            <tc:foo>bar</tc:foo>
+        </tc:cat>
+    </tc:internet>
+</ns0:data>
+#+END_SRC
+
+lo and behold as this time around it complains loudly:
+#+BEGIN_SRC shell
+kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
+== Generating RELAX NG schema './tubecats-data.rng'
+Done.
+
+== Generating Schematron schema './tubecats-data.sch'
+Done.
+
+== Generating DSRL schema './tubecats-data.dsrl'
+Done.
+
+== Validating grammar and datatypes ...
+data.xml:8: element foo: Relax-NG validity error : Did not expect element foo there
+data.xml fails to validate
+kll@kll:~/yang-test$
+#+END_SRC
+
+So that's how you can validate your instance data with a YANG model!
+
+The ~<data>~ tag at the root of the XML document is part of many NETCONF commands. It's also possible to ask it to validate data that is wrapped in other nodes like edit-config, get-reply etc. If you are just trying to write some data on your own and don't want to think about NETCONF you do still have to add that extra ~<data>~ tag at the root to get validation to complete... it is a bit NETCONF centric after all.
