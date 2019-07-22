@@ -1,6 +1,29 @@
 @import "normalize";
 @import "htmlize";
 
+// Colors
+$blue: #4183C4;
+
+// Grays
+$black: #000;
+$darkerGray: #222;
+$darkGray: #333;
+$gray: #666;
+$lightGray: #eee;
+$white: #fff;
+
+// Font stacks
+$helvetica: Helvetica, Arial, sans-serif;
+$helveticaNeue: "Helvetica Neue", Helvetica, Arial, sans-serif;
+$georgia: Georgia, serif;
+
+// Mobile breakpoints
+@mixin mobile {
+    @media screen and (max-width: 640px) {
+        @content;
+    }
+}
+
 $sans: Helvetica, sans-serif;
 $serif: Georgia, serif;
 $monospace: Lucida Console, monospace;
@@ -16,9 +39,11 @@ body {
     width: 95%;
     vertical-align: middle;
     margin: 2% auto;
-    line-height: 1.4em;
-    font-family: $serif;
-    color: #1e1f25;
+    line-height: 34px;
+    background: #FFF;
+    font-size: 20px;
+    font-family: Stem Light, Helvetica Neue, Helvetica, Arial, sans-serif;
+    color: #333;
 }
 
 @media screen and (min-width: 910px) {
@@ -53,7 +78,6 @@ dl {
     text-align: center;
     font-size: 0.8em;
     line-height: 1.4;
-    font-weight: bold;
     margin: 1em auto;
 }
 
@@ -126,7 +150,7 @@ img {
 
 h1,h2,h3,h4,h5,h6 {
     line-height: 1em;
-    font-family: $sans;
+    font-weight: 400;
 }
 
 h1,h2,h3 {
@@ -139,7 +163,7 @@ h4,h5,h6 {
 
 @media screen and (min-width: 600px) {
     h1 {
-        font-size: 2em;
+        font-size: 3em;
     }
     h2 {
         font-size: 1.5em;
@@ -156,7 +180,6 @@ h4,h5,h6 {
 }
 
 dt {
-    font-weight: bold;
 }
 
 /* table */
@@ -327,6 +350,10 @@ kbd {
 
 p.verse {
     margin-left: 3%;
+}
+
+.outline-text-2, .outline-text-3 {
+    padding-left: 40px;
 }
 
 :not(pre) > code {
