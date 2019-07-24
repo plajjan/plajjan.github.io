@@ -39,9 +39,9 @@ body {
     width: 95%;
     vertical-align: middle;
     margin: 2% auto;
-    line-height: 34px;
+    line-height: 1.5em;
     background: #FFF;
-    font-size: 20px;
+    font-size: 1.3em;
     font-family: Stem Light, Helvetica Neue, Helvetica, Arial, sans-serif;
     color: #333;
 }
@@ -374,6 +374,7 @@ p.verse {
     margin: 1em auto;
     padding: 0.1em 0.5em;
     position: relative;
+    line-height: 1.1em;
 }
 
 .org-src-container>pre {
