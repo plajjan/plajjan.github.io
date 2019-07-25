@@ -1,0 +1,28 @@
+#+TITLE: About
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2019-07-25 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: NSO, NCS, network automation
+#+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+
+
+* Kristian Larsson
+
+I'm a network kind of guy doing network kind of things.
+
+Currently working for Deutsche Telekom / TeraStream with network architecture and automation thereof.
+
+I am the primary author of [[https://github.com/SpriteLink/NIPAP][NIPAP]], a fast, flexible and powerful IPAM with native support for VRFs and IPv6.
+
+[[https://github.com/plajjan/vrnetlab][vrnetlab]] is a system I put together to run virtual routers using docker containers for convenient lab / CI.
+
+When I'm not coding for work I like building on home automation stuff. I wrote a serial binding for OpenHAB to talk to my Benq projector.
+
+Go see my [[https://github.com/plajjan/][github]] page for more up to date info on what I might be working on.
+
+** Contact me
+Reach me on IRC, kll on ircnet/freenode, or [[https://twitter.com/plajjan][Twitter]].
+
+Also [[mailto:kristian@spritelink.net][kristian@spritelink.net]].

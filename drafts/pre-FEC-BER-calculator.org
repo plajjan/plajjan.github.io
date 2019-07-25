@@ -1,0 +1,34 @@
+#+TITLE: Tools
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2019-07-25 00:00:00>
+#+LANGUAGE: en
+#+FILETAGS: NSO, NCS, network automation
+#+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+
+
+This page helps you calculate trigger and revert values for pre-FEC BER based proactive routing.
+
+Input the FEC limit of your card (should say in data sheet or similar). Then put in the margin you want to the trigger and finally to the revert value.
+
+Cisco calls it dbQ margin whereas Juniper calls it Q2-factor.
+
+I'm using an example of 2dBQ margin for trigger and 3dbQ for revert. You should probably figure out what's good for your environment but this is a start.
+
+#+BEGIN_EXPORT html
+<div>
+    <hr/>
+    <p>FEC limit: <input id="fec_limit" value="1.5e-02"/> BER</p>
+    <p>Trigger: <input id="trigger" value="2"/> dbQ / Q2-factor</p>
+    <p>Revert: <input id="revert" value="3"/> dBQ / Q2-factor</p>
+    <hr/>
+    <p>FEC limit dbQ: <input id="fec_limit_dbq" disabled="disabled"/></p>
+    <p>Trigger BER: <input id="trigger_ber" disabled="disabled"/></p>
+    <p>Revert BER: <input id="revert_ber" disabled="disabled"/></p>
+</div>
+
+<script type="text/javascript" src="/js/pre_fec_ber.js"></script>
+#+END_EXPORT
+
+You can read more about this over on [[http://www.juniper.net/documentation/en_US/junos15.1/topics/concept/otn-signal-degrade-monitoring-understanding.html][Juniper's page]].

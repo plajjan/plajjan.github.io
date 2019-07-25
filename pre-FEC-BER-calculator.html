@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Tools</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico"></head>
+<body>
+<div id="preamble" class="status">
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<div class="post-date">25 Jul 2019</div><h1 class="post-title"><a href="pre-FEC-BER-calculator.html">Tools</a></h1>
+<p>
+This page helps you calculate trigger and revert values for pre-FEC BER based proactive routing.
+</p>
+
+<p>
+Input the FEC limit of your card (should say in data sheet or similar). Then put in the margin you want to the trigger and finally to the revert value.
+</p>
+
+<p>
+Cisco calls it dbQ margin whereas Juniper calls it Q2-factor.
+</p>
+
+<p>
+I'm using an example of 2dBQ margin for trigger and 3dbQ for revert. You should probably figure out what's good for your environment but this is a start.
+</p>
+
+<div>
+    <hr/>
+    <p>FEC limit: <input id="fec_limit" value="1.5e-02"/> BER</p>
+    <p>Trigger: <input id="trigger" value="2"/> dbQ / Q2-factor</p>
+    <p>Revert: <input id="revert" value="3"/> dBQ / Q2-factor</p>
+    <hr/>
+    <p>FEC limit dbQ: <input id="fec_limit_dbq" disabled="disabled"/></p>
+    <p>Trigger BER: <input id="trigger_ber" disabled="disabled"/></p>
+    <p>Revert BER: <input id="revert_ber" disabled="disabled"/></p>
+</div>
+
+<script type="text/javascript" src="/js/pre_fec_ber.js"></script>
+
+<p>
+You can read more about this over on <a href="http://www.juniper.net/documentation/en_US/junos15.1/topics/concept/otn-signal-degrade-monitoring-understanding.html">Juniper's page</a>.
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div></div>
+<div id="postamble" class="status"><br/><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>
