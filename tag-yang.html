@@ -995,8 +995,8 @@ If you've written YANG models yourself you might have ended up in the situation 
 How do you keep a backwards compatible YANG modeled API while allowing for changes?
 </p>
 
-<div id="outline-container-org3a2a35e" class="outline-2">
-<h2 id="org3a2a35e"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
+<div id="outline-container-org12f75ce" class="outline-2">
+<h2 id="org12f75ce"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 YANG is defined in RFC6020, which has a <a href="https://tools.ietf.org/html/rfc6020#section-10">section</a> on what changes are allowed between revisions of a YANG model. 
@@ -1017,8 +1017,8 @@ I won't list all the rules here but they essentially boil down to only allowing 
 </div>
 
 
-<div id="outline-container-org5018a36" class="outline-2">
-<h2 id="org5018a36"><span class="section-number-2">2</span> Offenders</h2>
+<div id="outline-container-orga7d7564" class="outline-2">
+<h2 id="orga7d7564"><span class="section-number-2">2</span> Offenders</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 I think one of the more clear examples of YANG compatibility breakage is Cisco's IOS XR as can be witnessed by the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr/">XR YANG models published on GitHub.</a>
@@ -1093,8 +1093,8 @@ It's rather ironic how two Cisco products aren't compatible with each other whil
 </div>
 
 
-<div id="outline-container-orgaf0fa0d" class="outline-2">
-<h2 id="orgaf0fa0d"><span class="section-number-2">3</span> Solution?</h2>
+<div id="outline-container-org13fab8a" class="outline-2">
+<h2 id="org13fab8a"><span class="section-number-2">3</span> Solution?</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The simple solution is of course that Cisco stops breaking YANG rules. However, I can understand it's difficult with their development process and sometimes you just have to make backwards incompatible changes. Besides, it's an industry wide problem and not just related to Cisco.
@@ -1107,8 +1107,8 @@ Let's first look at semver and then how we might merge the concept of semver wit
 </div>
 
 
-<div id="outline-container-orgcb653c7" class="outline-2">
-<h2 id="orgcb653c7"><span class="section-number-2">4</span> Semantic versioning</h2>
+<div id="outline-container-orgfa65cf1" class="outline-2">
+<h2 id="orgfa65cf1"><span class="section-number-2">4</span> Semantic versioning</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <a href="http://semver.org/">Semantic versioning</a> (semver for short) is a fairly widely accepted versioning scheme where the version is described as MAJOR.MINOR.PATCH. In essence, increment the:
@@ -1127,8 +1127,8 @@ YANG however doesn't follow semver but I believe the same concept can be applied
 </div>
 
 
-<div id="outline-container-org0c32a58" class="outline-2">
-<h2 id="org0c32a58"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
+<div id="outline-container-orgc2e6f7a" class="outline-2">
+<h2 id="orgc2e6f7a"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 The suggestion is simple:
@@ -1170,8 +1170,8 @@ maintaining backwards compatibility</li>
 </div>
 </div>
 
-<div id="outline-container-orgd860f25" class="outline-2">
-<h2 id="orgd860f25"><span class="section-number-2">6</span> An example</h2>
+<div id="outline-container-org1722780" class="outline-2">
+<h2 id="org1722780"><span class="section-number-2">6</span> An example</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Let's say we have a module we wish to name <code>foo</code>. The first public release of it, keeping in line with semver, is v1.0.0. The module would thus be called <code>foo-v1</code> and with a namespace that also includes the <code>-v1</code> part, like <code>http://example.com/ns/yang/foo-v1</code>.
@@ -1195,8 +1195,8 @@ Further bug fixes and minor feature additions can be made to both, or if you cho
 </div>
 </div>
 
-<div id="outline-container-org936bcc1" class="outline-2">
-<h2 id="org936bcc1"><span class="section-number-2">7</span> YANG revision label</h2>
+<div id="outline-container-org26a05b9" class="outline-2">
+<h2 id="org26a05b9"><span class="section-number-2">7</span> YANG revision label</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 The "label" used in the revision statement in YANG models is an ISO 8601 date. This could potentially be replaced with a semver version but I don't believe it obviates the need to put the major version in the model name. If a backwards incompatible change is made we might want to support both MAJOR version 1 and 2 at the same time and thus need to load two versions of the model. How are we to do that if both versions have the same name? How do we store two different YANG modules on disk if the filename doesn't reflect the MAJOR version?
@@ -1204,8 +1204,8 @@ The "label" used in the revision statement in YANG models is an ISO 8601 date. T
 </div>
 </div>
 
-<div id="outline-container-org3c0fb35" class="outline-2">
-<h2 id="org3c0fb35"><span class="section-number-2">8</span> Thoughts?</h2>
+<div id="outline-container-orgcf55c60" class="outline-2">
+<h2 id="orgcf55c60"><span class="section-number-2">8</span> Thoughts?</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 There are probably more aspects to consider associated with this suggestion. For example, YANG models can refer to each other, through imports or submodules. If a large number of models are "intertwined" through reference it might not be apparent which of these models can or should be upgraded in a MAJOR version bump.
