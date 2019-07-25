@@ -17,17 +17,17 @@
 </div></div>
 <div id="content">
 <h1 class="title">Posts tagged "NSO":</h1>
-<div class="post-date">02 Jul 2019</div><h1 class="post-title"><a href="2019-07-02-writing-a-background-worker-for-cisco-nso.html">Writing a Python background worker for Cisco NSO</a></h1>
+<div class="post-date">25 Jul 2019</div><h1 class="post-title"><a href="2019-07-02-writing-a-background-worker-for-cisco-nso.html">Writing a Python background worker for Cisco NSO</a></h1>
 
-<div id="outline-container-orgff7faae" class="outline-2">
-<h2 id="orgff7faae"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
+<div id="outline-container-org72bc042" class="outline-2">
+<h2 id="org72bc042"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-The <code>create()</code> callback is the primary means of which we get things done in Cisco NSO. The use of NSO is most often focused on configuration provisioning and so the <code>create()</code> callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our <code>create()</code> code which renders new configuration output. In the YANG model we use a <code>servicepoint</code> for attaching a <code>create()</code> callback to a particular subtree in the YANG model. In addition to <code>create()</code> <code>servicepoint</code> we also have <code>actionpoints</code> which allow us to attach our code to YANG actions. Both <code>servicepoint</code> and <code>actionpoint</code> both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the worker to do whatever you need to accomplish.
+The <code>create()</code> callback is the primary means of which we get things done in Cisco NSO. NSO is most often used for configuration provisioning and so the <code>create()</code> callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our <code>create()</code> code which renders new configuration output that we can push to devices or other services. In the YANG model we use a <code>servicepoints</code> for attaching a <code>create()</code> callback to a particular subtree in the YANG model. In addition to <code>create()</code> <code>servicepoint</code> we also have <code>actionpoints</code> which allow us to attach our code to YANG actions. Both <code>servicepoint</code> and <code>actionpoint</code> both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the code of the worker to do whatever you need to accomplish. This post is about implementing such a background worker.
 </p>
 
 <p>
-It should be noted that there is functionality in NSO to schedule periodic activities cron job style but I find it somewhat lacking, not that it's worse than cron but cron just isn't the right tool for everything. You would probably do well in understanding it before deciding on how to solve your specific challenge. Either way, as is common with us technical people the question of why or why not is not the focus of this post. Rather, we want to focus on the <b>how</b>. If you feel the need for a background worker in NSO, how do you actually go about implementing one?
+It should be noted that there is functionality in NSO to schedule periodic activities in a cron job style but I find it somewhat lacking, not that it's worse than cron but cron just isn't the right tool for everything. You would probably do well in understanding it before deciding on how to solve your specific challenge. Either way, as is common with us technical people the question of why or why not is not the focus of this post. Rather, we want to focus on the <b>how</b>. <i>If</i> you feel the need for a background worker in NSO, how do you actually go about implementing one?
 </p>
 
 <p>
@@ -35,11 +35,11 @@ I'll assume you have some experience with Cisco NSO and that you know how to imp
 </p>
 </div>
 
-<div id="outline-container-org4e8130a" class="outline-3">
-<h3 id="org4e8130a"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
+<div id="outline-container-orge18bfeb" class="outline-3">
+<h3 id="orge18bfeb"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
-The NSO core is written in Erlang and so to run user code written in Python it runs a separate Python VM process that communicates with the NSO core over a number of APIs. It will spawn one Python VM process for each NSO package that wants to run Python code. Thus there is some separation between different packages and given the GIL (Giant Interpreter Lock) in the standard Python interpreter it also allows for a natural way to get past the parallel execution problem, at least to a certain extent.
+The NSO core is written in Erlang and so to run user code written in Python it runs a separate Python VM process that communicates with the NSO core over a number of APIs. It will spawn one Python VM process for each NSO package that wants to run Python code. Thus there is some separation between different packages and given the GIL (Giant Interpreter Lock) in the standard Python interpreter it also allows for a natural way to get past the parallel execution problem, at least to a certain extent, as different NSO packages will run in their own python process.
 </p>
 
 <p>
@@ -48,11 +48,10 @@ Within each Python VM there will be a main thread and then multiple other thread
 </div>
 </div>
 
-<div id="outline-container-org54529d3" class="outline-3">
-<h3 id="org54529d3"><span class="section-number-3">1.2</span> A naive approach</h3>
+<div id="outline-container-orgcf0b2bd" class="outline-3">
+<h3 id="orgcf0b2bd"><span class="section-number-3">1.2</span> A naive approach</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
-Taking a queue from the implementation of the NCS related
 Okay, so let's get started. Let's try writing a background worker. We'll start by making a new package and we'll start off from the python service skeleton.
 </p>
 
@@ -87,11 +86,11 @@ Edit or replace the YANG model to the following. We just want a simple leaf call
 </div>
 
 <p>
-There are some other things, like revision and description of the module that you should add in but I'm trying to keep it down to an absolute bare minimum in order to show what is relevant for our scenario.
+There are some other things, like revision and description of the module that you should add in but I'm trying to keep it to an absolute bare minimum in order to focus on what is relevant for our scenario.
 </p>
 
 <p>
-We set the default value to 0 which means the counter will be 0 each time NCS starts up. Unlike configuration data, state data in NCS is not persisted per default which is why our leaf will go back to a value of 0 each time NCS starts. We could add <code>tailf:persist</code> to the leaf to make it persisted in CDB.
+We set the default value to 0 which means the counter will be 0 each time NCS starts up. Unlike configuration data, state data in NCS is not persisted per default which is why our leaf will go back to a value of 0 each time NCS starts. We could add <code>tailf:persistent "true"</code> to the leaf to make it persisted in CDB.
 </p>
 
 <p>
@@ -258,11 +257,11 @@ Et voilà! It's working.
 </div>
 </div>
 
-<div id="outline-container-org14fb886" class="outline-3">
-<h3 id="org14fb886"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
+<div id="outline-container-orgb0c0ce0" class="outline-3">
+<h3 id="orgb0c0ce0"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
-<code>request packages reload</code> is the "standard" way of loading in new packages, including loading new packages, loading a newer version of an existing already loaded package as well as unloading package (in which case you have to also provide the <code>force</code> as NCS will complain over the removal of namespace which it thinks is a mistake). It covers all changes like config template changes, YANG model changes and code changes. It is however quite slow and if you have a lot of packages you will soon be rather annoyed over the time it takes (around 2 minutes with the packages we usually have loaded in my work environment). Code changes are perhaps the most common changes during development as you are changing lines, wanting to get them loaded immediately and then run your code again. There is a <code>redeploy</code> command for exactly this purpose which can redeploy the code for a single package. In our case, the package is called <code>bgworker</code> and so we can redeploy the code by running <code>request packages package bgworker redeploy</code>.
+<code>request packages reload</code> is the "standard" way of loading in new packages, including loading new packages, loading a newer version of an existing already loaded package as well as unloading package (in which case you have to also provide the <code>force</code> as NCS will complain over the removal of a namespace, which it thinks is a mistake). It covers all changes like config template changes, YANG model changes and code changes. It is however quite slow and if you have a lot of packages you will soon be rather annoyed over the time it takes (around 2 minutes with the packages we usually have loaded in my work environment). Code changes are perhaps the most common changes during development as you are changing lines, wanting to get them loaded immediately and then run your code again. There is a <code>redeploy</code> command for exactly this purpose which can redeploy the code for a single package. In our case, the package is called <code>bgworker</code> and so we can redeploy the code by running <code>request packages package bgworker redeploy</code>. It normally runs in a second or so.
 </p>
 
 <p>
@@ -275,8 +274,9 @@ result false
 admin@ncs&gt; 
 </pre>
 </div>
+
 <p>
-uh oh. <code>result false</code> why?
+uh oh. <code>result false</code>, why?
 </p>
 
 <p>
@@ -327,7 +327,7 @@ Using a Python events might be the most natural way:
 </div>
 
 <p>
-We modify our code a bit, inserting a checking on a threading.Event in the main loop and then set the Event externally in the thread <code>stop</code> method. Since we can run <code>wait()</code> on the Event with a timeout of 1 second we no longer need the separate <code>time.sleep(1)</code> call.
+We modify our code a bit, inserting a check on a threading.Event in the main loop and then set the Event externally in the thread <code>stop()</code> method. Since we can run <code>wait()</code> on the Event with a timeout of 1 second we no longer need the separate <code>time.sleep(1)</code> call.
 </p>
 
 <p>
@@ -396,7 +396,7 @@ Maybe we should implement the main functionality of our program, to increment th
 </pre>
 </div>
 <p>
-We've added some code where we open a single MAAPI write transaction using <code>single_write_trans</code> which allows us to open both a maapi context, session and transaction all in one call. We use it as a context manager to ensure we close all those resources in case of errors or normal exit. There are three parameters to this call. The first and second are the "authentication" information to the system. All of this is running over a trusted MAAPI session but we can tell it what user we are then running our session as. The <code>system</code> user is special and has access to pretty much everything. It doesn't rely on the AAA system and so it is a good candidate for writing these kinds of background workers - if someone messes up the AAA configuration you still don't risk your background workers stopping. The first parameter is a context name. I've found that it's very useful to use a good name (you can use an empty string) since it makes troubleshooting so much easier - this context name shows up in <code>ncs --status</code> and other places - if you want to be able to know who is holding a lock, you want to put something useful here. The third parameter is where we say we are only interested in the operational datastore, whereas if we wanted to change any configuration this would have to be <code>running</code>, which also is the default so we could just leave out the argument completely.
+We've added some code where we open a single MAAPI write transaction using <code>single_write_trans()</code> which allows us to open both a maapi context, session and transaction all in one call. We use it as a context manager to ensure we close all those resources in case of errors or normal exit. There are three parameters to this call. The first and second are the "authentication" information to the system. All of this is running over a trusted MAAPI session but we can tell it what user we are then running our session as. The <code>system</code> user is special and has access to pretty much everything. It doesn't rely on the AAA system and so it is a good candidate for writing these kinds of background workers - if someone messes up the AAA configuration you still don't risk your background workers stopping. The first parameter is a context name. I've found that it's very useful to use a good name (you can use an empty string) since it makes troubleshooting so much easier - this context name shows up in <code>ncs --status</code> and other places - if you want to be able to know who is holding a lock, you want to put something useful here. The third parameter is where we say we are only interested in the operational datastore, whereas if we wanted to change any configuration this would have to be <code>running</code>, which also is the default so we could just leave out the argument completely.
 </p>
 
 <p>
@@ -519,8 +519,8 @@ And looking in the log <code>ncs-python-vm-bgworker-log</code> (notice the packa
 </div>
 
 
-<div id="outline-container-org2b4a630" class="outline-3">
-<h3 id="org2b4a630"><span class="section-number-3">1.4</span> Back to killable threads</h3>
+<div id="outline-container-org60c0ecf" class="outline-3">
+<h3 id="org60c0ecf"><span class="section-number-3">1.4</span> Back to killable threads</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 Now that we've opened a transaction towards CDB there is one issue we will inevitable face. The running datastore has a global lock and while there are no locks on the operational datastore, applying a transaction can still take some time. For example, in a HA cluster the operational data is synchronously replicated and if other nodes are busy or there are other things ahead of us queued up, it can take some time to apply a transaction. Remember that we have to exit in three seconds. The way we structured our code, we read the <code>self._exit_flag</code> waiting for up to a second for any values to happen, then we open the transaction and write some data and then we come back to looking at our exit flag again. If we spend more than three seconds in the transaction part of the code we won't observe the exit flag and we will fail to exit in three seconds.
@@ -540,8 +540,8 @@ Also, David Beazley did an interesting talk on killable threads <a href="https:/
 </div>
 </div>
 
-<div id="outline-container-orgf3560eb" class="outline-3">
-<h3 id="orgf3560eb"><span class="section-number-3">1.5</span> multiprocessing</h3>
+<div id="outline-container-org1802565" class="outline-3">
+<h3 id="org1802565"><span class="section-number-3">1.5</span> multiprocessing</h3>
 <div class="outline-text-3" id="text-1-5">
 <p>
 Python has a very convenient library called <code>multiprocessing</code> which is close to a drop in replacement for the threading library but as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
@@ -596,8 +596,8 @@ well, I changed the log message slightly so I'd actually see it was from the bac
 </div>
 </div>
 
-<div id="outline-container-org0da27a0" class="outline-3">
-<h3 id="org0da27a0"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
+<div id="outline-container-org322a434" class="outline-3">
+<h3 id="org322a434"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
 <div class="outline-text-3" id="text-1-6">
 <p>
 What happens if something goes wrong with our worker process? Let's try.
@@ -660,8 +660,8 @@ Lo and behold, it did. After this, nothing more happens as our process is dead. 
 </div>
 </div>
 
-<div id="outline-container-org1b31ca4" class="outline-3">
-<h3 id="org1b31ca4"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
+<div id="outline-container-org1516733" class="outline-3">
+<h3 id="org1516733"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
 <div class="outline-text-3" id="text-1-7">
 <p>
 Since you are reading this you probably haven't implemented a background worker yet so let me share some advice - add an <b>off</b> button. When you are troubleshooting your system it can be rather difficult with lots of things going on, triggered by these background workers. Having multiple background workers both of different type and multiple instances of the same type exacerbate the issue. With an off button we can easily turn them off and troubleshoot the interesting parts. It might seem crude, and I think it is, but in lack of better instrumentation in NCS, it is the best we have.
@@ -695,8 +695,8 @@ The most intuitive way of doing this, and the way I've done it so far, is to sim
 </div>
 </div>
 
-<div id="outline-container-orge66e940" class="outline-3">
-<h3 id="orge66e940"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
+<div id="outline-container-org76c9e96" class="outline-3">
+<h3 id="org76c9e96"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
 <div class="outline-text-3" id="text-1-8">
 <p>
 Finally, we have to react to High Availability (HA) events. Depending on which type of worker we are implementing we might want different behaviour. I've so far only had to deal with background workers that write configuration and since that can only be done on the master of a HA system, our background worker should only run on the master node. If you on the other hand are operating on some other data or perhaps not writing anything to CDB, it is possible to still run the worker on all nodes.
@@ -763,7 +763,7 @@ I wrote this simple decision algorithm for the behaviour we are looking for:
 </table>
 
 <p>
-The sort of tricky thing is that when we are in mode <code>none</code> we should either run or not depending on if the whole HA functionality is enabled or not. Unlike the mode, I don't know what the official way is to determine if HA is enabled or not. The best I've gotten so far is to check if <code>/ncs:ncs-state/ha</code> exists or not. If it doesn't exist, it means HA is disabled and vice versa. The problem with this approach is that I doubt it's a deliberate part of the interface - I think it is happenstance based on the current implementation and if it were to change in the future it might be possible the behaviour around this would change.
+The sort of tricky thing is that when we are in mode <code>none</code> we should either run or not depending on if the whole HA functionality is enabled or not, which means we need to look at both. <code>/ncs:ncs-state/ha</code> is a presence container and is only present when HA is enabled, thus allowing us to determine if HA is enabled or not.
 </p>
 
 <p>
@@ -772,8 +772,8 @@ Another problem around HA event monitoring is that the <code>/ncs:ncs-state/ha</
 </div>
 </div>
 
-<div id="outline-container-orge20f219" class="outline-3">
-<h3 id="orge20f219"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
+<div id="outline-container-org995fb6b" class="outline-3">
+<h3 id="org995fb6b"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
 <div class="outline-text-3" id="text-1-9">
 <p>
 Okay, so we've gathered all our requirements and are ready to write, as we will see, the Rube Goldberg of NSO background worker process frameworks!
@@ -825,16 +825,296 @@ It's only the worker process that is an actual UNIX process as I believe we can 
 </p>
 
 <p>
-It's rather elaborate, a little Rube Goldbergian, but I still think it's rather clean. Perhaps it can be made more efficient through asyncio instead of threads but since we don't spawn many threads (only at startup) I doubt it would yield much. If we want multiple instance of the same background worker process then we should probably find a way to reuse the same auxiliary processes to avoid death by a thousand threads.
+The final code (don't actually use this - as it turns out later, there are multiple bugs in this):
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #9f8766;">"""A micro-framework for running background processes in Cisco NSO Python VM.</span>
+
+<span style="color: #9f8766;">Running any kind of background workers in Cisco NSO can be rather tricky. This</span>
+<span style="color: #9f8766;">will help you out! Just define a function that does what you want and create a</span>
+<span style="color: #9f8766;">Process instance to run it!</span>
+
+<span style="color: #9f8766;">We react to:</span>
+<span style="color: #9f8766;"> - background worker process dying (will restart it)</span>
+<span style="color: #9f8766;"> - NCS package events, like redeploy</span>
+<span style="color: #9f8766;"> - configuration changes (disable the background worker)</span>
+<span style="color: #9f8766;"> - HA events (if we are a slave)</span>
+<span style="color: #9f8766;">"""</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> multiprocessing
+<span style="color: #4f97d7; font-weight: bold;">import</span> os
+<span style="color: #4f97d7; font-weight: bold;">import</span> select
+<span style="color: #4f97d7; font-weight: bold;">import</span> socket
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.experimental <span style="color: #4f97d7; font-weight: bold;">import</span> Subscriber
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">queue module is called Queue in py2, we import with py3 name since the</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">exposed interface is similar enough</span>
+<span style="color: #4f97d7; font-weight: bold;">try</span>:
+    <span style="color: #4f97d7; font-weight: bold;">import</span> queue
+<span style="color: #4f97d7; font-weight: bold;">except</span> <span style="color: #ce537a; font-weight: bold;">ImportError</span>:
+    <span style="color: #4f97d7; font-weight: bold;">import</span> Queue <span style="color: #4f97d7; font-weight: bold;">as</span> queue
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Process</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""Supervisor for running the main background process and reacting to</span>
+<span style="color: #9f8766;">    various events</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, bg_fun, bg_fun_args=<span style="color: #a45bad;">None</span>, config_path=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>Process, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun = bg_fun
+        <span style="color: #4f97d7; font-weight: bold;">if</span> bg_fun_args <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #7590db;">bg_fun_args</span> = <span style="color: #4f97d7;">[]</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args = bg_fun_args
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path = config_path
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.name = <span style="color: #2d9574;">"{}.{}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.__module__,
+                                   <span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.<span style="color: #4f97d7;">__name__</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{} supervisor starting"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = multiprocessing.Queue<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the config subscriber thread</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber = Subscriber<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
+            <span style="color: #7590db;">subscriber_iter</span> = ConfigSubscriber<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.q, <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
+            subscriber_iter.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber<span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the HA event listener thread</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener = HaEventListener<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, q=<span style="color: #4f97d7; font-weight: bold;">self</span>.q<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = <span style="color: #a45bad;">None</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Read initial configuration, using two separate transactions</span>
+        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Maapi<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> m:
+            <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Session<span style="color: #4f97d7;">(</span>m, <span style="color: #2d9574;">'{}_supervisor'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span>, <span style="color: #2d9574;">'system'</span><span style="color: #4f97d7;">)</span>:
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">in the 1st transaction read config data from the 'enabled' leaf</span>
+                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> t_read:
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+                        <span style="color: #7590db;">enabled</span> = t_read.get_elem<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #4f97d7;">bool</span><span style="color: #4f97d7;">(</span>enabled<span style="color: #4f97d7;">)</span>
+                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
+                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">if there is no config_path we assume the process is always enabled</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #a45bad;">True</span>
+
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">In the 2nd transaction read operational data regarding HA.</span>
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This is an expensive operation invoking a data provider, thus</span>
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">we don't want to incur any unnecessary locks</span>
+                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">(</span>db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_t_read:
+                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">check if HA is enabled</span>
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> oper_t_read.exists<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"/tfnm:ncs-state/tfnm:ha"</span><span style="color: #4f97d7;">)</span>:
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">True</span>
+                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">False</span>
+
+                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">determine HA state if HA is enabled</span>
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled:
+                        <span style="color: #7590db;">ha_mode</span> = <span style="color: #4f97d7;">str</span><span style="color: #4f97d7;">(</span>ncs.maagic.get_node<span style="color: #bc6ec5;">(</span>oper_t_read, <span style="color: #2d9574;">'/tfnm:ncs-state/tfnm:ha/tfnm:mode'</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master = <span style="color: #4f97d7;">(</span>ha_mode == <span style="color: #2d9574;">'master'</span><span style="color: #4f97d7;">)</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #7590db;">should_run</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master<span style="color: #4f97d7;">)</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">if</span> should_run <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process should run but is not running, starting"</span><span style="color: #4f97d7;">)</span>
+                <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+                    <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_start<span style="color: #4f97d7;">()</span>
+            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">not</span> should_run:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process is running but should not run, stopping"</span><span style="color: #4f97d7;">)</span>
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">try</span>:
+                <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">except</span> queue.Empty:
+                <span style="color: #4f97d7; font-weight: bold;">continue</span>
+
+            <span style="color: #7590db;">k</span>, <span style="color: #7590db;">v</span> = item
+            <span style="color: #4f97d7; font-weight: bold;">if</span> k == <span style="color: #2d9574;">'exit'</span>:
+                <span style="color: #4f97d7; font-weight: bold;">return</span>
+            <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">'enabled'</span>:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = v
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""stop is called when the supervisor thread should stop and is part of</span>
+<span style="color: #9f8766;">        the standard Python interface for threading.Thread</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the HA event listener</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop CDB subscriber</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop us, the supervisor</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'exit'</span>, <span style="color: #a45bad;">None</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the background worker process</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_start</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Starts the background worker process</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: starting the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Instead of using the usual worker thread, we use a separate process here.</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This allows us to terminate the process on package reload / NSO shutdown.</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = multiprocessing.Process<span style="color: #4f97d7;">(</span>target=<span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun, args=<span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.start<span style="color: #4f97d7;">()</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Stops the background worker process</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.terminate<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.join<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: worker not terminated on time, alive: {}  process: {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #2d9574;">()</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">ConfigSubscriber</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7;">object</span><span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""CDB subscriber for background worker process</span>
+
+<span style="color: #9f8766;">    It is assumed that there is an 'enabled' leaf that controls whether a</span>
+<span style="color: #9f8766;">    background worker process should be enabled or disabled. Given the path to</span>
+<span style="color: #9f8766;">    that leaf, this subscriber can monitor it and send any changes to the</span>
+<span style="color: #9f8766;">    supervisor which in turn starts or stops the background worker process.</span>
+
+<span style="color: #9f8766;">    The enabled leaf has to be a boolean where true means the background worker</span>
+<span style="color: #9f8766;">    process is enabled and should run.</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, q, config_path<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = q
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path = config_path
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">register</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, subscriber<span style="color: #4f97d7;">)</span>:
+        subscriber.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_path, priority=<span style="color: #a45bad;">101</span>, iter_obj=<span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">pre_iterate</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7;">{</span><span style="color: #2d9574;">'enabled'</span>: <span style="color: #a45bad;">False</span><span style="color: #4f97d7;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">iterate</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, keypath_unused, operation_unused, oldval_unused, newval, state<span style="color: #4f97d7;">)</span>:
+        <span style="color: #7590db;">state</span><span style="color: #4f97d7;">[</span><span style="color: #2d9574;">'enabled'</span><span style="color: #4f97d7;">]</span> = newval
+        <span style="color: #4f97d7; font-weight: bold;">return</span> ncs.ITER_RECURSE
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">should_post_iterate</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, state_unused<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #a45bad;">True</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">post_iterate</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, state<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">"enabled"</span>, <span style="color: #4f97d7;">bool</span><span style="color: #2d9574;">(</span>state<span style="color: #67b11d;">[</span><span style="color: #2d9574;">'enabled'</span><span style="color: #67b11d;">]</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">HaEventListener</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""HA Event Listener</span>
+<span style="color: #9f8766;">    HA events, like HA-mode transitions, are exposed over a notification API.</span>
+<span style="color: #9f8766;">    We listen on that and forward relevant messages over the queue to the</span>
+<span style="color: #9f8766;">    supervisor which can act accordingly.</span>
+
+<span style="color: #9f8766;">    We use a WaitableEvent rather than a threading.Event since the former</span>
+<span style="color: #9f8766;">    allows us to wait on it using a select loop. The HA events are received</span>
+<span style="color: #9f8766;">    over a socket which can also be waited upon using a select loop, thus</span>
+<span style="color: #9f8766;">    making it possible to wait for the two inputs we have using a single select</span>
+<span style="color: #9f8766;">    loop.</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, q<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>HaEventListener, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = q
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'{} supervisor: init'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag = WaitableEvent<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'run() HA event listener'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">from</span> _ncs <span style="color: #4f97d7; font-weight: bold;">import</span> events
+        <span style="color: #7590db;">mask</span> = events.NOTIF_HA_INFO
+        <span style="color: #7590db;">event_socket</span> = socket.socket<span style="color: #4f97d7;">()</span>
+        events.notifications_connect<span style="color: #4f97d7;">(</span>event_socket, mask, ip=<span style="color: #2d9574;">'127.0.0.1'</span>, port=ncs.NCS_PORT<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #7590db;">rl</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag, event_socket<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag <span style="color: #4f97d7; font-weight: bold;">in</span> rl:
+                event_socket.close<span style="color: #4f97d7;">()</span>
+                <span style="color: #4f97d7; font-weight: bold;">return</span>
+
+            <span style="color: #7590db;">notification</span> = events.read_notification<span style="color: #4f97d7;">(</span>event_socket<span style="color: #4f97d7;">)</span>
+            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Can this fail? Could we get a KeyError here? Afraid to catch it</span>
+            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">because I don't know what it could mean.</span>
+            <span style="color: #7590db;">ha_notif_type</span> = notification<span style="color: #4f97d7;">[</span><span style="color: #2d9574;">'hnot'</span><span style="color: #4f97d7;">][</span><span style="color: #2d9574;">'type'</span><span style="color: #4f97d7;">]</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">if</span> ha_notif_type == events.HA_INFO_IS_MASTER:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-mode'</span>, <span style="color: #2d9574;">'master'</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">elif</span> ha_notif_type == events.HA_INFO_IS_NONE:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-mode'</span>, <span style="color: #2d9574;">'none'</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">WaitableEvent</span>:
+    <span style="color: #9f8766;">"""Provides an abstract object that can be used to resume select loops with</span>
+<span style="color: #9f8766;">    indefinite waits from another thread or process. This mimics the standard</span>
+<span style="color: #9f8766;">    threading.Event interface."""</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd = os.pipe<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">wait</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, timeout=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #7590db;">rfds</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span>, timeout<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd <span style="color: #4f97d7; font-weight: bold;">in</span> rfds
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">is_set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">isSet</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">clear</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
+            os.read<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
+            os.write<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd, b<span style="color: #2d9574;">'1'</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">fileno</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Return the FD number of the read side of the pipe, allows this</span>
+<span style="color: #9f8766;">        object to be used with select.select()</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__del__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #4f97d7;">)</span>
+        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+*Do not use the above code, as I later found out, it has bugs and has been further improved, but more on that in the next post).
 </p>
 
 <p>
-The code:
+It's rather elaborate, a little Rube Goldbergian, but I think it offers some rather nice properties in the end. The promises of reacting to NCS package reload / redeploy is upheld and we can quickly and efficiently react to HA and reconfiguration events.
 </p>
-<div class="org-src-container">
-<pre class="src src-python">
-</pre>
-</div>
+
+<p>
+I called that our final version of the code, which turns out to not hold true. As a consequence of our new design we end up using threads, multiprocessing (which forks) and the standard logging library. The three of them together leads to a intricate situation which can leave the child process hanging. This must of course be solved, but that's for part two.
+</p>
 </div>
 </div>
 </div>
