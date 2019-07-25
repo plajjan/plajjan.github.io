@@ -13,9 +13,14 @@
 <link rel="icon" href="static/favicon.ico"></head>
 <body>
 <div id="preamble" class="status">
-<div class="header">
-  <a href="/">Network Automation ramblings by Kristian Larsson</a>
-</div></div>
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
 <div id="content">
 <div class="post-date">29 Sep 2017</div><h1 class="post-title"><a href="2017-09-29-reasonable-netconf.html">TL;DR; reasonable NETCONF / YANG requirements - beyond the RFCs</a></h1>
 <p>
@@ -26,8 +31,8 @@ In the TeraStream project, we continuously evaluate NETCONF server implementatio
 If you are a vendor, then please make sure you support this. If you're someone buying network gear, try putting this in your RFQ to save yourself from future headaches.
 </p>
 
-<div id="outline-container-orgf115fe8" class="outline-2">
-<h2 id="orgf115fe8"><span class="section-number-2">1</span> TL;DR; Reasonable NETCONF / YANG requirements</h2>
+<div id="outline-container-orgb2864e8" class="outline-2">
+<h2 id="orgb2864e8"><span class="section-number-2">1</span> TL;DR; Reasonable NETCONF / YANG requirements</h2>
 <div class="outline-text-2" id="text-1">
 <ol class="org-ol">
 <li>Devices MUST implement NETCONF 1.1 [RFC6241] or 1.0 [RFC4741]. It is not acceptable with a partial implementation of the mandatory parts of NETCONF. At least one of the capabilities :candidate, :writable-running, or :startup MUST be implemented.</li>
@@ -47,8 +52,8 @@ If you are a vendor, then please make sure you support this. If you're someone b
 </div>
 
 
-<div id="outline-container-org972b788" class="outline-2">
-<h2 id="org972b788"><span class="section-number-2">2</span> What</h2>
+<div id="outline-container-org20173ef" class="outline-2">
+<h2 id="org20173ef"><span class="section-number-2">2</span> What</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 I'll dig into motivating the requirements later on but more importantly is the
@@ -65,7 +70,7 @@ a running and startup config exists in NETCONF. Most modern
 </div>
 </div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-netconf.html">NETCONF</a> <a href="tag-yang.html">YANG</a> </div></div>
-<div id="postamble" class="status"><div id="archive">
+<div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
 </div></div>
 </body>

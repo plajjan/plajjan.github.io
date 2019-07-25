@@ -46,6 +46,16 @@ body {
     color: #333;
 }
 
+div#preamble {
+    display: table;
+    width: 100%;
+}
+
+.header {
+    display: block;
+    float: left;
+}
+
 @media screen and (min-width: 910px) {
     body {
         width: 900px;

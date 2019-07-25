@@ -13,17 +13,22 @@
 <link rel="icon" href="static/favicon.ico"></head>
 <body>
 <div id="preamble" class="status">
-<div class="header">
-  <a href="/">Network Automation ramblings by Kristian Larsson</a>
-</div></div>
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
 <div id="content">
 <div class="post-date">23 Sep 2016</div><h1 class="post-title"><a href="2016-09-23-pictures-from-100G-dwdm-interop-lab.html">Pictures from the 100G DWDM interop lab</a></h1>
 <p>
 These are some pictures from the coherent 100G DWDM interoperability tests performed in the TeraStream lab. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///100G-dwdm-configuration">router configuration</a>.
 </p>
 
-<div id="outline-container-orgd0b96af" class="outline-2">
-<h2 id="orgd0b96af"><span class="section-number-2">1</span> 1500km fiber test path</h2>
+<div id="outline-container-orgd6a2e00" class="outline-2">
+<h2 id="orgd6a2e00"><span class="section-number-2">1</span> 1500km fiber test path</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 All tests have been completed over a DWDM system in our lab. It can be slightly reconfigured but have been at least 1500km in all the tests.
@@ -68,12 +73,12 @@ In a previous, slightly less carrier-grade, incarnation:
 </div>
 
 
-<div id="outline-container-org5d3e6aa" class="outline-2">
-<h2 id="org5d3e6aa"><span class="section-number-2">2</span> Router DWDM linecards</h2>
+<div id="outline-container-orgfd63c63" class="outline-2">
+<h2 id="orgfd63c63"><span class="section-number-2">2</span> Router DWDM linecards</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org074f610" class="outline-3">
-<h3 id="org074f610"><span class="section-number-3">2.1</span> Juniper</h3>
+<div id="outline-container-org3c8351d" class="outline-3">
+<h3 id="org3c8351d"><span class="section-number-3">2.1</span> Juniper</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 The first Juniper implementation was a pure beta build with the optical parts in a separate chassis and grey 100G-SR10 link back to the MX960. It looks more like a transponder but management happened exclusively from the router and the components could later simply be integrated on a linecard instead of in a separate chassis. I believe four of these were built all in all of which <del>two</del> three (one broke, so we got a replacement) ended up with us.
@@ -96,8 +101,8 @@ We still have one of the first generation "transponders" from Juniper in use as 
 </div>
 </div>
 
-<div id="outline-container-org8a114da" class="outline-3">
-<h3 id="org8a114da"><span class="section-number-3">2.2</span> Nokia</h3>
+<div id="outline-container-orgf9ef50d" class="outline-3">
+<h3 id="orgf9ef50d"><span class="section-number-3">2.2</span> Nokia</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 Nokia, previously Alcatel-Lucent (previously TiMetra), were one of the early partners behind the 100G DWDM standard and were also early with putting together a line card for their 7750 router:
@@ -132,8 +137,8 @@ And installed in router (the one on the left - the right one is for grey optics)
 </div>
 </div>
 
-<div id="outline-container-orgcae626e" class="outline-3">
-<h3 id="orgcae626e"><span class="section-number-3">2.3</span> Cisco</h3>
+<div id="outline-container-orgde3cefa" class="outline-3">
+<h3 id="orgde3cefa"><span class="section-number-3">2.3</span> Cisco</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 Cisco has a couple of different generations. Here's one of the first for the ASR9000 router, which has since been discontinued:
@@ -165,8 +170,8 @@ The Laserbeak card also uses the more modern CFP2-ACO optical modules.
 </div>
 </div>
 
-<div id="outline-container-org3bab0a5" class="outline-3">
-<h3 id="org3bab0a5"><span class="section-number-3">2.4</span> Huawei</h3>
+<div id="outline-container-orgfeb84b2" class="outline-3">
+<h3 id="orgfeb84b2"><span class="section-number-3">2.4</span> Huawei</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 Last but not least we have stack of Huawei routers. The 2-port card in the first two slots is the 100G card:
@@ -176,7 +181,7 @@ Last but not least we have stack of Huawei routers. The 2-port card in the first
 </div>
 </div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-terastream,.html">TeraStream,</a> <a href="tag-100g.html">100G</a> <a href="tag-dwdm.html">DWDM</a> </div></div>
-<div id="postamble" class="status"><div id="archive">
+<div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
 </div></div>
 </body>

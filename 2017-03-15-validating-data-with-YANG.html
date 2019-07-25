@@ -13,9 +13,14 @@
 <link rel="icon" href="static/favicon.ico"></head>
 <body>
 <div id="preamble" class="status">
-<div class="header">
-  <a href="/">Network Automation ramblings by Kristian Larsson</a>
-</div></div>
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
 <div id="content">
 <div class="post-date">15 Mar 2017</div><h1 class="post-title"><a href="2017-03-15-validating-data-with-YANG.html">Validating data with YANG</a></h1>
 <p>
@@ -163,7 +168,7 @@ So that's how you can validate your instance data with a YANG model!
 The <code>&lt;data&gt;</code> tag at the root of the XML document is part of many NETCONF commands. It's also possible to ask it to validate data that is wrapped in other nodes like edit-config, get-reply etc. If you are just trying to write some data on your own and don't want to think about NETCONF you do still have to add that extra <code>&lt;data&gt;</code> tag at the root to get validation to complete&#x2026; it is a bit NETCONF centric after all.
 </p>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
-<div id="postamble" class="status"><div id="archive">
+<div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
 </div></div>
 </body>

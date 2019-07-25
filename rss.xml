@@ -4,13 +4,13 @@
 <title>Network Automation ramblings by Kristian Larsson</title>
 <description>Network Automation ramblings by Kristian Larsson</description>
 <link>https://plajjan.github.io/</link>
-<lastBuildDate>Thu, 25 Jul 2019 13:14:58 +0200</lastBuildDate>
+<lastBuildDate>Thu, 25 Jul 2019 13:48:26 +0200</lastBuildDate>
 <item>
   <title>Writing a Python background worker for Cisco NSO</title>
   <description><![CDATA[
 
-<div id="outline-container-org72bc042" class="outline-2">
-<h2 id="org72bc042"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
+<div id="outline-container-org847cfd9" class="outline-2">
+<h2 id="org847cfd9"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 The <code>create()</code> callback is the primary means of which we get things done in Cisco NSO. NSO is most often used for configuration provisioning and so the <code>create()</code> callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our <code>create()</code> code which renders new configuration output that we can push to devices or other services. In the YANG model we use a <code>servicepoints</code> for attaching a <code>create()</code> callback to a particular subtree in the YANG model. In addition to <code>create()</code> <code>servicepoint</code> we also have <code>actionpoints</code> which allow us to attach our code to YANG actions. Both <code>servicepoint</code> and <code>actionpoint</code> both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the code of the worker to do whatever you need to accomplish. This post is about implementing such a background worker.
@@ -25,8 +25,8 @@ I'll assume you have some experience with Cisco NSO and that you know how to imp
 </p>
 </div>
 
-<div id="outline-container-orge18bfeb" class="outline-3">
-<h3 id="orge18bfeb"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
+<div id="outline-container-org1984165" class="outline-3">
+<h3 id="org1984165"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 The NSO core is written in Erlang and so to run user code written in Python it runs a separate Python VM process that communicates with the NSO core over a number of APIs. It will spawn one Python VM process for each NSO package that wants to run Python code. Thus there is some separation between different packages and given the GIL (Giant Interpreter Lock) in the standard Python interpreter it also allows for a natural way to get past the parallel execution problem, at least to a certain extent, as different NSO packages will run in their own python process.
@@ -38,8 +38,8 @@ Within each Python VM there will be a main thread and then multiple other thread
 </div>
 </div>
 
-<div id="outline-container-orgcf0b2bd" class="outline-3">
-<h3 id="orgcf0b2bd"><span class="section-number-3">1.2</span> A naive approach</h3>
+<div id="outline-container-org191ef91" class="outline-3">
+<h3 id="org191ef91"><span class="section-number-3">1.2</span> A naive approach</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 Okay, so let's get started. Let's try writing a background worker. We'll start by making a new package and we'll start off from the python service skeleton.
@@ -247,8 +247,8 @@ Et voilà! It's working.
 </div>
 </div>
 
-<div id="outline-container-orgb0c0ce0" class="outline-3">
-<h3 id="orgb0c0ce0"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
+<div id="outline-container-orged57afe" class="outline-3">
+<h3 id="orged57afe"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 <code>request packages reload</code> is the "standard" way of loading in new packages, including loading new packages, loading a newer version of an existing already loaded package as well as unloading package (in which case you have to also provide the <code>force</code> as NCS will complain over the removal of a namespace, which it thinks is a mistake). It covers all changes like config template changes, YANG model changes and code changes. It is however quite slow and if you have a lot of packages you will soon be rather annoyed over the time it takes (around 2 minutes with the packages we usually have loaded in my work environment). Code changes are perhaps the most common changes during development as you are changing lines, wanting to get them loaded immediately and then run your code again. There is a <code>redeploy</code> command for exactly this purpose which can redeploy the code for a single package. In our case, the package is called <code>bgworker</code> and so we can redeploy the code by running <code>request packages package bgworker redeploy</code>. It normally runs in a second or so.
@@ -509,8 +509,8 @@ And looking in the log <code>ncs-python-vm-bgworker-log</code> (notice the packa
 </div>
 
 
-<div id="outline-container-org60c0ecf" class="outline-3">
-<h3 id="org60c0ecf"><span class="section-number-3">1.4</span> Back to killable threads</h3>
+<div id="outline-container-org438cef7" class="outline-3">
+<h3 id="org438cef7"><span class="section-number-3">1.4</span> Back to killable threads</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 Now that we've opened a transaction towards CDB there is one issue we will inevitable face. The running datastore has a global lock and while there are no locks on the operational datastore, applying a transaction can still take some time. For example, in a HA cluster the operational data is synchronously replicated and if other nodes are busy or there are other things ahead of us queued up, it can take some time to apply a transaction. Remember that we have to exit in three seconds. The way we structured our code, we read the <code>self._exit_flag</code> waiting for up to a second for any values to happen, then we open the transaction and write some data and then we come back to looking at our exit flag again. If we spend more than three seconds in the transaction part of the code we won't observe the exit flag and we will fail to exit in three seconds.
@@ -530,8 +530,8 @@ Also, David Beazley did an interesting talk on killable threads <a href="https:/
 </div>
 </div>
 
-<div id="outline-container-org1802565" class="outline-3">
-<h3 id="org1802565"><span class="section-number-3">1.5</span> multiprocessing</h3>
+<div id="outline-container-org437e31b" class="outline-3">
+<h3 id="org437e31b"><span class="section-number-3">1.5</span> multiprocessing</h3>
 <div class="outline-text-3" id="text-1-5">
 <p>
 Python has a very convenient library called <code>multiprocessing</code> which is close to a drop in replacement for the threading library but as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
@@ -586,8 +586,8 @@ well, I changed the log message slightly so I'd actually see it was from the bac
 </div>
 </div>
 
-<div id="outline-container-org322a434" class="outline-3">
-<h3 id="org322a434"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
+<div id="outline-container-org4bd79ec" class="outline-3">
+<h3 id="org4bd79ec"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
 <div class="outline-text-3" id="text-1-6">
 <p>
 What happens if something goes wrong with our worker process? Let's try.
@@ -650,8 +650,8 @@ Lo and behold, it did. After this, nothing more happens as our process is dead. 
 </div>
 </div>
 
-<div id="outline-container-org1516733" class="outline-3">
-<h3 id="org1516733"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
+<div id="outline-container-orgbb14c19" class="outline-3">
+<h3 id="orgbb14c19"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
 <div class="outline-text-3" id="text-1-7">
 <p>
 Since you are reading this you probably haven't implemented a background worker yet so let me share some advice - add an <b>off</b> button. When you are troubleshooting your system it can be rather difficult with lots of things going on, triggered by these background workers. Having multiple background workers both of different type and multiple instances of the same type exacerbate the issue. With an off button we can easily turn them off and troubleshoot the interesting parts. It might seem crude, and I think it is, but in lack of better instrumentation in NCS, it is the best we have.
@@ -685,8 +685,8 @@ The most intuitive way of doing this, and the way I've done it so far, is to sim
 </div>
 </div>
 
-<div id="outline-container-org76c9e96" class="outline-3">
-<h3 id="org76c9e96"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
+<div id="outline-container-org9c66673" class="outline-3">
+<h3 id="org9c66673"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
 <div class="outline-text-3" id="text-1-8">
 <p>
 Finally, we have to react to High Availability (HA) events. Depending on which type of worker we are implementing we might want different behaviour. I've so far only had to deal with background workers that write configuration and since that can only be done on the master of a HA system, our background worker should only run on the master node. If you on the other hand are operating on some other data or perhaps not writing anything to CDB, it is possible to still run the worker on all nodes.
@@ -762,8 +762,8 @@ Another problem around HA event monitoring is that the <code>/ncs:ncs-state/ha</
 </div>
 </div>
 
-<div id="outline-container-org995fb6b" class="outline-3">
-<h3 id="org995fb6b"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
+<div id="outline-container-orgf8a9bfd" class="outline-3">
+<h3 id="orgf8a9bfd"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
 <div class="outline-text-3" id="text-1-9">
 <p>
 Okay, so we've gathered all our requirements and are ready to write, as we will see, the Rube Goldberg of NSO background worker process frameworks!
@@ -1937,8 +1937,8 @@ There are probably all sorts of use cases for automating various git operations 
 </p>
 
 
-<div id="outline-container-orga637af3" class="outline-2">
-<h2 id="orga637af3"><span class="section-number-2">1</span> Automatic rebase</h2>
+<div id="outline-container-orgb9c8748" class="outline-2">
+<h2 id="orgb9c8748"><span class="section-number-2">1</span> Automatic rebase</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 We have some git repos with code that we receive from vendors, who we can think of as our <code>upstream</code>. We don't actually share a git repo with the vendor but rather we get a tar ball every now and then. The tar ball is extracted into a git repository, on the <code>master</code> branch which thus tracks the software as it is received from upstream. In a perfect world the software we receive would be feature complete and bug free and so we would be done, but that's usually not the case. We do find bugs and if they are blocking we might decide to implement a patch to fix them ourselves. The same is true for new features where we might not want to wait for the vendor to implement it.
@@ -2132,8 +2132,8 @@ Anyway, we'll be checking out a new git repository where we'll do our work, then
 </div>
 
 
-<div id="outline-container-org8f887d7" class="outline-2">
-<h2 id="org8f887d7"><span class="section-number-2">2</span> Automatic merge requests</h2>
+<div id="outline-container-orgabe47ef" class="outline-2">
+<h2 id="orgabe47ef"><span class="section-number-2">2</span> Automatic merge requests</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 All the repositories I mentioned in the previous section are NEDs, a form of driver for how to communicate with a certain type of device, for Cisco NSO (a network orchestration system). We package up Cisco NSO, together with these NEDs and our own service code, in a container image. The build of that image is performed in CI and we use a repository called <code>nso-ts</code> to control that work.
@@ -2204,8 +2204,8 @@ What we end up with is that whenever there is a new version of a NED, a merge re
 </div>
 
 
-<div id="outline-container-orgd6efa88" class="outline-2">
-<h2 id="orgd6efa88"><span class="section-number-2">3</span> Getting fancy</h2>
+<div id="outline-container-orgfb5621b" class="outline-2">
+<h2 id="orgfb5621b"><span class="section-number-2">3</span> Getting fancy</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 While automatically opening an MR is sweet&#x2026; we can do <del>better</del> fancier. Our <code>nso-ts</code> repository is based on Cisco NSO (Tail-F NCS), or actually the <code>nso-ts</code> docker image is based on a <code>cisco-nso</code> docker image that we build in a separate repository. We put the version of NSO as the tag of the <code>cisco-nso</code> docker image, so <code>cisco-nso:4.2.3</code> means Cisco NSO 4.2.3. This is what the <code>nso-ts</code> Dockerfile will use in its <code>FROM</code> line.
@@ -2272,8 +2272,8 @@ As this involves a bit more code I've put the relevant files in a <a href="https
 </div>
 </div>
 
-<div id="outline-container-org1b73a0e" class="outline-2">
-<h2 id="org1b73a0e"><span class="section-number-2">4</span> This is the end</h2>
+<div id="outline-container-org42f3977" class="outline-2">
+<h2 id="org42f3977"><span class="section-number-2">4</span> This is the end</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 If you are reading this, chances are you already have your reasons for why you want to automate some git operation. Hopefully I've provided some inspiration for how to do it.
@@ -2446,8 +2446,8 @@ The <code>&lt;data&gt;</code> tag at the root of the XML document is part of man
   <title>Interoperable 100G DWDM equipment</title>
   <description><![CDATA[
 
-<div id="outline-container-org3175a11" class="outline-2">
-<h2 id="org3175a11"><span class="section-number-2">1</span> Interoperable coherent 100G DWDM</h2>
+<div id="outline-container-orgcbb1e4e" class="outline-2">
+<h2 id="orgcbb1e4e"><span class="section-number-2">1</span> Interoperable coherent 100G DWDM</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 This is a non-comprehensive list of interoperable coherent 100G DWDM equipment.
@@ -2486,8 +2486,8 @@ This is a non-comprehensive list of interoperable coherent 100G DWDM equipment.
 </div>
 
 
-<div id="outline-container-org2916556" class="outline-2">
-<h2 id="org2916556"><span class="section-number-2">2</span> Coherent 100G DWDM without interop</h2>
+<div id="outline-container-org2330904" class="outline-2">
+<h2 id="org2330904"><span class="section-number-2">2</span> Coherent 100G DWDM without interop</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 This is a non-comprehensive list of equipment that supports coherent 100G DWDM but does <b><b>NOT</b></b> support standardised FEC and mapping:
@@ -2545,8 +2545,8 @@ This is a non-comprehensive list of equipment that supports coherent 100G DWDM b
 These are some pictures from the coherent 100G DWDM interoperability tests performed in the TeraStream lab. Read the <a href="file:///interoperable-100G">full story</a> and look at the <a href="file:///100G-dwdm-configuration">router configuration</a>.
 </p>
 
-<div id="outline-container-orgd0b96af" class="outline-2">
-<h2 id="orgd0b96af"><span class="section-number-2">1</span> 1500km fiber test path</h2>
+<div id="outline-container-orgd6a2e00" class="outline-2">
+<h2 id="orgd6a2e00"><span class="section-number-2">1</span> 1500km fiber test path</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 All tests have been completed over a DWDM system in our lab. It can be slightly reconfigured but have been at least 1500km in all the tests.
@@ -2591,12 +2591,12 @@ In a previous, slightly less carrier-grade, incarnation:
 </div>
 
 
-<div id="outline-container-org5d3e6aa" class="outline-2">
-<h2 id="org5d3e6aa"><span class="section-number-2">2</span> Router DWDM linecards</h2>
+<div id="outline-container-orgfd63c63" class="outline-2">
+<h2 id="orgfd63c63"><span class="section-number-2">2</span> Router DWDM linecards</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org074f610" class="outline-3">
-<h3 id="org074f610"><span class="section-number-3">2.1</span> Juniper</h3>
+<div id="outline-container-org3c8351d" class="outline-3">
+<h3 id="org3c8351d"><span class="section-number-3">2.1</span> Juniper</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 The first Juniper implementation was a pure beta build with the optical parts in a separate chassis and grey 100G-SR10 link back to the MX960. It looks more like a transponder but management happened exclusively from the router and the components could later simply be integrated on a linecard instead of in a separate chassis. I believe four of these were built all in all of which <del>two</del> three (one broke, so we got a replacement) ended up with us.
@@ -2619,8 +2619,8 @@ We still have one of the first generation "transponders" from Juniper in use as 
 </div>
 </div>
 
-<div id="outline-container-org8a114da" class="outline-3">
-<h3 id="org8a114da"><span class="section-number-3">2.2</span> Nokia</h3>
+<div id="outline-container-orgf9ef50d" class="outline-3">
+<h3 id="orgf9ef50d"><span class="section-number-3">2.2</span> Nokia</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 Nokia, previously Alcatel-Lucent (previously TiMetra), were one of the early partners behind the 100G DWDM standard and were also early with putting together a line card for their 7750 router:
@@ -2655,8 +2655,8 @@ And installed in router (the one on the left - the right one is for grey optics)
 </div>
 </div>
 
-<div id="outline-container-orgcae626e" class="outline-3">
-<h3 id="orgcae626e"><span class="section-number-3">2.3</span> Cisco</h3>
+<div id="outline-container-orgde3cefa" class="outline-3">
+<h3 id="orgde3cefa"><span class="section-number-3">2.3</span> Cisco</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 Cisco has a couple of different generations. Here's one of the first for the ASR9000 router, which has since been discontinued:
@@ -2688,8 +2688,8 @@ The Laserbeak card also uses the more modern CFP2-ACO optical modules.
 </div>
 </div>
 
-<div id="outline-container-org3bab0a5" class="outline-3">
-<h3 id="org3bab0a5"><span class="section-number-3">2.4</span> Huawei</h3>
+<div id="outline-container-orgfeb84b2" class="outline-3">
+<h3 id="orgfeb84b2"><span class="section-number-3">2.4</span> Huawei</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 Last but not least we have stack of Huawei routers. The 2-port card in the first two slots is the 100G card:
@@ -2716,8 +2716,8 @@ This is how you configure your shiny new 100G router port for interoperability a
 The interface number is naturally an example and you need to fill in yours. The same is true for channel / frequency / wavelength and output power. I have however shown a configuration here that is the equivalent for each platform, i.e. we use a frequency if 193.4THz, which is channel 34 on Nokia, channel 54 on Huawei and wavelength 1550.12nm on Juniper. Output power is -10dBm but this is expressed in different ways, some platforms use dBm while other work in units of 0.1 dBm which means that -10dBm is equivalent to a value of -100.
 </p>
 
-<div id="outline-container-orgb5c536d" class="outline-2">
-<h2 id="orgb5c536d"><span class="section-number-2">1</span> Cisco</h2>
+<div id="outline-container-org6609378" class="outline-2">
+<h2 id="org6609378"><span class="section-number-2">1</span> Cisco</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Cisco IOS XR configuration for the ASR9k. Already XML formatted so you can punt
@@ -2750,8 +2750,8 @@ it over the NETCONF interface and have your router configured!
 </div>
 </div>
 
-<div id="outline-container-orga5bb261" class="outline-2">
-<h2 id="orga5bb261"><span class="section-number-2">2</span> Huawei</h2>
+<div id="outline-container-org4ab15e3" class="outline-2">
+<h2 id="org4ab15e3"><span class="section-number-2">2</span> Huawei</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 CLI conf for Huawei since their NETCONF interface is currently an abomination.
@@ -2770,8 +2770,8 @@ interface 100GE 1/0/0
 </div>
 </div>
 
-<div id="outline-container-org7132c4c" class="outline-2">
-<h2 id="org7132c4c"><span class="section-number-2">3</span> Juniper</h2>
+<div id="outline-container-orge2f2014" class="outline-2">
+<h2 id="orge2f2014"><span class="section-number-2">3</span> Juniper</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can send over a NETCONF interface!
@@ -2799,8 +2799,8 @@ Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can se
 </div>
 </div>
 
-<div id="outline-container-org3d72c05" class="outline-2">
-<h2 id="org3d72c05"><span class="section-number-2">4</span> Nokia</h2>
+<div id="outline-container-org3532763" class="outline-2">
+<h2 id="org3532763"><span class="section-number-2">4</span> Nokia</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Here's how to configure a port on Nokia SROS. "interop2" is the magic name for the interoperable FEC and bit mapping:
@@ -2862,8 +2862,8 @@ coherent 100G DWDM.
 <i>You can skip directly to the <a href="file:///pictures-from-100G-dwdm-interop-lab">pretty pictures from our lab</a> or look at how to <a href="file:///100G-dwdm-configuration">configure your router interfaces for interop</a>!</i>
 </p>
 
-<div id="outline-container-org6fb740a" class="outline-2">
-<h2 id="org6fb740a"><span class="section-number-2">1</span> A word on optical line level codings</h2>
+<div id="outline-container-orgccc638b" class="outline-2">
+<h2 id="orgccc638b"><span class="section-number-2">1</span> A word on optical line level codings</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 DP-QPSK is the (de-facto) standard for coherent 100G DWDM. All was fun and games in the days of 10G as OOK (On-Off Keying) was both cheap and good enough for long haul optics.
@@ -2879,8 +2879,8 @@ With 100G people had learnt the lesson. Coherent was the natural choice and by s
 </div>
 </div>
 
-<div id="outline-container-org1956546" class="outline-2">
-<h2 id="org1956546"><span class="section-number-2">2</span> The FEC and mapping mess</h2>
+<div id="outline-container-org05323e5" class="outline-2">
+<h2 id="org05323e5"><span class="section-number-2">2</span> The FEC and mapping mess</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Unfortunately, using a few standardised components doesn't lead to interoperability. Here's a diagram of a coherent 100G DWDM CFP module. It's a slightly silly diagram as it shows the signal being transmitted an received by the same module but it illustrates the components both on the transmit and receive side.
@@ -2900,8 +2900,8 @@ Enter <a href="file:///assets/docs/standards/100G-long-haul.pdf"><i>the standard
 </div>
 </div>
 
-<div id="outline-container-orgc5c5c39" class="outline-2">
-<h2 id="orgc5c5c39"><span class="section-number-2">3</span> Hard Decision "Staircase" Forward Error Correction</h2>
+<div id="outline-container-org48012de" class="outline-2">
+<h2 id="org48012de"><span class="section-number-2">3</span> Hard Decision "Staircase" Forward Error Correction</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <i>The standard</i> describes a strong hard decision FEC algorithm, known as "Staircase FEC", designed by Cortina Networks (now part of Inphi).
@@ -2930,8 +2930,8 @@ Only 20µs of latency is introduced by the Staircase FEC and it has a very low e
 </div>
 
 
-<div id="outline-container-org232978c" class="outline-2">
-<h2 id="org232978c"><span class="section-number-2">4</span> Standardised framing and bit mapping</h2>
+<div id="outline-container-orgc3e7bc4" class="outline-2">
+<h2 id="orgc3e7bc4"><span class="section-number-2">4</span> Standardised framing and bit mapping</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 A FEC operates on block of bits and does not really need to understand the meaning of those bits, which is where the framing part comes in, in this case a standard G.709 OTU4 framing. The framing defines the start and end of our payload and includes various "overhead bits" which can be used to signal defects.
@@ -2944,8 +2944,8 @@ The mapping of the Staircase FEC's block of bits to G.709 OTUk frames is also de
 </div>
 
 
-<div id="outline-container-org9d608f0" class="outline-2">
-<h2 id="org9d608f0"><span class="section-number-2">5</span> TeraStream and 100G DWDM</h2>
+<div id="outline-container-orgca49b0f" class="outline-2">
+<h2 id="orgca49b0f"><span class="section-number-2">5</span> TeraStream and 100G DWDM</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Interoperable coherent 100G DWDM has been a corner stone of the TeraStream design and a requirement, based on this standard, to the vendors from day one.
@@ -2968,8 +2968,8 @@ It's been an arduous task with various technical issues delaying the process. Fo
 </div>
 
 
-<div id="outline-container-org89b22b9" class="outline-2">
-<h2 id="org89b22b9"><span class="section-number-2">6</span> Now what?</h2>
+<div id="outline-container-orgff3a657" class="outline-2">
+<h2 id="orgff3a657"><span class="section-number-2">6</span> Now what?</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 <b>So now we have interoperable 100G DWDM, now what? What do we do with it?</b>
@@ -2998,8 +2998,8 @@ Deutsche Telekom is also part of the Telecom Infrastructure Project (TIP) initia
 </div>
 
 
-<div id="outline-container-org1998ced" class="outline-2">
-<h2 id="org1998ced"><span class="section-number-2">7</span> 100G peering</h2>
+<div id="outline-container-orgbe31152" class="outline-2">
+<h2 id="orgbe31152"><span class="section-number-2">7</span> 100G peering</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 The vast majority of peering links today are at 10G speed and using grey optics. Upgrading to 100G to meet increasing bandwidth demands presents challenges on the optical layer. While 10G is available as LR (10km), ER (40km) and ZR (80km), the selection of grey 100G optics is much more limited.
@@ -3020,8 +3020,8 @@ TeraStream is using 100G DWDM on peering links to external partners - a feat tha
 </div>
 
 
-<div id="outline-container-org8388a14" class="outline-2">
-<h2 id="org8388a14"><span class="section-number-2">8</span> Are you ready?</h2>
+<div id="outline-container-org34f2fd7" class="outline-2">
+<h2 id="org34f2fd7"><span class="section-number-2">8</span> Are you ready?</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 Make sure you <b>never buy</b> a 100G linecard that <b>does not</b> support interoperability!
@@ -3065,8 +3065,8 @@ If you've written YANG models yourself you might have ended up in the situation 
 How do you keep a backwards compatible YANG modeled API while allowing for changes?
 </p>
 
-<div id="outline-container-orga1f6789" class="outline-2">
-<h2 id="orga1f6789"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
+<div id="outline-container-orgb4692ec" class="outline-2">
+<h2 id="orgb4692ec"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 YANG is defined in RFC6020, which has a <a href="https://tools.ietf.org/html/rfc6020#section-10">section</a> on what changes are allowed between revisions of a YANG model. 
@@ -3087,8 +3087,8 @@ I won't list all the rules here but they essentially boil down to only allowing 
 </div>
 
 
-<div id="outline-container-org4379a2f" class="outline-2">
-<h2 id="org4379a2f"><span class="section-number-2">2</span> Offenders</h2>
+<div id="outline-container-orgba17c30" class="outline-2">
+<h2 id="orgba17c30"><span class="section-number-2">2</span> Offenders</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 I think one of the more clear examples of YANG compatibility breakage is Cisco's IOS XR as can be witnessed by the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr/">XR YANG models published on GitHub.</a>
@@ -3163,8 +3163,8 @@ It's rather ironic how two Cisco products aren't compatible with each other whil
 </div>
 
 
-<div id="outline-container-orgdd71411" class="outline-2">
-<h2 id="orgdd71411"><span class="section-number-2">3</span> Solution?</h2>
+<div id="outline-container-org01dab6d" class="outline-2">
+<h2 id="org01dab6d"><span class="section-number-2">3</span> Solution?</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The simple solution is of course that Cisco stops breaking YANG rules. However, I can understand it's difficult with their development process and sometimes you just have to make backwards incompatible changes. Besides, it's an industry wide problem and not just related to Cisco.
@@ -3177,8 +3177,8 @@ Let's first look at semver and then how we might merge the concept of semver wit
 </div>
 
 
-<div id="outline-container-orgddd8285" class="outline-2">
-<h2 id="orgddd8285"><span class="section-number-2">4</span> Semantic versioning</h2>
+<div id="outline-container-org2040819" class="outline-2">
+<h2 id="org2040819"><span class="section-number-2">4</span> Semantic versioning</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <a href="http://semver.org/">Semantic versioning</a> (semver for short) is a fairly widely accepted versioning scheme where the version is described as MAJOR.MINOR.PATCH. In essence, increment the:
@@ -3197,8 +3197,8 @@ YANG however doesn't follow semver but I believe the same concept can be applied
 </div>
 
 
-<div id="outline-container-orgbef62a7" class="outline-2">
-<h2 id="orgbef62a7"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
+<div id="outline-container-org74ffb49" class="outline-2">
+<h2 id="org74ffb49"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 The suggestion is simple:
@@ -3240,8 +3240,8 @@ maintaining backwards compatibility</li>
 </div>
 </div>
 
-<div id="outline-container-org30f377c" class="outline-2">
-<h2 id="org30f377c"><span class="section-number-2">6</span> An example</h2>
+<div id="outline-container-org9021a40" class="outline-2">
+<h2 id="org9021a40"><span class="section-number-2">6</span> An example</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Let's say we have a module we wish to name <code>foo</code>. The first public release of it, keeping in line with semver, is v1.0.0. The module would thus be called <code>foo-v1</code> and with a namespace that also includes the <code>-v1</code> part, like <code>http://example.com/ns/yang/foo-v1</code>.
@@ -3265,8 +3265,8 @@ Further bug fixes and minor feature additions can be made to both, or if you cho
 </div>
 </div>
 
-<div id="outline-container-orgd6c894e" class="outline-2">
-<h2 id="orgd6c894e"><span class="section-number-2">7</span> YANG revision label</h2>
+<div id="outline-container-org0bba4ca" class="outline-2">
+<h2 id="org0bba4ca"><span class="section-number-2">7</span> YANG revision label</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 The "label" used in the revision statement in YANG models is an ISO 8601 date. This could potentially be replaced with a semver version but I don't believe it obviates the need to put the major version in the model name. If a backwards incompatible change is made we might want to support both MAJOR version 1 and 2 at the same time and thus need to load two versions of the model. How are we to do that if both versions have the same name? How do we store two different YANG modules on disk if the filename doesn't reflect the MAJOR version?
@@ -3274,8 +3274,8 @@ The "label" used in the revision statement in YANG models is an ISO 8601 date. T
 </div>
 </div>
 
-<div id="outline-container-org2493e89" class="outline-2">
-<h2 id="org2493e89"><span class="section-number-2">8</span> Thoughts?</h2>
+<div id="outline-container-org878b5d2" class="outline-2">
+<h2 id="org878b5d2"><span class="section-number-2">8</span> Thoughts?</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 There are probably more aspects to consider associated with this suggestion. For example, YANG models can refer to each other, through imports or submodules. If a large number of models are "intertwined" through reference it might not be apparent which of these models can or should be upgraded in a MAJOR version bump.
@@ -3505,8 +3505,8 @@ I'm not just talking about people using the Internet to a greater extent so that
 Some argue that operators should separate important traffic, such as VoIP, so that it is still possible to call 112 or 911 in the event of DDoS attacks or other issues with an Internet network. I fundamentally don't believe in this approach. Technical evolution and market economy pushes operators to converge on the Internet as the single bearer of all services. Gone are the days when there was a dedicated network for telephony and another for TV. Operators are today, or will shortly be, using the same IP network to carry all those services together with Internet. There's also nothing to say that those services wouldn't be attacked just because they are moved to separate infrastructure. Compare it to IPX, which had some delusional concept of being a secure network, as if there was an evil bit. Nonsense.
 </p>
 
-<div id="outline-container-org268b038" class="outline-2">
-<h2 id="org268b038"><span class="section-number-2">1</span> Internet &gt; *</h2>
+<div id="outline-container-org8ccbba8" class="outline-2">
+<h2 id="org8ccbba8"><span class="section-number-2">1</span> Internet &gt; *</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 There are examples of when the Internet actually works better than classic networks, like during the recent events in Belgium when Alexander De Croo, deputy prime minister of Belgium, tweeted that standard mobile connections in Brussels were overloaded as a result of people trying to reach one another following the attacks. De Croo urged people to avoid using standard services like phone calls and text messages, saying that residents should use Facebook, WhatsApp and Twitter via Wi-Fi connections instead.

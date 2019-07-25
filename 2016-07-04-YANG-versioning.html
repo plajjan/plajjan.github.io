@@ -13,9 +13,14 @@
 <link rel="icon" href="static/favicon.ico"></head>
 <body>
 <div id="preamble" class="status">
-<div class="header">
-  <a href="/">Network Automation ramblings by Kristian Larsson</a>
-</div></div>
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
 <div id="content">
 <div class="post-date">04 Jul 2016</div><h1 class="post-title"><a href="2016-07-04-YANG-versioning.html">YANG versioning and backwards (in)compatibility</a></h1>
 <div class="abstract">
@@ -37,8 +42,8 @@ If you've written YANG models yourself you might have ended up in the situation 
 How do you keep a backwards compatible YANG modeled API while allowing for changes?
 </p>
 
-<div id="outline-container-orga1f6789" class="outline-2">
-<h2 id="orga1f6789"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
+<div id="outline-container-orgb4692ec" class="outline-2">
+<h2 id="orgb4692ec"><span class="section-number-2">1</span> YANG revision compatibility rules</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 YANG is defined in RFC6020, which has a <a href="https://tools.ietf.org/html/rfc6020#section-10">section</a> on what changes are allowed between revisions of a YANG model. 
@@ -59,8 +64,8 @@ I won't list all the rules here but they essentially boil down to only allowing 
 </div>
 
 
-<div id="outline-container-org4379a2f" class="outline-2">
-<h2 id="org4379a2f"><span class="section-number-2">2</span> Offenders</h2>
+<div id="outline-container-orgba17c30" class="outline-2">
+<h2 id="orgba17c30"><span class="section-number-2">2</span> Offenders</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 I think one of the more clear examples of YANG compatibility breakage is Cisco's IOS XR as can be witnessed by the <a href="https://github.com/YangModels/yang/tree/master/vendor/cisco/xr/">XR YANG models published on GitHub.</a>
@@ -135,8 +140,8 @@ It's rather ironic how two Cisco products aren't compatible with each other whil
 </div>
 
 
-<div id="outline-container-orgdd71411" class="outline-2">
-<h2 id="orgdd71411"><span class="section-number-2">3</span> Solution?</h2>
+<div id="outline-container-org01dab6d" class="outline-2">
+<h2 id="org01dab6d"><span class="section-number-2">3</span> Solution?</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The simple solution is of course that Cisco stops breaking YANG rules. However, I can understand it's difficult with their development process and sometimes you just have to make backwards incompatible changes. Besides, it's an industry wide problem and not just related to Cisco.
@@ -149,8 +154,8 @@ Let's first look at semver and then how we might merge the concept of semver wit
 </div>
 
 
-<div id="outline-container-orgddd8285" class="outline-2">
-<h2 id="orgddd8285"><span class="section-number-2">4</span> Semantic versioning</h2>
+<div id="outline-container-org2040819" class="outline-2">
+<h2 id="org2040819"><span class="section-number-2">4</span> Semantic versioning</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 <a href="http://semver.org/">Semantic versioning</a> (semver for short) is a fairly widely accepted versioning scheme where the version is described as MAJOR.MINOR.PATCH. In essence, increment the:
@@ -169,8 +174,8 @@ YANG however doesn't follow semver but I believe the same concept can be applied
 </div>
 
 
-<div id="outline-container-orgbef62a7" class="outline-2">
-<h2 id="orgbef62a7"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
+<div id="outline-container-org74ffb49" class="outline-2">
+<h2 id="org74ffb49"><span class="section-number-2">5</span> YANG + semver = &lt;3 ?</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 The suggestion is simple:
@@ -212,8 +217,8 @@ maintaining backwards compatibility</li>
 </div>
 </div>
 
-<div id="outline-container-org30f377c" class="outline-2">
-<h2 id="org30f377c"><span class="section-number-2">6</span> An example</h2>
+<div id="outline-container-org9021a40" class="outline-2">
+<h2 id="org9021a40"><span class="section-number-2">6</span> An example</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Let's say we have a module we wish to name <code>foo</code>. The first public release of it, keeping in line with semver, is v1.0.0. The module would thus be called <code>foo-v1</code> and with a namespace that also includes the <code>-v1</code> part, like <code>http://example.com/ns/yang/foo-v1</code>.
@@ -237,8 +242,8 @@ Further bug fixes and minor feature additions can be made to both, or if you cho
 </div>
 </div>
 
-<div id="outline-container-orgd6c894e" class="outline-2">
-<h2 id="orgd6c894e"><span class="section-number-2">7</span> YANG revision label</h2>
+<div id="outline-container-org0bba4ca" class="outline-2">
+<h2 id="org0bba4ca"><span class="section-number-2">7</span> YANG revision label</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 The "label" used in the revision statement in YANG models is an ISO 8601 date. This could potentially be replaced with a semver version but I don't believe it obviates the need to put the major version in the model name. If a backwards incompatible change is made we might want to support both MAJOR version 1 and 2 at the same time and thus need to load two versions of the model. How are we to do that if both versions have the same name? How do we store two different YANG modules on disk if the filename doesn't reflect the MAJOR version?
@@ -246,8 +251,8 @@ The "label" used in the revision statement in YANG models is an ISO 8601 date. T
 </div>
 </div>
 
-<div id="outline-container-org2493e89" class="outline-2">
-<h2 id="org2493e89"><span class="section-number-2">8</span> Thoughts?</h2>
+<div id="outline-container-org878b5d2" class="outline-2">
+<h2 id="org878b5d2"><span class="section-number-2">8</span> Thoughts?</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 There are probably more aspects to consider associated with this suggestion. For example, YANG models can refer to each other, through imports or submodules. If a large number of models are "intertwined" through reference it might not be apparent which of these models can or should be upgraded in a MAJOR version bump.
@@ -263,7 +268,7 @@ Incidentally, just a few days after I wrote the first draft of this post I notic
 </div>
 </div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
-<div id="postamble" class="status"><div id="archive">
+<div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
 </div></div>
 </body>
