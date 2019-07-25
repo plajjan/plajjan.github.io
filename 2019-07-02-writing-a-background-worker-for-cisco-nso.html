@@ -10,7 +10,8 @@
 <meta name="author" content="Kristian Larsson">
 <meta name="referrer" content="no-referrer">
 <link href= "css/style.css" rel="stylesheet" type="text/css" />
-<link rel="icon" href="static/favicon.ico"></head>
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
 <body>
 <div id="preamble" class="status">
 <div class='header'>
@@ -24,8 +25,8 @@
 <div id="content">
 <div class="post-date">25 Jul 2019</div><h1 class="post-title"><a href="2019-07-02-writing-a-background-worker-for-cisco-nso.html">Writing a Python background worker for Cisco NSO</a></h1>
 
-<div id="outline-container-org847cfd9" class="outline-2">
-<h2 id="org847cfd9"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
+<div id="outline-container-org45bc90c" class="outline-2">
+<h2 id="org45bc90c"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 The <code>create()</code> callback is the primary means of which we get things done in Cisco NSO. NSO is most often used for configuration provisioning and so the <code>create()</code> callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our <code>create()</code> code which renders new configuration output that we can push to devices or other services. In the YANG model we use a <code>servicepoints</code> for attaching a <code>create()</code> callback to a particular subtree in the YANG model. In addition to <code>create()</code> <code>servicepoint</code> we also have <code>actionpoints</code> which allow us to attach our code to YANG actions. Both <code>servicepoint</code> and <code>actionpoint</code> both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the code of the worker to do whatever you need to accomplish. This post is about implementing such a background worker.
@@ -40,8 +41,8 @@ I'll assume you have some experience with Cisco NSO and that you know how to imp
 </p>
 </div>
 
-<div id="outline-container-org1984165" class="outline-3">
-<h3 id="org1984165"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
+<div id="outline-container-org1d7ca8f" class="outline-3">
+<h3 id="org1d7ca8f"><span class="section-number-3">1.1</span> Anatomy of the Python VM</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 The NSO core is written in Erlang and so to run user code written in Python it runs a separate Python VM process that communicates with the NSO core over a number of APIs. It will spawn one Python VM process for each NSO package that wants to run Python code. Thus there is some separation between different packages and given the GIL (Giant Interpreter Lock) in the standard Python interpreter it also allows for a natural way to get past the parallel execution problem, at least to a certain extent, as different NSO packages will run in their own python process.
@@ -53,8 +54,8 @@ Within each Python VM there will be a main thread and then multiple other thread
 </div>
 </div>
 
-<div id="outline-container-org191ef91" class="outline-3">
-<h3 id="org191ef91"><span class="section-number-3">1.2</span> A naive approach</h3>
+<div id="outline-container-org517b898" class="outline-3">
+<h3 id="org517b898"><span class="section-number-3">1.2</span> A naive approach</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 Okay, so let's get started. Let's try writing a background worker. We'll start by making a new package and we'll start off from the python service skeleton.
@@ -262,8 +263,8 @@ Et voilà! It's working.
 </div>
 </div>
 
-<div id="outline-container-orged57afe" class="outline-3">
-<h3 id="orged57afe"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
+<div id="outline-container-org9cf2c27" class="outline-3">
+<h3 id="org9cf2c27"><span class="section-number-3">1.3</span> Reacting to NCS package events like reload and redeploy</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 <code>request packages reload</code> is the "standard" way of loading in new packages, including loading new packages, loading a newer version of an existing already loaded package as well as unloading package (in which case you have to also provide the <code>force</code> as NCS will complain over the removal of a namespace, which it thinks is a mistake). It covers all changes like config template changes, YANG model changes and code changes. It is however quite slow and if you have a lot of packages you will soon be rather annoyed over the time it takes (around 2 minutes with the packages we usually have loaded in my work environment). Code changes are perhaps the most common changes during development as you are changing lines, wanting to get them loaded immediately and then run your code again. There is a <code>redeploy</code> command for exactly this purpose which can redeploy the code for a single package. In our case, the package is called <code>bgworker</code> and so we can redeploy the code by running <code>request packages package bgworker redeploy</code>. It normally runs in a second or so.
@@ -524,8 +525,8 @@ And looking in the log <code>ncs-python-vm-bgworker-log</code> (notice the packa
 </div>
 
 
-<div id="outline-container-org438cef7" class="outline-3">
-<h3 id="org438cef7"><span class="section-number-3">1.4</span> Back to killable threads</h3>
+<div id="outline-container-org82b0c52" class="outline-3">
+<h3 id="org82b0c52"><span class="section-number-3">1.4</span> Back to killable threads</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 Now that we've opened a transaction towards CDB there is one issue we will inevitable face. The running datastore has a global lock and while there are no locks on the operational datastore, applying a transaction can still take some time. For example, in a HA cluster the operational data is synchronously replicated and if other nodes are busy or there are other things ahead of us queued up, it can take some time to apply a transaction. Remember that we have to exit in three seconds. The way we structured our code, we read the <code>self._exit_flag</code> waiting for up to a second for any values to happen, then we open the transaction and write some data and then we come back to looking at our exit flag again. If we spend more than three seconds in the transaction part of the code we won't observe the exit flag and we will fail to exit in three seconds.
@@ -545,8 +546,8 @@ Also, David Beazley did an interesting talk on killable threads <a href="https:/
 </div>
 </div>
 
-<div id="outline-container-org437e31b" class="outline-3">
-<h3 id="org437e31b"><span class="section-number-3">1.5</span> multiprocessing</h3>
+<div id="outline-container-org647f6ca" class="outline-3">
+<h3 id="org647f6ca"><span class="section-number-3">1.5</span> multiprocessing</h3>
 <div class="outline-text-3" id="text-1-5">
 <p>
 Python has a very convenient library called <code>multiprocessing</code> which is close to a drop in replacement for the threading library but as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
@@ -601,8 +602,8 @@ well, I changed the log message slightly so I'd actually see it was from the bac
 </div>
 </div>
 
-<div id="outline-container-org4bd79ec" class="outline-3">
-<h3 id="org4bd79ec"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
+<div id="outline-container-org906471f" class="outline-3">
+<h3 id="org906471f"><span class="section-number-3">1.6</span> Reacting to worker process events</h3>
 <div class="outline-text-3" id="text-1-6">
 <p>
 What happens if something goes wrong with our worker process? Let's try.
@@ -665,8 +666,8 @@ Lo and behold, it did. After this, nothing more happens as our process is dead. 
 </div>
 </div>
 
-<div id="outline-container-orgbb14c19" class="outline-3">
-<h3 id="orgbb14c19"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
+<div id="outline-container-org706a5a9" class="outline-3">
+<h3 id="org706a5a9"><span class="section-number-3">1.7</span> Reacting to configuration events</h3>
 <div class="outline-text-3" id="text-1-7">
 <p>
 Since you are reading this you probably haven't implemented a background worker yet so let me share some advice - add an <b>off</b> button. When you are troubleshooting your system it can be rather difficult with lots of things going on, triggered by these background workers. Having multiple background workers both of different type and multiple instances of the same type exacerbate the issue. With an off button we can easily turn them off and troubleshoot the interesting parts. It might seem crude, and I think it is, but in lack of better instrumentation in NCS, it is the best we have.
@@ -700,8 +701,8 @@ The most intuitive way of doing this, and the way I've done it so far, is to sim
 </div>
 </div>
 
-<div id="outline-container-org9c66673" class="outline-3">
-<h3 id="org9c66673"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
+<div id="outline-container-org3558a11" class="outline-3">
+<h3 id="org3558a11"><span class="section-number-3">1.8</span> Reacting to HA events</h3>
 <div class="outline-text-3" id="text-1-8">
 <p>
 Finally, we have to react to High Availability (HA) events. Depending on which type of worker we are implementing we might want different behaviour. I've so far only had to deal with background workers that write configuration and since that can only be done on the master of a HA system, our background worker should only run on the master node. If you on the other hand are operating on some other data or perhaps not writing anything to CDB, it is possible to still run the worker on all nodes.
@@ -777,8 +778,8 @@ Another problem around HA event monitoring is that the <code>/ncs:ncs-state/ha</
 </div>
 </div>
 
-<div id="outline-container-orgf8a9bfd" class="outline-3">
-<h3 id="orgf8a9bfd"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
+<div id="outline-container-org5d3a465" class="outline-3">
+<h3 id="org5d3a465"><span class="section-number-3">1.9</span> Rube Goldberg</h3>
 <div class="outline-text-3" id="text-1-9">
 <p>
 Okay, so we've gathered all our requirements and are ready to write, as we will see, the Rube Goldberg of NSO background worker process frameworks!

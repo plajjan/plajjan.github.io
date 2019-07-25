@@ -10,7 +10,8 @@
 <meta name="author" content="Kristian Larsson">
 <meta name="referrer" content="no-referrer">
 <link href= "css/style.css" rel="stylesheet" type="text/css" />
-<link rel="icon" href="static/favicon.ico"></head>
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
 <body>
 <div id="preamble" class="status">
 <div class='header'>
@@ -32,8 +33,8 @@ There are probably all sorts of use cases for automating various git operations 
 </p>
 
 
-<div id="outline-container-orgb9c8748" class="outline-2">
-<h2 id="orgb9c8748"><span class="section-number-2">1</span> Automatic rebase</h2>
+<div id="outline-container-org1410aa2" class="outline-2">
+<h2 id="org1410aa2"><span class="section-number-2">1</span> Automatic rebase</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 We have some git repos with code that we receive from vendors, who we can think of as our <code>upstream</code>. We don't actually share a git repo with the vendor but rather we get a tar ball every now and then. The tar ball is extracted into a git repository, on the <code>master</code> branch which thus tracks the software as it is received from upstream. In a perfect world the software we receive would be feature complete and bug free and so we would be done, but that's usually not the case. We do find bugs and if they are blocking we might decide to implement a patch to fix them ourselves. The same is true for new features where we might not want to wait for the vendor to implement it.
@@ -227,8 +228,8 @@ Anyway, we'll be checking out a new git repository where we'll do our work, then
 </div>
 
 
-<div id="outline-container-orgabe47ef" class="outline-2">
-<h2 id="orgabe47ef"><span class="section-number-2">2</span> Automatic merge requests</h2>
+<div id="outline-container-orgf94d69c" class="outline-2">
+<h2 id="orgf94d69c"><span class="section-number-2">2</span> Automatic merge requests</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 All the repositories I mentioned in the previous section are NEDs, a form of driver for how to communicate with a certain type of device, for Cisco NSO (a network orchestration system). We package up Cisco NSO, together with these NEDs and our own service code, in a container image. The build of that image is performed in CI and we use a repository called <code>nso-ts</code> to control that work.
@@ -299,8 +300,8 @@ What we end up with is that whenever there is a new version of a NED, a merge re
 </div>
 
 
-<div id="outline-container-orgfb5621b" class="outline-2">
-<h2 id="orgfb5621b"><span class="section-number-2">3</span> Getting fancy</h2>
+<div id="outline-container-org40947bf" class="outline-2">
+<h2 id="org40947bf"><span class="section-number-2">3</span> Getting fancy</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 While automatically opening an MR is sweet&#x2026; we can do <del>better</del> fancier. Our <code>nso-ts</code> repository is based on Cisco NSO (Tail-F NCS), or actually the <code>nso-ts</code> docker image is based on a <code>cisco-nso</code> docker image that we build in a separate repository. We put the version of NSO as the tag of the <code>cisco-nso</code> docker image, so <code>cisco-nso:4.2.3</code> means Cisco NSO 4.2.3. This is what the <code>nso-ts</code> Dockerfile will use in its <code>FROM</code> line.
@@ -367,8 +368,8 @@ As this involves a bit more code I've put the relevant files in a <a href="https
 </div>
 </div>
 
-<div id="outline-container-org42f3977" class="outline-2">
-<h2 id="org42f3977"><span class="section-number-2">4</span> This is the end</h2>
+<div id="outline-container-orged5bfb3" class="outline-2">
+<h2 id="orged5bfb3"><span class="section-number-2">4</span> This is the end</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 If you are reading this, chances are you already have your reasons for why you want to automate some git operation. Hopefully I've provided some inspiration for how to do it.

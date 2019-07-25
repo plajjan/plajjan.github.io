@@ -65,12 +65,6 @@ function calculate () {
 
 // attach our function to the form's submit event.
 
-$(document).ready(function(){
-    //$(".textfield").contents().keyup(function(evnt) {
-    //    document.getElementById("btn_save").style.opacity = "1";
-    //    saved = false;
-    //});
-    $('#fec_limit').keyup(calculate);
-    //$('#trigger').keyup(calculate);
-    //$('#revert').keyup(calculate);
-});
+$('#fec_limit').keyup(calculate);
+$('#trigger').keyup(calculate);
+$('#revert').keyup(calculate);
