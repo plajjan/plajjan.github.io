@@ -32,8 +32,8 @@ This is how you configure your shiny new 100G router port for interoperability a
 The interface number is naturally an example and you need to fill in yours. The same is true for channel / frequency / wavelength and output power. I have however shown a configuration here that is the equivalent for each platform, i.e. we use a frequency if 193.4THz, which is channel 34 on Nokia, channel 54 on Huawei and wavelength 1550.12nm on Juniper. Output power is -10dBm but this is expressed in different ways, some platforms use dBm while other work in units of 0.1 dBm which means that -10dBm is equivalent to a value of -100.
 </p>
 
-<div id="outline-container-org29ec0b8" class="outline-2">
-<h2 id="org29ec0b8"><span class="section-number-2">1</span> Cisco</h2>
+<div id="outline-container-orga757b79" class="outline-2">
+<h2 id="orga757b79"><span class="section-number-2">1</span> Cisco</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Cisco IOS XR configuration for the ASR9k. Already XML formatted so you can punt
@@ -66,8 +66,8 @@ it over the NETCONF interface and have your router configured!
 </div>
 </div>
 
-<div id="outline-container-org1cdb9af" class="outline-2">
-<h2 id="org1cdb9af"><span class="section-number-2">2</span> Huawei</h2>
+<div id="outline-container-orge903e43" class="outline-2">
+<h2 id="orge903e43"><span class="section-number-2">2</span> Huawei</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 CLI conf for Huawei since their NETCONF interface is currently an abomination.
@@ -86,8 +86,8 @@ interface 100GE 1/0/0
 </div>
 </div>
 
-<div id="outline-container-orgc93a4ec" class="outline-2">
-<h2 id="orgc93a4ec"><span class="section-number-2">3</span> Juniper</h2>
+<div id="outline-container-org52cbf6c" class="outline-2">
+<h2 id="org52cbf6c"><span class="section-number-2">3</span> Juniper</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can send over a NETCONF interface!
@@ -115,8 +115,8 @@ Juniper calls <i>the standard</i> "hgfec", here expressed in XML that you can se
 </div>
 </div>
 
-<div id="outline-container-orgfbe9321" class="outline-2">
-<h2 id="orgfbe9321"><span class="section-number-2">4</span> Nokia</h2>
+<div id="outline-container-org3fb34e2" class="outline-2">
+<h2 id="org3fb34e2"><span class="section-number-2">4</span> Nokia</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Here's how to configure a port on Nokia SROS. "interop2" is the magic name for the interoperable FEC and bit mapping:

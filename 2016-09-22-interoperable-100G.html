@@ -57,8 +57,8 @@ coherent 100G DWDM.
 <i>You can skip directly to the <a href="file:///pictures-from-100G-dwdm-interop-lab">pretty pictures from our lab</a> or look at how to <a href="file:///100G-dwdm-configuration">configure your router interfaces for interop</a>!</i>
 </p>
 
-<div id="outline-container-orgb30d5bd" class="outline-2">
-<h2 id="orgb30d5bd"><span class="section-number-2">1</span> A word on optical line level codings</h2>
+<div id="outline-container-orgfc4e57f" class="outline-2">
+<h2 id="orgfc4e57f"><span class="section-number-2">1</span> A word on optical line level codings</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 DP-QPSK is the (de-facto) standard for coherent 100G DWDM. All was fun and games in the days of 10G as OOK (On-Off Keying) was both cheap and good enough for long haul optics.
@@ -74,8 +74,8 @@ With 100G people had learnt the lesson. Coherent was the natural choice and by s
 </div>
 </div>
 
-<div id="outline-container-orgcff66c9" class="outline-2">
-<h2 id="orgcff66c9"><span class="section-number-2">2</span> The FEC and mapping mess</h2>
+<div id="outline-container-orgcd8ee4a" class="outline-2">
+<h2 id="orgcd8ee4a"><span class="section-number-2">2</span> The FEC and mapping mess</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Unfortunately, using a few standardised components doesn't lead to interoperability. Here's a diagram of a coherent 100G DWDM CFP module. It's a slightly silly diagram as it shows the signal being transmitted an received by the same module but it illustrates the components both on the transmit and receive side.
@@ -95,8 +95,8 @@ Enter <a href="file:///assets/docs/standards/100G-long-haul.pdf"><i>the standard
 </div>
 </div>
 
-<div id="outline-container-orgc7061c8" class="outline-2">
-<h2 id="orgc7061c8"><span class="section-number-2">3</span> Hard Decision "Staircase" Forward Error Correction</h2>
+<div id="outline-container-org8dd3db7" class="outline-2">
+<h2 id="org8dd3db7"><span class="section-number-2">3</span> Hard Decision "Staircase" Forward Error Correction</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <i>The standard</i> describes a strong hard decision FEC algorithm, known as "Staircase FEC", designed by Cortina Networks (now part of Inphi).
@@ -125,8 +125,8 @@ Only 20µs of latency is introduced by the Staircase FEC and it has a very low e
 </div>
 
 
-<div id="outline-container-orgfa8f7c1" class="outline-2">
-<h2 id="orgfa8f7c1"><span class="section-number-2">4</span> Standardised framing and bit mapping</h2>
+<div id="outline-container-orgd6f1844" class="outline-2">
+<h2 id="orgd6f1844"><span class="section-number-2">4</span> Standardised framing and bit mapping</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 A FEC operates on block of bits and does not really need to understand the meaning of those bits, which is where the framing part comes in, in this case a standard G.709 OTU4 framing. The framing defines the start and end of our payload and includes various "overhead bits" which can be used to signal defects.
@@ -139,8 +139,8 @@ The mapping of the Staircase FEC's block of bits to G.709 OTUk frames is also de
 </div>
 
 
-<div id="outline-container-org8bb8346" class="outline-2">
-<h2 id="org8bb8346"><span class="section-number-2">5</span> TeraStream and 100G DWDM</h2>
+<div id="outline-container-orge2935e4" class="outline-2">
+<h2 id="orge2935e4"><span class="section-number-2">5</span> TeraStream and 100G DWDM</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Interoperable coherent 100G DWDM has been a corner stone of the TeraStream design and a requirement, based on this standard, to the vendors from day one.
@@ -163,8 +163,8 @@ It's been an arduous task with various technical issues delaying the process. Fo
 </div>
 
 
-<div id="outline-container-orgd1ea730" class="outline-2">
-<h2 id="orgd1ea730"><span class="section-number-2">6</span> Now what?</h2>
+<div id="outline-container-org9a8c799" class="outline-2">
+<h2 id="org9a8c799"><span class="section-number-2">6</span> Now what?</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 <b>So now we have interoperable 100G DWDM, now what? What do we do with it?</b>
@@ -193,8 +193,8 @@ Deutsche Telekom is also part of the Telecom Infrastructure Project (TIP) initia
 </div>
 
 
-<div id="outline-container-org8236a9e" class="outline-2">
-<h2 id="org8236a9e"><span class="section-number-2">7</span> 100G peering</h2>
+<div id="outline-container-org438007a" class="outline-2">
+<h2 id="org438007a"><span class="section-number-2">7</span> 100G peering</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 The vast majority of peering links today are at 10G speed and using grey optics. Upgrading to 100G to meet increasing bandwidth demands presents challenges on the optical layer. While 10G is available as LR (10km), ER (40km) and ZR (80km), the selection of grey 100G optics is much more limited.
@@ -215,8 +215,8 @@ TeraStream is using 100G DWDM on peering links to external partners - a feat tha
 </div>
 
 
-<div id="outline-container-org8ed9e1c" class="outline-2">
-<h2 id="org8ed9e1c"><span class="section-number-2">8</span> Are you ready?</h2>
+<div id="outline-container-org0fc5467" class="outline-2">
+<h2 id="org0fc5467"><span class="section-number-2">8</span> Are you ready?</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 Make sure you <b>never buy</b> a 100G linecard that <b>does not</b> support interoperability!

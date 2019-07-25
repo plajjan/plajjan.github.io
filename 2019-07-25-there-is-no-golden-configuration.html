@@ -35,15 +35,15 @@ Using services in Cisco NSO to enable management of the full life cycle of confi
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org83e1060">1. TL;DR;</a></li>
-<li><a href="#org2f03fbb">2. Golden configuration</a></li>
-<li><a href="#orgae9d5da">3. FASTMAP and reference counting in Cisco NSO</a></li>
+<li><a href="#org362c9fc">1. TL;DR;</a></li>
+<li><a href="#org3a41cbf">2. Golden configuration</a></li>
+<li><a href="#org002d615">3. FASTMAP and reference counting in Cisco NSO</a></li>
 </ul>
 </div>
 </nav>
 
-<div id="outline-container-org83e1060" class="outline-2">
-<h2 id="org83e1060"><span class="section-number-2">1</span> TL;DR;</h2>
+<div id="outline-container-org362c9fc" class="outline-2">
+<h2 id="org362c9fc"><span class="section-number-2">1</span> TL;DR;</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Use services in Cisco NSO for everything you configure on your devices.
@@ -52,8 +52,8 @@ Use services in Cisco NSO for everything you configure on your devices.
 </div>
 
 
-<div id="outline-container-org2f03fbb" class="outline-2">
-<h2 id="org2f03fbb"><span class="section-number-2">2</span> Golden configuration</h2>
+<div id="outline-container-org3a41cbf" class="outline-2">
+<h2 id="org3a41cbf"><span class="section-number-2">2</span> Golden configuration</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 If you've been in the networking business for some time you'll likely be familiar with the term "golden configuration". A sort of master template for how configuration should look. It brings associations to something that is perfect - like a golden statue on a pedestal.
@@ -103,8 +103,8 @@ Tomorrow we realize we don't want neither <code>8.8.8.8</code> nor <code>1.1.1.1
 </div>
 
 
-<div id="outline-container-orgae9d5da" class="outline-2">
-<h2 id="orgae9d5da"><span class="section-number-2">3</span> FASTMAP and reference counting in Cisco NSO</h2>
+<div id="outline-container-org002d615" class="outline-2">
+<h2 id="org002d615"><span class="section-number-2">3</span> FASTMAP and reference counting in Cisco NSO</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the <code>create</code> function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declaratively define what the configuration should look like and the system will figure out the rest.
