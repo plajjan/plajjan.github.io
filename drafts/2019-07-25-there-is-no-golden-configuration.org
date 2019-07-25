@@ -46,7 +46,7 @@ Use services in Cisco NSO for everything you configure on your devices.
 
 * FASTMAP and reference counting in Cisco NSO
   
-  Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the ~create~ function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declarative define what the configuration should look like and the system will figure out the rest.
+  Cisco NSO uses an algorithm known as FASTMAP to reference count configuration items that are written by the ~create~ function of services. FASTMAP is one of the foundational pillars of the seamless and convenient configuration provisioning we get with Cisco NSO. We can declaratively define what the configuration should look like and the system will figure out the rest.
   
   In contrast, using device templates, we won't get reference counting which means that removing leaves won't happen automatically. If we have set leaf X in our golden configuration today, pushed it to a thousand devices and want to remove it tomorrow, we have to do that manually.
 
