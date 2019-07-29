@@ -9,7 +9,7 @@
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
 
 * Writing a Python background worker for Cisco NSO
-  The ~create()~ callback is the primary means of which we get things done in Cisco NSO. NSO is most often used for configuration provisioning and so the ~create()~ callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our ~create()~ code which renders new configuration output that we can push to devices or other services. In the YANG model we use a ~servicepoints~ for attaching a ~create()~ callback to a particular subtree in the YANG model. In addition to ~create()~ ~servicepoint~ we also have ~actionpoints~ which allow us to attach our code to YANG actions. Both ~servicepoint~ and ~actionpoint~ both attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the code of the worker to do whatever you need to accomplish. This post is about implementing such a background worker.
+  The ~create()~ callback is the primary means of which we get things done in Cisco NSO. NSO is most often used for configuration provisioning and so the ~create()~ callback, which reacts to changes on a YANG configuration subtree is the perfect tool; new configuration input leads to running of our ~create()~ code which renders new configuration output that we can push to devices or other services. In the YANG model we use a ~servicepoints~ for attaching a ~create()~ callback to a particular subtree in the YANG model. In addition to ~create()~ ~servicepoint~ we also have ~actionpoints~ which allow us to attach our code to YANG actions. Both ~servicepoint~ and ~actionpoint~ attach to the YANG model and lets code be executed upon external stimuli, either the request to run an action or the change of configuration. What if you want to decide yourself when something should happen or perhaps execute things at a certain periodicity? That's a job for a background worker which is running continuously. With such a background worker, it would be entirely up to you to shape and form the code of the worker to do whatever you need to accomplish. This post is about implementing such a background worker.
    
   It should be noted that there is functionality in NSO to schedule periodic activities in a cron job style but I find it somewhat lacking, not that it's worse than cron but cron just isn't the right tool for everything. You would probably do well in understanding it before deciding on how to solve your specific challenge. Either way, as is common with us technical people the question of why or why not is not the focus of this post. Rather, we want to focus on the *how*. /If/ you feel the need for a background worker in NSO, how do you actually go about implementing one?
    
@@ -416,7 +416,7 @@
    Also, David Beazley did an interesting talk on killable threads https://www.youtube.com/watch?v=U66KuyD3T0M which you're encouraged to check out. It's rather interesting... but back to our background worker process!
     
 ** multiprocessing
-   Python has a very convenient library called ~multiprocessing~ which is close to a drop in replacement for the threading library but as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
+   Python has a very convenient library called ~multiprocessing~ which is close to a drop in replacement for the threading library and as we'll see, we can simplify the code quite a bit since we no longer have to do cooperative shutdown - we can just terminate the background worker process when we want to stop it.
     
    #+BEGIN_SRC python
      # -*- mode: python; python-indent: 4 -*-
@@ -546,7 +546,7 @@
     
    Getting HA mode is quite simple, it's available from ~/ncs:ncs-state/ha/mode~.
 
-   I wrote this simple decision algorithm for the behaviour we are looking for:
+   I wrote this simple decision table for the behaviour we are looking for:
     
    | HA enabled | mode   | run worker? |
    |------------+--------+-------------|
@@ -578,8 +578,8 @@
          notification = events.read_notification(event_socket)
    #+END_SRC
     
-   The standard way of monitoring say multiple sockets would be by using a select loop, but we can't do that here since ~events.read_notification()~ isn't selectable nor does a standard CDB subscriber expose a selectable interface. Instead we end up in some form of loop where we need to run various read or wait calls on the things we want to monitor. If we do that using non-blocking calls on all the things it means we will busy loop, which is bad due to CPU usage. If we do blocking calls with a timeout on at least one item, then it means we are blocking on item X while an event could come in on item Y. Maybe the sleep isn't long enough to make it a real problem but it's not an elegant solution and means we are bound to always (statistically) wait for some time before reacting to events.
-    
+   The standard way of monitoring say multiple sockets would be by using a select loop, but then everything has to be a socket. While the HA event socket is, the CDB subscriber is not nor is the main queue we use to to signal events. Instead we end up in some form of loop where we need to run various read or wait calls on the things we want to monitor. If we do that using non-blocking calls on all the things it means we will busy loop, which is bad due to CPU usage. If we do blocking calls with a timeout on at least one item, then it means we are blocking on item X while an event could come in on item Y. Maybe the sleep isn't long enough to make it a real problem but it's not an elegant solution and means we are bound to always (statistically) wait for some time before reacting to events.
+   
    We'll solve all this by defining multiple cooperating pieces:
    - a worker that is running as its own UNIX process through the multiprocessing library
    - a supervisor thread that starts and stop the worker process
@@ -871,5 +871,5 @@
     
    It's rather elaborate, a little Rube Goldbergian, but I think it offers some rather nice properties in the end. The promises of reacting to NCS package reload / redeploy is upheld and we can quickly and efficiently react to HA and reconfiguration events.
     
-   I called that our final version of the code, which turns out to not hold true. As a consequence of our new design we end up using threads, multiprocessing (which forks) and the standard logging library. The three of them together leads to a intricate situation which can leave the child process hanging. This must of course be solved, but that's for part two.
+   I called that our final version of the code, which turns out to not hold true. As a consequence of our new design we end up using threads, multiprocessing (which forks) and the standard logging library. The three of them together leads to a intricate situation which can leave the child process hanging. This must of course be solved, but that's for [[./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html][part two]].
     
