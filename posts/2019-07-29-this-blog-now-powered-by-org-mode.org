@@ -8,7 +8,9 @@
 #+OPTIONS: html-style:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
 
-* This blog now powered by org-mode
+#+ATTR_HTML: :style float:left;
+#+ATTR_HTML: :width 300px
+[[./images/1920px-Org-mode-unicorn.svg.png]]
   
 I've used Jekyll for quite some time to power my blog. I would commit markdown files to a git repository and then the magic sauce of Jekyll and Github Pages would turn this into beautiful HTML pages and publish it. It worked fine but as I have switched to Emacs as my primary editor, which features something called org-mode, that among other things feature a syntax that I find way better and more intuitive than markdown, I decided to switch over my blogging to this format.
 
