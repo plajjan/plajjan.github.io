@@ -23,6 +23,29 @@
 </nav></div>
 <div id="content">
 
+<div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-this-blog-now-powered-by-org-mode.html">Blogging with org-mode</a></h1>
+
+<div id="outline-container-orga0efae2" class="outline-2">
+<h2 id="orga0efae2"><span class="section-number-2">1</span> This blog now powered by org-mode</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+I've used Jekyll for quite some time to power my blog. I would commit markdown files to a git repository and then the magic sauce of Jekyll and Github Pages would turn this into beautiful HTML pages and publish it. It worked fine but as I have switched to Emacs as my primary editor, which features something called org-mode, that among other things feature a syntax that I find way better and more intuitive than markdown, I decided to switch over my blogging to this format.
+</p>
+
+<p>
+org-mode is a markup language, just like markdown, but it's been around for a wee bit longer. I use quite a lot of markdown in various places and its popularity means its widely accepted. I naturally prefer it over something like Word documents. However, it has limitations, it is inconsistent and not very intuitive. The arguments have been made before and I won't repeat it all here, instead if you are interested in org-mode vs *, <a href="https://karl-voit.at/2017/09/23/orgmode-as-markup-only/">Karl Voit sums it up</a> best.
+</p>
+
+<p>
+It should also be noted that org-mode does so much more. My calendar, todo list and various notes are all in org-mode and it provides various useful tools to work with it. It's often listed as a unique selling point for Emacs. If you are technology oriented, likes to tinker and setup tools your way, care about your time (efficiency), then org-mode might be for you.
+</p>
+
+<p>
+Anyway, I'm not trying to sell org-mode, just saying I'm now using it to power this blog. I use org-static-blog to actually render the org files into HTML. Not super happy with it but it works for now (I can switch to something else that also is based on org, like org-publish, without having to rewrite all my posts). In the end, what this switch to org-mode might mean is that the threshold for me to write something is lowered just a tiny bit and that might just result in a slightly increased post publishing cadence.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
 <div class="post-date">26 Jul 2019</div><h1 class="post-title"><a href="2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">Writing a Python background worker for Cisco NSO - part deux</a></h1>
 
 <div id="outline-container-org00bff74" class="outline-2">
@@ -2537,153 +2560,7 @@ If not or if you just want to discuss the topic in general or have more specific
 </p>
 </div>
 </div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-git.html">git</a> <a href="tag-automation.html">automation</a> </div>
-<div class="post-date">15 Mar 2017</div><h1 class="post-title"><a href="2017-03-15-validating-data-with-YANG.html">Validating data with YANG</a></h1>
-<p>
-Every now and then I hear about how difficult it is to use YANG to actually validate any data (we call this instance data). Since we in the TeraStream team do this quite a lot I thought I'd share how it can be done. This is using a process that we also employ in our CI pipeline.
-</p>
-
-<p>
-Let's first write a simple YANG model:
-</p>
-<div class="org-src-container">
-<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
-    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
-
-    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
-        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
-    <span style="color: #bc6ec5;">}</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
-        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
-            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
-            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
-                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
-            <span style="color: #67b11d;">}</span>
-        <span style="color: #2d9574;">}</span>
-    <span style="color: #bc6ec5;">}</span>
-<span style="color: #4f97d7;">}</span>
-</pre>
-</div>
-
-<p>
-We all know the Internet is full of cats so I created a list under the <code>internet</code> container so we can fill it up with cats. The only valid leaf value of each cat list entry is its name.
-</p>
-
-<p>
-Let's start off by actually making sure that our YANG model is valid. We can use the tool called <code>pyang</code> to do this. If you don't have pyang installed you can install it with <code>pip install pyang</code>.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-shell">kll@kll:~/yang-test$ pyang tubecats.yang
-kll@kll:~/yang-test$ pyang --ietf tubecats.yang
-tubecats.yang:1: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.1:</span> the module name should start with one of the strings <span style="color: #2d9574;">"ietf-"</span> or <span style="color: #2d9574;">"iana-"</span>
-tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"contact"</span> substatement
-tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"organization"</span> substatement
-tubecats.yang:1: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"module"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
-tubecats.yang:2: warning: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.8:</span> namespace value should be <span style="color: #2d9574;">"urn:ietf:params:xml:ns:yang:tubecats"</span>
-tubecats.yang:5: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.7:</span> statement <span style="color: #2d9574;">"revision"</span> must have a <span style="color: #2d9574;">"reference"</span> substatement
-tubecats.yang:9: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"container"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
-tubecats.yang:10: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"list"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
-tubecats.yang:12: error: RFC <span style="color: #a45bad;">6087:</span> <span style="color: #a45bad;">4.12:</span> statement <span style="color: #2d9574;">"leaf"</span> must have a <span style="color: #2d9574;">"description"</span> substatement
-</pre>
-</div>
-
-<p>
-The <code>--ietf</code> argument makes pyang a little more strict and adheres to a bunch of IETF guidelines on how to write YANG models. Since we aren't writing an IETF model and don't have an IETF namespace for it, we'll get some warnings and errors. Anyway, our model is sound since it succeeded without <code>--ietf</code>.
-</p>
-
-<p>
-Ok, so we have a valid model, let's write some data that adheres to it:
-</p>
-<div class="org-src-container">
-<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
-    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
-&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
-</pre>
-</div>
-
-<p>
-And now, to validate we use yang2dsdl which is shipped together with pyang:
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
-== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
-Done.
-
-== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
-Done.
-
-== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
-Done.
-
-== Validating grammar and datatypes ...
-data.xml validates
-
-== Adding default values... done.
-
-== Validating semantic constraints ...
-No errors found.
-kll@kll:~/yang-test$
-</pre>
-</div>
-
-<p>
-To make sure that our toolchain is working here we'll introduce an error in our
-data file, namely a second node under one of the cat list entries:
-</p>
-<div class="org-src-container">
-<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
-    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;bar&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
-&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
-</pre>
-</div>
-
-<p>
-lo and behold as this time around it complains loudly:
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">kll@kll:~/yang-test$ /usr/bin/yang2dsdl -v data.xml tubecats.yang
-== Generating RELAX NG schema <span style="color: #2d9574;">'./tubecats-data.rng'</span>
-Done.
-
-== Generating Schematron schema <span style="color: #2d9574;">'./tubecats-data.sch'</span>
-Done.
-
-== Generating DSRL schema <span style="color: #2d9574;">'./tubecats-data.dsrl'</span>
-Done.
-
-== Validating grammar and datatypes ...
-data.xml:8: element foo: Relax-NG validity error : Did not expect element foo there
-data.xml fails to validate
-kll@kll:~/yang-test$
-</pre>
-</div>
-
-<p>
-So that's how you can validate your instance data with a YANG model!
-</p>
-
-<p>
-The <code>&lt;data&gt;</code> tag at the root of the XML document is part of many NETCONF commands. It's also possible to ask it to validate data that is wrapped in other nodes like edit-config, get-reply etc. If you are just trying to write some data on your own and don't want to think about NETCONF you do still have to add that extra <code>&lt;data&gt;</code> tag at the root to get validation to complete&#x2026; it is a bit NETCONF centric after all.
-</p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div><div id="archive">
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-git.html">git</a> <a href="tag-automation.html">automation</a> </div><div id="archive">
 <a href="archive.html">Other posts</a>
 </div>
 </div>
