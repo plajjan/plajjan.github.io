@@ -1,4 +1,4 @@
-#+TITLE: Blogging with org-mode
+#+TITLE: This blog now powered by org-mode
 #+AUTHOR: Kristian Larsson
 #+EMAIL: kristian@spritelink.net
 #+DATE: <2019-07-29 Mon 00:00>
