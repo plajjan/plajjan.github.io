@@ -1,7 +1,7 @@
 #+TITLE: This blog now powered by org-mode
 #+AUTHOR: Kristian Larsson
 #+EMAIL: kristian@spritelink.net
-#+DATE: <2019-07-29 Mon 00:00>
+#+DATE: <2019-07-29 Mon 08:00>
 #+LANGUAGE: en
 #+FILETAGS: NSO
 #+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t

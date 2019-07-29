@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Writing a Python background worker for Cisco NSO - finale</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
+<body>
+<div id="preamble" class="status">
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">Writing a Python background worker for Cisco NSO - finale</a></h1>
+
+<div id="outline-container-org69f0b1c" class="outline-2">
+<h2 id="org69f0b1c">Writing a Python background worker for Cisco NSO - finale</h2>
+<div class="outline-text-2" id="text-org69f0b1c">
+<p>
+Having read through the previous two parts (<a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">1</a>, <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">2</a>) you know we now have an implementation that actually works and behaves, at least in regards to the most important properties, the way we want. In this last part I would like to explain some of the implementation details, in particular how we efficiently wait for events.
+</p>
+
+<p>
+All daemons, or computer applications running in the background, typically have a number of things they need to continuously perform. If it's a web server, we need to look for new incoming connections and then perform the relevant HTTP query handling. A naive implementation could repeatedly ask, or <i>poll</i>, the socket if there is anything new. If we want to react quickly, then we would have to poll very frequently which in turn means that we will use up a lot of CPU. If there are a lot of requests then this could make sense, in fact many network interface drivers use polling as it is much more efficient than being interrupt based. Polling 1000 times per second means that we will notice anything incoming within a maximum of 1 millisecond and for each poll we can efficiently batch handle all the incoming requests (assuming there are more than 1000 request per second). If there aren't that many incoming requests though, it is probably better finding a pattern where we can sleep and be awoken only when there is a request. This is what interrupts can provide to the CPU. UNIX processes don't have interrupts, instead there are signals which act in a similar way and can interrupt what the program is currently doing. It's often used for stopping the application (KILL signal) or reconfiguring it (HUP signal).
+</p>
+
+<p>
+There are good use cases for signals but overall they are not the primary means of driving an application control flow. They are meant as simple inputs to a UNIX process from the <i>outside</i>.
+</p>
+
+<p>
+Smart people realized many moons ago that we needed ways to efficiently wait for input and this is why we have things like <code>select()</code> and <code>poll()</code> which can efficiently wait for a file descriptor to become readable.
+</p>
+
+<p>
+By <i>efficiently</i>, I mean it is able to wait for something to happen without consuming a lot of CPU resources yet is able to immediately wake up and return when something has happened. Not only can <code>select()</code> efficiently wait for something to happen on a file descriptor, it can wait on <b>multiple</b> file descriptors.
+</p>
+
+<p>
+Everything in UNIX is a file, which means that sockets have file descriptors too, so we can <i>wait</i> on a bunch of sockets and multiple files all using the same <code>select()</code> call. This is the basis for many of the daemons that exist today.
+</p>
+
+<p>
+Now for the background worker in NCS we have multiple events we want to observe and react to:
+</p>
+<ul class="org-ul">
+<li>react to NCS package events (redeploy primarily)</li>
+<li>react to the background worker dying (supervisor style)</li>
+<li>react to changes of the configuration for our background worker (enabled or not)</li>
+<li>react to HA events</li>
+</ul>
+
+<p>
+Are all these sockets or file descriptors that we can wait on with a <code>select()</code> call? As it turns out, yes, but it wasn't very obvious from the beginning.
+</p>
+</div>
+
+
+<div id="outline-container-orge65f038" class="outline-3">
+<h3 id="orge65f038">Thread whispering</h3>
+<div class="outline-text-3" id="text-orge65f038">
+<p>
+When a package is redeployed or reloaded, NCS will stop the currently running instance by calling the <code>teardown()</code> function of each component thread. This is where we then in turn can call the <code>stop()</code> function on the various threads or processes we are running. Thus, the interface here for the incoming data is a function but we then have to propagate this information from our function to our main thread. If you remember from the <a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">first part</a> we had a silly naive implementation of a background worker that looked like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
+            time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+and since it had no way to signal to the threads <code>run()</code> function that it should stop, it would never stop. We quickly realized this and improved it to:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag = threading.Event<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+where we use a <code>threading.Event</code> as the means to signal into the thread <code>run()</code> method that we want it to stop. In <code>run()</code> we read the <code>threading.Event</code> exit flag in a blocking fashion for a second and then perform our main functionality only to return and wait on the <code>Event</code>.
+</p>
+
+<p>
+Using <code>wait()</code> on that Event means we can only wait for a single thing at a time. That's not good enough - we have multiple things we need to observe. In the main supervisor thread we replaced this with a queue since we can feed things into the queue from multiple publishers. Something like this (this isn't our actual supervisor function, just an example showing how we would wait on a queue instead):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> threading
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = queue.Queue<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
+
+            <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">try</span>:
+                <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">except</span> queue.Empty:
+                <span style="color: #4f97d7; font-weight: bold;">continue</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">if</span> item == <span style="color: #2d9574;">'exit'</span>:
+                <span style="color: #4f97d7; font-weight: bold;">return</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'exit'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+Thus far we have just replaced the <code>threading.Event</code> with a <code>queue.Queue</code> and unlike the <code>Event</code>, which effectively just carries a boolean value, the queue could carry close to anything. We use a simple string value of <code>exit</code> to signal the thread that it should stop. Now that we have a queue though, we can put more things on the queue and this is why a queue was picked for the supervisor.
+</p>
+
+<p>
+When implementing a thread for monitoring something, the important thing to remember is that the <code>run()</code> loop of the thread has to be able to monitor its primary object and be signaled from the <code>stop()</code> function using the same method so that it can be efficiently waited upon in the <code>run()</code> loop.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org156ce24" class="outline-3">
+<h3 id="org156ce24">CDB configuration changes</h3>
+<div class="outline-text-3" id="text-org156ce24">
+<p>
+CDB subscribers are using a design pattern provided by Cisco and we can't influence it much. Instead we have to integrate with it. With a queue to the supervisor this becomes trivial. The config CDB subscriber simply runs as a separate thread and will take whatever updates it receives on CDB changes and publish them on the queue so the supervisor can react to it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0d542ec" class="outline-3">
+<h3 id="org0d542ec">Monitoring HA events</h3>
+<div class="outline-text-3" id="text-org0d542ec">
+<p>
+HA events come from NSO over the notifications API which we access through a socket from Python. Unlike the CDB subscriber, there is no ready to go class that we can just subclass and get moving with. Instead we have to implement the thread <code>run()</code> method ourselves. Efficiently waiting on a socket is easy, as already covered, we can use <code>select()</code> for this. However, how can we signal the thread to stop using something that is selectable? I chose to implement a WaitableEvent that sends its data over a pipe, which has a file descriptor and thus is waitable. The code for that looks like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">WaitableEvent</span>:
+    <span style="color: #9f8766;">"""Provides an abstract object that can be used to resume select loops with</span>
+<span style="color: #9f8766;">    indefinite waits from another thread or process. This mimics the standard</span>
+<span style="color: #9f8766;">    threading.Event interface."""</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd = os.pipe<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">wait</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, timeout=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #7590db;">rfds</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span>, timeout<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd <span style="color: #4f97d7; font-weight: bold;">in</span> rfds
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">is_set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">isSet</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">clear</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
+            os.read<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
+            os.write<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd, b<span style="color: #2d9574;">'1'</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">fileno</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Return the FD number of the read side of the pipe, allows this</span>
+<span style="color: #9f8766;">        object to be used with select.select()</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__del__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #4f97d7;">)</span>
+        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd<span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+and we can use it much the same way as <code>threading.Event</code> since it implements the same interface, however, note how the underlying transport is an <code>os.pipe</code> and we thus can use that in our <code>select()</code> call simply by digging out <code>self._read_fd</code>. Also note that I didn't write the code for this myself. After realizing what I needed I searched and the Internet delivered.
+</p>
+
+<p>
+Here is the code for the HA event monitor using a <code>WaitableEvent</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">HaEventListener</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""HA Event Listener</span>
+<span style="color: #9f8766;">    HA events, like HA-mode transitions, are exposed over a notification API.</span>
+<span style="color: #9f8766;">    We listen on that and forward relevant messages over the queue to the</span>
+<span style="color: #9f8766;">    supervisor which can act accordingly.</span>
+
+<span style="color: #9f8766;">    We use a WaitableEvent rather than a threading.Event since the former</span>
+<span style="color: #9f8766;">    allows us to wait on it using a select loop. The HA events are received</span>
+<span style="color: #9f8766;">    over a socket which can also be waited upon using a select loop, thus</span>
+<span style="color: #9f8766;">    making it possible to wait for the two inputs we have using a single select</span>
+<span style="color: #9f8766;">    loop.</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, q<span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>HaEventListener, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = q
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'{} supervisor: init'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag = WaitableEvent<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'run() HA event listener'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">from</span> _ncs <span style="color: #4f97d7; font-weight: bold;">import</span> events
+        <span style="color: #7590db;">mask</span> = events.NOTIF_HA_INFO
+        <span style="color: #7590db;">event_socket</span> = socket.socket<span style="color: #4f97d7;">()</span>
+        events.notifications_connect<span style="color: #4f97d7;">(</span>event_socket, mask, ip=<span style="color: #2d9574;">'127.0.0.1'</span>, port=ncs.PORT<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #7590db;">rl</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag, event_socket<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag <span style="color: #4f97d7; font-weight: bold;">in</span> rl:
+                event_socket.close<span style="color: #4f97d7;">()</span>
+                <span style="color: #4f97d7; font-weight: bold;">return</span>
+
+            <span style="color: #7590db;">notification</span> = events.read_notification<span style="color: #4f97d7;">(</span>event_socket<span style="color: #4f97d7;">)</span>
+            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Can this fail? Could we get a KeyError here? Afraid to catch it</span>
+            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">because I don't know what it could mean.</span>
+            <span style="color: #7590db;">ha_notif_type</span> = notification<span style="color: #4f97d7;">[</span><span style="color: #2d9574;">'hnot'</span><span style="color: #4f97d7;">][</span><span style="color: #2d9574;">'type'</span><span style="color: #4f97d7;">]</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">if</span> ha_notif_type == events.HA_INFO_IS_MASTER:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">True</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">elif</span> ha_notif_type == events.HA_INFO_IS_NONE:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">False</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">elif</span> ha_notif_type == events.HA_INFO_SLAVE_INITIALIZED:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">False</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+
+<p>
+It selects on the <code>exit_flag</code> (which is a <code>WaitableEvent</code>) and the event socket itself. The <code>stop()</code> method simply sets the <code>WaitableEvent</code>. If <code>exit_flag</code> is readable it means the thread should exit while if the <code>event_socket</code> is readable we have a HA event.
+</p>
+
+<p>
+We use multiple threads with different methods so we can efficiently monitor different <i>classes</i> of objects.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1906591" class="outline-3">
+<h3 id="org1906591">Child process liveness monitor</h3>
+<div class="outline-text-3" id="text-org1906591">
+<p>
+If the process we started to run the background worker function dies for whatever reason, we want to notice this and restart it. How can we efficiently monitor the liveness of a child process?
+</p>
+
+<p>
+This was the last thing we wanted to monitor that remained as a half busy poll. The supervisor would wait for things coming in on the supervisor queue for one second, then go and check if the child process was alive only to continue monitoring the queue.
+</p>
+
+<p>
+The supervisor <code>run()</code> function:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+        <span style="color: #7590db;">should_run</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master<span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">if</span> should_run <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process should run but is not running, starting"</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_start<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">not</span> should_run:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process is running but should not run, stopping"</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">try</span>:
+            <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">except</span> queue.Empty:
+            <span style="color: #4f97d7; font-weight: bold;">continue</span>
+
+        <span style="color: #7590db;">k</span>, <span style="color: #7590db;">v</span> = item
+        <span style="color: #4f97d7; font-weight: bold;">if</span> k == <span style="color: #2d9574;">'exit'</span>:
+            <span style="color: #4f97d7; font-weight: bold;">return</span>
+        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">'enabled'</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = v
+</pre>
+</div>
+
+<p>
+This irked me. Waking up once a second to check on the child process doesn't exactly qualify as busy polling - only looping once a second won't increase CPU utilization by much, yet child processes dying should be enough of a rare event that not reacting quicker than 1 second is still good enough. It was a simple and pragmatic solution that was enough for production use. But it irked me.
+</p>
+
+<p>
+I wanted to remove the last <i>busy</i> poll and so I started researching the problem. It turns out that it is possible, through a rather clever hack, to detect when a child process is no longer alive.
+</p>
+
+<p>
+<b>When the write end of a POSIX pipe is in the sole possession of a process and that process dies, the read end becomes readable</b>
+</p>
+
+<p>
+And so this is exactly what we've implemented.
+</p>
+<ul class="org-ul">
+<li>setup a pipe</li>
+<li>fork child process (actually 'spawn'), passing write end of pipe to child</li>
+<li>close write end of pipe in parent process</li>
+<li>wait for read end of pipe to become readable, which only happens when the child process has died</li>
+</ul>
+
+<p>
+Since a pipe has a file descriptor we can wait on it using our <code>select()</code> loop and this is what we do in the later versions of bgworker.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge7fb1e9" class="outline-3">
+<h3 id="orge7fb1e9">Hiding things from the bg function</h3>
+<div class="outline-text-3" id="text-orge7fb1e9">
+<p>
+We want to make it dead simple to use the background process framework. Passing in a pipe, and the logging objects that need to be set up, as described in the <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">previous part</a>, should have to be done by the user of our framework. We want to take care of that, but how?
+</p>
+
+<p>
+When we start the child process, it doesn't immediately run the user provided function. Instead we have a wrapper function that takes care of these things and then hands over control to the user provided function! Like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">_bg_wrapper</span><span style="color: #4f97d7;">(</span>pipe_unused, log_q, log_config_q, log_level, bg_fun, *bg_fun_args<span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""Internal wrapper for the background worker function.</span>
+
+<span style="color: #9f8766;">    Used to set up logging via a QueueHandler in the child process. The other end</span>
+<span style="color: #9f8766;">    of the queue is observed by a QueueListener in the parent process.</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #7590db;">queue_hdlr</span> = logging.handlers.QueueHandler<span style="color: #4f97d7;">(</span>log_q<span style="color: #4f97d7;">)</span>
+    <span style="color: #7590db;">root</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
+    root.setLevel<span style="color: #4f97d7;">(</span>log_level<span style="color: #4f97d7;">)</span>
+    root.addHandler<span style="color: #4f97d7;">(</span>queue_hdlr<span style="color: #4f97d7;">)</span>
+
+    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">thread to monitor log level changes and reconfigure the root logger level</span>
+    <span style="color: #7590db;">log_reconf</span> = LogReconfigurator<span style="color: #4f97d7;">(</span>log_config_q, root<span style="color: #4f97d7;">)</span>
+    log_reconf.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">try</span>:
+        bg_fun<span style="color: #4f97d7;">(</span>*bg_fun_args<span style="color: #4f97d7;">)</span>
+    <span style="color: #4f97d7; font-weight: bold;">except</span> <span style="color: #ce537a; font-weight: bold;">Exception</span> <span style="color: #4f97d7; font-weight: bold;">as</span> e:
+        root.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Unhandled error in {} - {}: {}'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>bg_fun.<span style="color: #4f97d7;">__name__</span>, <span style="color: #4f97d7;">type</span><span style="color: #2d9574;">(</span>e<span style="color: #2d9574;">)</span>.<span style="color: #4f97d7;">__name__</span>, e<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        root.debug<span style="color: #4f97d7;">(</span>traceback.format_exc<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>
+
+</pre>
+</div>
+
+<p>
+Note how the first argument, accepting the pipe is unused, but it is enough to receive the write end of the pipe. Then we configure logging etc and implement a big exception handler.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org963a50f" class="outline-3">
+<h3 id="org963a50f">A selectable queue</h3>
+<div class="outline-text-3" id="text-org963a50f">
+<p>
+Monitoring the child process liveness happens through a pipe which is waitable using select. As previously described though, we placed a queue at the center of the supervisor thread and send messages from other threads over this queue. Now we have a queue and a pipe to wait on, how?
+</p>
+
+<p>
+We could probably abandon the queue and have those messages be sent over a pipe, which we could then <code>select()</code> on&#x2026; but the queue is so convenient!
+</p>
+
+<p>
+The <code>multiprocessing</code> library also has a queue which works across multiple processes. It uses a pipe under the hood to pass the messages and deals with things like sharing the the file descriptor when you spawn your child process (which is what we do). By simply switching from <code>queue.Queue</code> to <code>multiprocessing.Queue</code> (they feature the exact same interface) we have gained a pipe under the hood that we can <code>select()</code> on. Voilà!
+</p>
+
+<p>
+Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process framework, just head over to <a href="https://github.com/plajjan/bgworker/">the bgworker repo on Github</a>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Process</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
+    <span style="color: #9f8766;">"""Supervisor for running the main background process and reacting to</span>
+<span style="color: #9f8766;">    various events</span>
+<span style="color: #9f8766;">    """</span>
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, bg_fun, bg_fun_args=<span style="color: #a45bad;">None</span>, config_path=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>Process, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun = bg_fun
+        <span style="color: #4f97d7; font-weight: bold;">if</span> bg_fun_args <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #7590db;">bg_fun_args</span> = <span style="color: #4f97d7;">[]</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args = bg_fun_args
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path = config_path
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe = <span style="color: #a45bad;">None</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.name = <span style="color: #2d9574;">"{}.{}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.__module__,
+                                   <span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.<span style="color: #4f97d7;">__name__</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{} supervisor starting"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.vmid = <span style="color: #4f97d7; font-weight: bold;">self</span>.app._ncs_id
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx = multiprocessing.get_context<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'spawn'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the config subscriber thread</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber = Subscriber<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
+            <span style="color: #7590db;">subscriber_iter</span> = ConfigSubscriber<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.q, <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
+            subscriber_iter.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber<span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the HA event listener thread</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener = HaEventListener<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, q=<span style="color: #4f97d7; font-weight: bold;">self</span>.q<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the logging QueueListener thread</span>
+        <span style="color: #7590db;">hdlrs</span> = <span style="color: #4f97d7;">list</span><span style="color: #4f97d7;">(</span>_get_handler_impls<span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.app._logger<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener = logging.handlers.QueueListener<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue, *hdlrs, respect_handler_level=<span style="color: #a45bad;">True</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener.start<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.current_log_level = <span style="color: #4f97d7; font-weight: bold;">self</span>.app._logger.getEffectiveLevel<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start log config CDB subscriber</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber = Subscriber<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
+        <span style="color: #7590db;">log_subscriber_iter</span> = LogConfigSubscriber<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q, <span style="color: #4f97d7; font-weight: bold;">self</span>.vmid<span style="color: #4f97d7;">)</span>
+        log_subscriber_iter.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = <span style="color: #a45bad;">None</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Read initial configuration, using two separate transactions</span>
+        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Maapi<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> m:
+            <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Session<span style="color: #4f97d7;">(</span>m, <span style="color: #2d9574;">'{}_supervisor'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span>, <span style="color: #2d9574;">'system'</span><span style="color: #4f97d7;">)</span>:
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">in the 1st transaction read config data from the 'enabled' leaf</span>
+                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> t_read:
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+                        <span style="color: #7590db;">enabled</span> = t_read.get_elem<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #4f97d7;">bool</span><span style="color: #4f97d7;">(</span>enabled<span style="color: #4f97d7;">)</span>
+                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
+                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">if there is no config_path we assume the process is always enabled</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #a45bad;">True</span>
+
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">In the 2nd transaction read operational data regarding HA.</span>
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This is an expensive operation invoking a data provider, thus</span>
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">we don't want to incur any unnecessary locks</span>
+                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">(</span>db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_t_read:
+                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">check if HA is enabled</span>
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> oper_t_read.exists<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"/tfnm:ncs-state/tfnm:ha"</span><span style="color: #4f97d7;">)</span>:
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">True</span>
+                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">False</span>
+
+                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">determine HA state if HA is enabled</span>
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled:
+                        <span style="color: #7590db;">ha_mode</span> = <span style="color: #4f97d7;">str</span><span style="color: #4f97d7;">(</span>ncs.maagic.get_node<span style="color: #bc6ec5;">(</span>oper_t_read, <span style="color: #2d9574;">'/tfnm:ncs-state/tfnm:ha/tfnm:mode'</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master = <span style="color: #4f97d7;">(</span>ha_mode == <span style="color: #2d9574;">'master'</span><span style="color: #4f97d7;">)</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+            <span style="color: #4f97d7; font-weight: bold;">try</span>:
+                <span style="color: #7590db;">should_run</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master<span style="color: #4f97d7;">)</span>
+
+                <span style="color: #4f97d7; font-weight: bold;">if</span> should_run <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>:
+                    <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process should run but is not running, starting"</span><span style="color: #4f97d7;">)</span>
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+                    <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_start<span style="color: #4f97d7;">()</span>
+                <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">not</span> should_run:
+                    <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process is running but should not run, stopping"</span><span style="color: #4f97d7;">)</span>
+                    <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+
+                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">check for input</span>
+                <span style="color: #7590db;">waitable_rfds</span> = <span style="color: #4f97d7;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.q._reader<span style="color: #4f97d7;">]</span>
+                <span style="color: #4f97d7; font-weight: bold;">if</span> should_run:
+                    waitable_rfds.append<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe<span style="color: #4f97d7;">)</span>
+
+                <span style="color: #7590db;">rfds</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span>waitable_rfds, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span><span style="color: #4f97d7;">)</span>
+                <span style="color: #4f97d7; font-weight: bold;">for</span> rfd <span style="color: #4f97d7; font-weight: bold;">in</span> rfds:
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> rfd == <span style="color: #4f97d7; font-weight: bold;">self</span>.q._reader:
+                        <span style="color: #7590db;">k</span>, <span style="color: #7590db;">v</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">()</span>
+
+                        <span style="color: #4f97d7; font-weight: bold;">if</span> k == <span style="color: #2d9574;">'exit'</span>:
+                            <span style="color: #4f97d7; font-weight: bold;">return</span>
+                        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">'enabled'</span>:
+                            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = v
+                        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">"ha-master"</span>:
+                            <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master = v
+
+                    <span style="color: #4f97d7; font-weight: bold;">if</span> rfd == <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe:
+                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">getting a readable event on the pipe should mean the</span>
+                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">child is dead - wait for it to die and start again</span>
+                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">we'll restart it at the top of the loop</span>
+                        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Child process died"</span><span style="color: #4f97d7;">)</span>
+                        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
+                            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.join<span style="color: #4f97d7;">()</span>
+
+            <span style="color: #4f97d7; font-weight: bold;">except</span> <span style="color: #ce537a; font-weight: bold;">Exception</span> <span style="color: #4f97d7; font-weight: bold;">as</span> e:
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Unhandled exception in the supervisor thread: {} ({})'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7;">type</span><span style="color: #2d9574;">(</span>e<span style="color: #2d9574;">)</span>.<span style="color: #4f97d7;">__name__</span>, e<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span>traceback.format_exc<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>
+                time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""stop is called when the supervisor thread should stop and is part of</span>
+<span style="color: #9f8766;">        the standard Python interface for threading.Thread</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the HA event listener</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping HA event listener"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop config CDB subscriber</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping config CDB subscriber"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop log config CDB subscriber</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping log config CDB subscriber"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the logging QueueListener</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping logging QueueListener"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener.stop<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop us, the supervisor</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping supervisor thread"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'exit'</span>, <span style="color: #a45bad;">None</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the background worker process</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_start</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Starts the background worker process</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: starting the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Instead of using the usual worker thread, we use a separate process here.</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This allows us to terminate the process on package reload / NSO shutdown.</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">using multiprocessing.Pipe which is shareable across a spawned</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">process, while os.pipe only works, per default over to a forked</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">child</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe, <span style="color: #7590db;">child_pipe</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Pipe<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Instead of calling the bg_fun worker function directly, call our</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">internal wrapper to set up things like inter-process logging through</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">a queue.</span>
+        <span style="color: #7590db;">args</span> = <span style="color: #4f97d7;">[</span>child_pipe, <span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue, <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q, <span style="color: #4f97d7; font-weight: bold;">self</span>.current_log_level, <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun<span style="color: #4f97d7;">]</span> + <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Process<span style="color: #4f97d7;">(</span>target=_bg_wrapper, args=args<span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.start<span style="color: #4f97d7;">()</span>
+
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">close child pipe in parent so only child is in possession of file</span>
+        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">handle, which means we get EOF when the child dies</span>
+        child_pipe.close<span style="color: #4f97d7;">()</span>
+
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #9f8766;">"""Stops the background worker process</span>
+<span style="color: #9f8766;">        """</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: asked to stop worker but background worker does not exist"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">return</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.terminate<span style="color: #4f97d7;">()</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.join<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
+            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: worker not terminated on time, alive: {}  process: {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #2d9574;">()</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org62f984e" class="outline-3">
+<h3 id="org62f984e">Finale</h3>
+<div class="outline-text-3" id="text-org62f984e">
+<p>
+And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use frameworks/libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
+</p>
+
+<p>
+I hope you will also appreciate the amount of energy that went into writing the bgworker package. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic framework/library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
+</p>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div id="postamble" class="status"><br/><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div></div>
+</body>
+</html>
