@@ -25,9 +25,9 @@
 
 <div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">Writing a Python background worker for Cisco NSO - finale</a></h1>
 
-<div id="outline-container-org6ea071a" class="outline-2">
-<h2 id="org6ea071a">Writing a Python background worker for Cisco NSO - finale</h2>
-<div class="outline-text-2" id="text-org6ea071a">
+<div id="outline-container-org11370df" class="outline-2">
+<h2 id="org11370df">Writing a Python background worker for Cisco NSO - finale</h2>
+<div class="outline-text-2" id="text-org11370df">
 <p>
 Having read through the previous two parts (<a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">1</a>, <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">2</a>) you know we now have an implementation that actually works and behaves, at least in regards to the most important properties, the way we want. In this last part I would like to explain some of the implementation details, in particular how we efficiently wait for events.
 </p>
@@ -68,9 +68,9 @@ Are all these sockets or file descriptors that we can wait on with a <code>selec
 </div>
 
 
-<div id="outline-container-org6165fa6" class="outline-3">
-<h3 id="org6165fa6">Thread whispering</h3>
-<div class="outline-text-3" id="text-org6165fa6">
+<div id="outline-container-org9577b2e" class="outline-3">
+<h3 id="org9577b2e">Thread whispering</h3>
+<div class="outline-text-3" id="text-org9577b2e">
 <p>
 When a package is redeployed or reloaded, NCS will stop the currently running instance by calling the <code>teardown()</code> function of each component thread. This is where we then in turn can call the <code>stop()</code> function on the various threads or processes we are running. Thus, the interface here for the incoming data is a function but we then have to propagate this information from our function to our main thread. If you remember from the <a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">first part</a> we had a silly naive implementation of a background worker that looked like this:
 </p>
@@ -204,18 +204,18 @@ When implementing a thread for monitoring something, the important thing to reme
 </div>
 </div>
 
-<div id="outline-container-org6f0bf7b" class="outline-3">
-<h3 id="org6f0bf7b">CDB configuration changes</h3>
-<div class="outline-text-3" id="text-org6f0bf7b">
+<div id="outline-container-org1898578" class="outline-3">
+<h3 id="org1898578">CDB configuration changes</h3>
+<div class="outline-text-3" id="text-org1898578">
 <p>
 CDB subscribers are using a design pattern provided by Cisco and we can't influence it much. Instead we have to integrate with it. With a queue to the supervisor this becomes trivial. The config CDB subscriber simply runs as a separate thread and will take whatever updates it receives on CDB changes and publish them on the queue so the supervisor can react to it.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2b79a62" class="outline-3">
-<h3 id="org2b79a62">Monitoring HA events</h3>
-<div class="outline-text-3" id="text-org2b79a62">
+<div id="outline-container-org654ee50" class="outline-3">
+<h3 id="org654ee50">Monitoring HA events</h3>
+<div class="outline-text-3" id="text-org654ee50">
 <p>
 HA events come from NSO over the notifications API which we access through a socket from Python. Unlike the CDB subscriber, there is no ready to go class that we can just subclass and get moving with. Instead we have to implement the thread <code>run()</code> method ourselves. Efficiently waiting on a socket is easy, as already covered, we can use <code>select()</code> for this. However, how can we signal the thread to stop using something that is selectable? I chose to implement a WaitableEvent that sends its data over a pipe, which has a file descriptor and thus is waitable. The code for that looks like this:
 </p>
@@ -330,9 +330,9 @@ We use multiple threads with different methods so we can efficiently monitor dif
 </div>
 </div>
 
-<div id="outline-container-org94cec29" class="outline-3">
-<h3 id="org94cec29">Child process liveness monitor</h3>
-<div class="outline-text-3" id="text-org94cec29">
+<div id="outline-container-org601d88e" class="outline-3">
+<h3 id="org601d88e">Child process liveness monitor</h3>
+<div class="outline-text-3" id="text-org601d88e">
 <p>
 If the process we started to run the background worker function dies for whatever reason, we want to notice this and restart it. How can we efficiently monitor the liveness of a child process?
 </p>
@@ -402,11 +402,11 @@ Since a pipe has a file descriptor we can wait on it using our <code>select()</c
 </div>
 </div>
 
-<div id="outline-container-orga6b90b5" class="outline-3">
-<h3 id="orga6b90b5">Hiding things from the bg function</h3>
-<div class="outline-text-3" id="text-orga6b90b5">
+<div id="outline-container-org72d9440" class="outline-3">
+<h3 id="org72d9440">Hiding things from the bg function</h3>
+<div class="outline-text-3" id="text-org72d9440">
 <p>
-We want to make it dead simple to use the background process framework. Passing in a pipe, and the logging objects that need to be set up, as described in the <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">previous part</a>, should have to be done by the user of our framework. We want to take care of that, but how?
+We want to make it dead simple to use the background process library. Passing in a pipe, and the logging objects that need to be set up, as described in the <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">previous part</a>, should have to be done by the user of our library. We want to take care of that, but how?
 </p>
 
 <p>
@@ -444,9 +444,9 @@ Note how the first argument, accepting the pipe is unused, but it is enough to r
 </div>
 </div>
 
-<div id="outline-container-org3d739c1" class="outline-3">
-<h3 id="org3d739c1">A selectable queue</h3>
-<div class="outline-text-3" id="text-org3d739c1">
+<div id="outline-container-org81f998b" class="outline-3">
+<h3 id="org81f998b">A selectable queue</h3>
+<div class="outline-text-3" id="text-org81f998b">
 <p>
 Monitoring the child process liveness happens through a pipe which is waitable using select. As previously described though, we placed a queue at the center of the supervisor thread and send messages from other threads over this queue. Now we have a queue and a pipe to wait on, how?
 </p>
@@ -460,7 +460,7 @@ The <code>multiprocessing</code> library also has a queue which works across mul
 </p>
 
 <p>
-Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process framework, just head over to <a href="https://github.com/plajjan/bgworker/">the bgworker repo on Github</a>.
+Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process library, just head over to <a href="https://github.com/plajjan/bgworker/">the bgworker repo on Github</a>.
 </p>
 
 <div class="org-src-container">
@@ -664,9 +664,9 @@ Here's the code for the supervisor thread showing both the selectable queue (wel
 </div>
 </div>
 
-<div id="outline-container-org052b9f0" class="outline-3">
-<h3 id="org052b9f0">User interface</h3>
-<div class="outline-text-3" id="text-org052b9f0">
+<div id="outline-container-orga78faa4" class="outline-3">
+<h3 id="orga78faa4">A library with a simple user interface</h3>
+<div class="outline-text-3" id="text-orga78faa4">
 <p>
 As we've gone through over in these three posts, there's quite a bit of code that needs to be written to implement a proper NSO background worker. The idea was that we would write it in such a way that it could be reused. Someone wanting to implement a background worker should not have to understand, much less implement, all of this. This is why we've structured the surrounding code for running a background worker as a library that can be reused. We effectively hide the complexity by exposing a simple user interface to the developer. Using the bgworker background process library could look like this:
 </p>
@@ -741,20 +741,20 @@ We aimed for a simple interface and I think we succeeded.
 </p>
 
 <p>
-The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our framework. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - <i>spend your time on your business logic and not on overhead tasks</i> - nonetheless I think we accomplished what we set out to do.
+The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our library. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - <i>spend your time on your business logic and not on overhead tasks</i> - nonetheless I think we accomplished what we set out to do.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgc4aeec6" class="outline-3">
-<h3 id="orgc4aeec6">Finale</h3>
-<div class="outline-text-3" id="text-orgc4aeec6">
+<div id="outline-container-orgde8b56e" class="outline-3">
+<h3 id="orgde8b56e">Finale</h3>
+<div class="outline-text-3" id="text-orgde8b56e">
 <p>
-And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use frameworks/libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
+And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
 </p>
 
 <p>
-I hope you will also appreciate the amount of energy that went into writing the bgworker package. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic framework/library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
+I hope you will also appreciate the amount of energy that went into writing the <a href="https://github.com/plajjan/bgworker">bgworker</a> package.py library that you can reuse. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
 </p>
 </div>
 </div>
