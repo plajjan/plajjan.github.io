@@ -25,9 +25,9 @@
 <div id="content">
 <div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">Writing a Python background worker for Cisco NSO - finale</a></h1>
 
-<div id="outline-container-org69f0b1c" class="outline-2">
-<h2 id="org69f0b1c">Writing a Python background worker for Cisco NSO - finale</h2>
-<div class="outline-text-2" id="text-org69f0b1c">
+<div id="outline-container-org6ea071a" class="outline-2">
+<h2 id="org6ea071a">Writing a Python background worker for Cisco NSO - finale</h2>
+<div class="outline-text-2" id="text-org6ea071a">
 <p>
 Having read through the previous two parts (<a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">1</a>, <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">2</a>) you know we now have an implementation that actually works and behaves, at least in regards to the most important properties, the way we want. In this last part I would like to explain some of the implementation details, in particular how we efficiently wait for events.
 </p>
@@ -68,9 +68,9 @@ Are all these sockets or file descriptors that we can wait on with a <code>selec
 </div>
 
 
-<div id="outline-container-orge65f038" class="outline-3">
-<h3 id="orge65f038">Thread whispering</h3>
-<div class="outline-text-3" id="text-orge65f038">
+<div id="outline-container-org6165fa6" class="outline-3">
+<h3 id="org6165fa6">Thread whispering</h3>
+<div class="outline-text-3" id="text-org6165fa6">
 <p>
 When a package is redeployed or reloaded, NCS will stop the currently running instance by calling the <code>teardown()</code> function of each component thread. This is where we then in turn can call the <code>stop()</code> function on the various threads or processes we are running. Thus, the interface here for the incoming data is a function but we then have to propagate this information from our function to our main thread. If you remember from the <a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">first part</a> we had a silly naive implementation of a background worker that looked like this:
 </p>
@@ -204,18 +204,18 @@ When implementing a thread for monitoring something, the important thing to reme
 </div>
 </div>
 
-<div id="outline-container-org156ce24" class="outline-3">
-<h3 id="org156ce24">CDB configuration changes</h3>
-<div class="outline-text-3" id="text-org156ce24">
+<div id="outline-container-org6f0bf7b" class="outline-3">
+<h3 id="org6f0bf7b">CDB configuration changes</h3>
+<div class="outline-text-3" id="text-org6f0bf7b">
 <p>
 CDB subscribers are using a design pattern provided by Cisco and we can't influence it much. Instead we have to integrate with it. With a queue to the supervisor this becomes trivial. The config CDB subscriber simply runs as a separate thread and will take whatever updates it receives on CDB changes and publish them on the queue so the supervisor can react to it.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org0d542ec" class="outline-3">
-<h3 id="org0d542ec">Monitoring HA events</h3>
-<div class="outline-text-3" id="text-org0d542ec">
+<div id="outline-container-org2b79a62" class="outline-3">
+<h3 id="org2b79a62">Monitoring HA events</h3>
+<div class="outline-text-3" id="text-org2b79a62">
 <p>
 HA events come from NSO over the notifications API which we access through a socket from Python. Unlike the CDB subscriber, there is no ready to go class that we can just subclass and get moving with. Instead we have to implement the thread <code>run()</code> method ourselves. Efficiently waiting on a socket is easy, as already covered, we can use <code>select()</code> for this. However, how can we signal the thread to stop using something that is selectable? I chose to implement a WaitableEvent that sends its data over a pipe, which has a file descriptor and thus is waitable. The code for that looks like this:
 </p>
@@ -330,9 +330,9 @@ We use multiple threads with different methods so we can efficiently monitor dif
 </div>
 </div>
 
-<div id="outline-container-org1906591" class="outline-3">
-<h3 id="org1906591">Child process liveness monitor</h3>
-<div class="outline-text-3" id="text-org1906591">
+<div id="outline-container-org94cec29" class="outline-3">
+<h3 id="org94cec29">Child process liveness monitor</h3>
+<div class="outline-text-3" id="text-org94cec29">
 <p>
 If the process we started to run the background worker function dies for whatever reason, we want to notice this and restart it. How can we efficiently monitor the liveness of a child process?
 </p>
@@ -402,9 +402,9 @@ Since a pipe has a file descriptor we can wait on it using our <code>select()</c
 </div>
 </div>
 
-<div id="outline-container-orge7fb1e9" class="outline-3">
-<h3 id="orge7fb1e9">Hiding things from the bg function</h3>
-<div class="outline-text-3" id="text-orge7fb1e9">
+<div id="outline-container-orga6b90b5" class="outline-3">
+<h3 id="orga6b90b5">Hiding things from the bg function</h3>
+<div class="outline-text-3" id="text-orga6b90b5">
 <p>
 We want to make it dead simple to use the background process framework. Passing in a pipe, and the logging objects that need to be set up, as described in the <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">previous part</a>, should have to be done by the user of our framework. We want to take care of that, but how?
 </p>
@@ -444,9 +444,9 @@ Note how the first argument, accepting the pipe is unused, but it is enough to r
 </div>
 </div>
 
-<div id="outline-container-org963a50f" class="outline-3">
-<h3 id="org963a50f">A selectable queue</h3>
-<div class="outline-text-3" id="text-org963a50f">
+<div id="outline-container-org3d739c1" class="outline-3">
+<h3 id="org3d739c1">A selectable queue</h3>
+<div class="outline-text-3" id="text-org3d739c1">
 <p>
 Monitoring the child process liveness happens through a pipe which is waitable using select. As previously described though, we placed a queue at the center of the supervisor thread and send messages from other threads over this queue. Now we have a queue and a pipe to wait on, how?
 </p>
@@ -664,10 +664,91 @@ Here's the code for the supervisor thread showing both the selectable queue (wel
 </div>
 </div>
 
+<div id="outline-container-org052b9f0" class="outline-3">
+<h3 id="org052b9f0">User interface</h3>
+<div class="outline-text-3" id="text-org052b9f0">
+<p>
+As we've gone through over in these three posts, there's quite a bit of code that needs to be written to implement a proper NSO background worker. The idea was that we would write it in such a way that it could be reused. Someone wanting to implement a background worker should not have to understand, much less implement, all of this. This is why we've structured the surrounding code for running a background worker as a library that can be reused. We effectively hide the complexity by exposing a simple user interface to the developer. Using the bgworker background process library could look like this:
+</p>
 
-<div id="outline-container-org62f984e" class="outline-3">
-<h3 id="org62f984e">Finale</h3>
-<div class="outline-text-3" id="text-org62f984e">
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
+<span style="color: #4f97d7; font-weight: bold;">import</span> logging
+<span style="color: #4f97d7; font-weight: bold;">import</span> random
+<span style="color: #4f97d7; font-weight: bold;">import</span> sys
+<span style="color: #4f97d7; font-weight: bold;">import</span> time
+
+<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
+<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
+
+<span style="color: #4f97d7; font-weight: bold;">from</span> . <span style="color: #4f97d7; font-weight: bold;">import</span> background_process
+
+<span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">bg_worker</span><span style="color: #4f97d7;">()</span>:
+    <span style="color: #7590db;">log</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
+        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
+            <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
+            <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
+            <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
+            oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
+
+        log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker process, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">if</span> random.randint<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span>, <span style="color: #a45bad;">10</span><span style="color: #4f97d7;">)</span> == <span style="color: #a45bad;">9</span>:
+            log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Bad dice value"</span><span style="color: #4f97d7;">)</span>
+            sys.<span style="color: #a45bad;">exit</span><span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
+        time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">2</span><span style="color: #4f97d7;">)</span>
+
+<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p = background_process.Process<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, bg_worker, config_path=<span style="color: #2d9574;">'/bgworker/enabled'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+This is the example in the <a href="https://github.com/plajjan/bgworker">bgworker repo</a> and it shows the simple worker that increments an operational state value once per second. Every now and then it dies, which then shows that the supervisor correctly monitors the child process and restarts it. You can disable it by setting <code>/bgworker/enabled</code> to <code>false</code>.
+</p>
+
+<p>
+The main functionality is implemented in the <code>bg_worker()</code> function and we use the background process library to run that function in the background.
+</p>
+
+<p>
+It is the following lines, which are part of a standard NSO Application definition, where we hook in and run the background process by instantiating <code>background_process.Process()</code> and feeding it the function we want it to run. Further we tell it that the path to the enable/disable leaf of this background worker is <code>/bgworker/enabled</code>. The library then takes over and does the needful.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p = background_process.Process<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, bg_worker, config_path=<span style="color: #2d9574;">'/bgworker/enabled'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.start<span style="color: #4f97d7;">()</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
+        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.stop<span style="color: #4f97d7;">()</span>
+</pre>
+</div>
+
+<p>
+We aimed for a simple interface and I think we succeeded.
+</p>
+
+<p>
+The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our framework. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - <i>spend your time on your business logic and not on overhead tasks</i> - nonetheless I think we accomplished what we set out to do.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc4aeec6" class="outline-3">
+<h3 id="orgc4aeec6">Finale</h3>
+<div class="outline-text-3" id="text-orgc4aeec6">
 <p>
 And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use frameworks/libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
 </p>
