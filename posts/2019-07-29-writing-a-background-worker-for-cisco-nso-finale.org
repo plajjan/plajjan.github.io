@@ -302,7 +302,7 @@
    Since a pipe has a file descriptor we can wait on it using our =select()= loop and this is what we do in the later versions of bgworker.
    
 ** Hiding things from the bg function
-   We want to make it dead simple to use the background process framework. Passing in a pipe, and the logging objects that need to be set up, as described in the [[./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html][previous part]], should have to be done by the user of our framework. We want to take care of that, but how?
+   We want to make it dead simple to use the background process library. Passing in a pipe, and the logging objects that need to be set up, as described in the [[./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html][previous part]], should have to be done by the user of our library. We want to take care of that, but how?
    
    When we start the child process, it doesn't immediately run the user provided function. Instead we have a wrapper function that takes care of these things and then hands over control to the user provided function! Like this:
    
@@ -339,7 +339,7 @@
    
    The =multiprocessing= library also has a queue which works across multiple processes. It uses a pipe under the hood to pass the messages and deals with things like sharing the the file descriptor when you spawn your child process (which is what we do). By simply switching from =queue.Queue= to =multiprocessing.Queue= (they feature the exact same interface) we have gained a pipe under the hood that we can =select()= on. Voilà!
    
-   Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process framework, just head over to [[https://github.com/plajjan/bgworker/][the bgworker repo on Github]].
+   Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process library, just head over to [[https://github.com/plajjan/bgworker/][the bgworker repo on Github]].
 
    #+BEGIN_SRC python
      class Process(threading.Thread):
@@ -539,7 +539,7 @@
                  self.log.error("{}: worker not terminated on time, alive: {}  process: {}".format(self, self.worker.is_alive(), self.worker))
    #+END_SRC
    
-** User interface
+** A library with a simple user interface
    As we've gone through over in these three posts, there's quite a bit of code that needs to be written to implement a proper NSO background worker. The idea was that we would write it in such a way that it could be reused. Someone wanting to implement a background worker should not have to understand, much less implement, all of this. This is why we've structured the surrounding code for running a background worker as a library that can be reused. We effectively hide the complexity by exposing a simple user interface to the developer. Using the bgworker background process library could look like this:
    
    #+BEGIN_SRC python
@@ -601,9 +601,9 @@
    
    We aimed for a simple interface and I think we succeeded.
    
-   The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our framework. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - /spend your time on your business logic and not on overhead tasks/ - nonetheless I think we accomplished what we set out to do.
+   The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our library. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - /spend your time on your business logic and not on overhead tasks/ - nonetheless I think we accomplished what we set out to do.
 
 ** Finale
-   And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use frameworks/libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
+   And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
    
-   I hope you will also appreciate the amount of energy that went into writing the bgworker package. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic framework/library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
+   I hope you will also appreciate the amount of energy that went into writing the [[https://github.com/plajjan/bgworker][bgworker]] package.py library that you can reuse. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
