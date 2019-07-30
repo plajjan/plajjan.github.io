@@ -539,7 +539,70 @@
                  self.log.error("{}: worker not terminated on time, alive: {}  process: {}".format(self, self.worker.is_alive(), self.worker))
    #+END_SRC
    
+** User interface
+   As we've gone through over in these three posts, there's quite a bit of code that needs to be written to implement a proper NSO background worker. The idea was that we would write it in such a way that it could be reused. Someone wanting to implement a background worker should not have to understand, much less implement, all of this. This is why we've structured the surrounding code for running a background worker as a library that can be reused. We effectively hide the complexity by exposing a simple user interface to the developer. Using the bgworker background process library could look like this:
    
+   #+BEGIN_SRC python
+     # -*- mode: python; python-indent: 4 -*-
+     import logging
+     import random
+     import sys
+     import time
+
+     import ncs
+     from ncs.application import Service
+
+     from . import background_process
+
+     def bg_worker():
+         log = logging.getLogger()
+
+         while True:
+             with ncs.maapi.single_write_trans('bgworker', 'system', db=ncs.OPERATIONAL) as oper_trans_write:
+                 root = ncs.maagic.get_root(oper_trans_write)
+                 cur_val = root.bgworker.counter
+                 root.bgworker.counter += 1
+                 oper_trans_write.apply()
+
+             log.debug("Hello from background worker process, increment counter from {} to {}".format(cur_val, cur_val+1))
+             if random.randint(0, 10) == 9:
+                 log.error("Bad dice value")
+                 sys.exit(1)
+             time.sleep(2)
+
+     class Main(ncs.application.Application):
+         def setup(self):
+             self.log.info('Main RUNNING')
+             self.p = background_process.Process(self, bg_worker, config_path='/bgworker/enabled')
+             self.p.start()
+
+         def teardown(self):
+             self.log.info('Main FINISHED')
+             self.p.stop()
+   #+END_SRC
+   
+   This is the example in the [[https://github.com/plajjan/bgworker][bgworker repo]] and it shows the simple worker that increments an operational state value once per second. Every now and then it dies, which then shows that the supervisor correctly monitors the child process and restarts it. You can disable it by setting =/bgworker/enabled= to =false=.
+   
+   The main functionality is implemented in the =bg_worker()= function and we use the background process library to run that function in the background.
+   
+   It is the following lines, which are part of a standard NSO Application definition, where we hook in and run the background process by instantiating =background_process.Process()= and feeding it the function we want it to run. Further we tell it that the path to the enable/disable leaf of this background worker is =/bgworker/enabled=. The library then takes over and does the needful.
+   
+   #+BEGIN_SRC python
+     class Main(ncs.application.Application):
+         def setup(self):
+             self.log.info('Main RUNNING')
+             self.p = background_process.Process(self, bg_worker, config_path='/bgworker/enabled')
+             self.p.start()
+
+         def teardown(self):
+             self.log.info('Main FINISHED')
+             self.p.stop()
+   #+END_SRC
+   
+   We aimed for a simple interface and I think we succeeded.
+   
+   The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our framework. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - /spend your time on your business logic and not on overhead tasks/ - nonetheless I think we accomplished what we set out to do.
+
 ** Finale
    And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use frameworks/libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
    
