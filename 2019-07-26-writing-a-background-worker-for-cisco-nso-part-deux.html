@@ -25,8 +25,8 @@
 <div id="content">
 <div class="post-date">26 Jul 2019</div><h1 class="post-title"><a href="2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">Writing a Python background worker for Cisco NSO - part deux</a></h1>
 
-<div id="outline-container-org00bff74" class="outline-2">
-<h2 id="org00bff74"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO - part deux (2)</h2>
+<div id="outline-container-org9284543" class="outline-2">
+<h2 id="org9284543"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO - part deux (2)</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 We ended the first part with a chunk of code that implements all the functionality we had listed as our requirements. You'll find the code <a href="https://github.com/plajjan/bgworker/commit/281324399c56f520f99920d00075c9c23557cb1c">in this commit</a> in case you want to look at it in more detail and how it then evolved, which is what I'll detail in this post.
@@ -37,8 +37,8 @@ First thing I did, after having played around with this code myself for some tim
 </p>
 </div>
 
-<div id="outline-container-orgce9d6da" class="outline-3">
-<h3 id="orgce9d6da"><span class="section-number-3">1.1</span> Debugging a <i>hung</i> Python VM</h3>
+<div id="outline-container-orgc51092b" class="outline-3">
+<h3 id="orgc51092b"><span class="section-number-3">1.1</span> Debugging a <i>hung</i> Python VM</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 At work we have a rather sleek way of starting up a development environment for NSO. We call it a <i>playground</i> and it consists of one or more containers running NSO and a number of virtual routers or other support containers that together form a small topology. Starting a playground is just a matter of executing one script, waiting a few minutes (both NSO and virtual routers are slow in starting up) and then you can start coding. There are different topologies you can choose from as well as options for controlling persistence of data or restarting playgrounds until tests fail (for finding bug reproduction cases). We start the same topologies in CI for testing. All in all it gives a rather good guarantee that the environment we develop and test in are all uniform.
@@ -74,8 +74,8 @@ Finally some progress. We repeated this, taking a stack dump for multiple invoca
 </div>
 </div>
 
-<div id="outline-container-orged98a62" class="outline-3">
-<h3 id="orged98a62"><span class="section-number-3">1.2</span> A ten year old bug</h3>
+<div id="outline-container-orgfb4c911" class="outline-3">
+<h3 id="orgfb4c911"><span class="section-number-3">1.2</span> A ten year old bug</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 The stack dump further reveals that the lock is being acquired in the logging module, which simply takes a lock around the output in the handler when it is emitting a log message. I didn't actually know the logging module took locks - mostly because I never thought about how it worked internally - but it's fairly natural since we would otherwise risk two log messages emitted at the same time overwriting each other.
@@ -103,8 +103,8 @@ It now also became clear why this hadn't manifested itself for me as I was devel
 </div>
 </div>
 
-<div id="outline-container-org2fc23b9" class="outline-3">
-<h3 id="org2fc23b9"><span class="section-number-3">1.3</span> Incredible timing</h3>
+<div id="outline-container-orgb55dfd7" class="outline-3">
+<h3 id="orgb55dfd7"><span class="section-number-3">1.3</span> Incredible timing</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 Note that the version of bgworker that we are talking about was committed on the 5th of July. After that it took us a few days, till the 8th, to hunt this bug down. 8th of July is also the day that Python 3.7.4rc2 was released and 3.7.4rc2 should address this issue!
@@ -116,8 +116,8 @@ Note that the version of bgworker that we are talking about was committed on the
 </div>
 </div>
 
-<div id="outline-container-orgacde9e7" class="outline-3">
-<h3 id="orgacde9e7"><span class="section-number-3">1.4</span> Revamping the NSO docker container</h3>
+<div id="outline-container-org796f2df" class="outline-3">
+<h3 id="org796f2df"><span class="section-number-3">1.4</span> Revamping the NSO docker container</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 We run NSO in a docker container so switching Python version is relatively simple, but we still have various components and NEDs that include a couple too many dependencies, which does make it trickier to upgrade. We also try to rely on official packages from the distribution repositories rather than pulling down and compiling our own Python build&#x2026; but we wanted to make progress, so that had to go out the window.
@@ -133,8 +133,8 @@ In the end however, it turns out 3.7.4 doesn't really fix our issue. While it do
 </div>
 </div>
 
-<div id="outline-container-org54344dd" class="outline-3">
-<h3 id="org54344dd"><span class="section-number-3">1.5</span> A fresh start</h3>
+<div id="outline-container-org14bc75f" class="outline-3">
+<h3 id="org14bc75f"><span class="section-number-3">1.5</span> A fresh start</h3>
 <div class="outline-text-3" id="text-1-5">
 <p>
 The multiprocessing library uses <code>fork()</code> per default on UNIX like operating systems but this can be influenced through an argument and instead of <code>fork()</code> we can tell the multiprocessing library to <code>spawn</code> which I'm pretty sure maps to <code>posix_spawn()</code> under the hood. Unlike <code>fork()</code>, <code>posix_spawn()</code> doesn't copy all of the memory of the parent to the child process and so we won't get a copy of the held locks - instead we start off fresh. It also means we don't have any loggers at all so we have to set those up. What we want to provide to the user of our background_process micro-framework is a smooth experience and it's just nice if the loggers are already set up for you so you can focus on your own code instead of overhead stuff like logging.
@@ -169,8 +169,8 @@ The queue log handler is set up and after this we run the bg_function provided t
 </div>
 </div>
 
-<div id="outline-container-org3a79b73" class="outline-3">
-<h3 id="org3a79b73"><span class="section-number-3">1.6</span> The promise of efficient logging</h3>
+<div id="outline-container-org39f679a" class="outline-3">
+<h3 id="org39f679a"><span class="section-number-3">1.6</span> The promise of efficient logging</h3>
 <div class="outline-text-3" id="text-1-6">
 <p>
 Logging can be tricky. We often want to add log messages in various places to easily understand what our program is doing. However, logging itself comes at a cost, not just writing the messages but actually doing the string formatting of them can be relatively expensive. Python's standard logging module is pretty clever and will only format+emit a message if the log level is set high enough. If you have a tight loop and a <code>log.debug()</code> statement it won't actually run unless the log level is set to debug. This makes it possible to leave the logging statements in your code and know it will normally run fast. You will only incur a performance penalty when you actually turn on debugging.
@@ -236,8 +236,8 @@ This is however a rather naive implementation design and it breaks the promise o
 </div>
 </div>
 
-<div id="outline-container-orgef79d4c" class="outline-3">
-<h3 id="orgef79d4c"><span class="section-number-3">1.7</span> Log control queue</h3>
+<div id="outline-container-org6e91913" class="outline-3">
+<h3 id="org6e91913"><span class="section-number-3">1.7</span> Log control queue</h3>
 <div class="outline-text-3" id="text-1-7">
 <p>
 To uphold the promise of cheap logging in an environment with multiple processes like ours we need to propagate the log level configuration to the child process so it doesn't need to format and emit the log messages unless enabled by the currently configured logging level.
@@ -257,7 +257,7 @@ Mission accomplished!
 </ul>
 
 <p>
-Stay tuned for the next part on how to avoid busy polling and efficiently implementing process monitoring!
+Read the <a href="./2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">final part</a> on how to avoid busy polling and efficiently implementing process monitoring!
 </p>
 </div>
 </div>
