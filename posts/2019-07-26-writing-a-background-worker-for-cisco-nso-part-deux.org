@@ -143,4 +143,4 @@
    - Consistent logging ergonomics with and without the background process framework
    - Cheap logging calls when debug is disabled
 
-   Stay tuned for the next part on how to avoid busy polling and efficiently implementing process monitoring!
+   Read the [[./2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html][final part]] on how to avoid busy polling and efficiently implementing process monitoring!
