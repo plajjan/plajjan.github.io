@@ -2,7 +2,7 @@
 #+SUBTITLE: Using Cisco NSO services for everything
 #+AUTHOR: Kristian Larsson
 #+EMAIL: kristian@spritelink.net
-#+DATE: <2019-07-25 00:00:00>
+#+DATE: <2019-09-24 Tue 00:00>
 #+LANGUAGE: en
 #+FILETAGS: NSO, NCS, network automation
 #+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
