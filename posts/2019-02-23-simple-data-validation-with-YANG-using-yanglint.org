@@ -1,0 +1,171 @@
+#+TITLE: Simple data validation with YANG using yanglint
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2019-02-23 Mon 08:00>
+#+LANGUAGE: en
+#+FILETAGS: NSO
+#+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+I've shown in the past how I used pyang and yang2dsdl to validate XML instance data against a YANG model. It's not the best user experience though; it'd be better with an integrated tool not exposing things like DSDL and something that provides better error message. Enter yanglint!
+
+yanglint comes as a part of libyang. Install libyang and you'll get yanglint.
+
+Operation of it is rather simple, I'll show it using the same example I used when showing yang2dsdl.
+
+The YANG module tubecats.yang:
+
+#+BEGIN_SRC yang
+    module tubecats {
+        namespace "http://plajjan.github.io/ns/yang/tubecats";
+        prefix tc;
+
+        revision 2017-03-15 {
+            description "First and only version";
+        }
+
+        container internet {
+            list cat {
+                key name;
+                leaf name {
+                    type string;
+                }
+            }
+        }
+    }
+#+END_SRC
+
+Some instance data, which is supposedly valid:
+
+#+BEGIN_SRC xml
+    <ns0:data xmlns:ns0="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <tc:internet xmlns:tc="http://plajjan.github.io/ns/yang/tubecats">
+            <tc:cat>
+                <tc:name>jingles</tc:name>
+            </tc:cat>
+            <tc:cat>
+                <tc:name>fluffy</tc:name>
+            </tc:cat>
+        </tc:internet>
+    </ns0:data>
+#+END_SRC
+
+We did validate this instance data against the YANG model [[/validating-data-with-YANG][/with yang2dsdl/]] so we can be fairly certain but let's test it again with yanglint:
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml 
+    kll@minemacs:~/yang-test$ echo $?
+    0
+    kll@minemacs:~/yang-test$ 
+#+END_SRC
+
+And let's introduce an error, a 'foo' node under the second cat entry which isn't in the model:
+
+#+BEGIN_SRC xml
+    <ns0:data xmlns:ns0="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <tc:internet xmlns:tc="http://plajjan.github.io/ns/yang/tubecats">
+            <tc:cat>
+                <tc:name>jingles</tc:name>
+            </tc:cat>
+            <tc:cat>
+                <tc:name>fluffy</tc:name>
+                <tc:foo>bar</tc:foo>
+            </tc:cat>
+        </tc:internet>
+    </ns0:data>
+#+END_SRC
+
+lo and behold as this time around it complains loudly:
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data2.xml 
+    err : Unknown element "foo". (/tubecats:internet/cat[name='fluffy'])
+    kll@minemacs:~/yang-test$ echo $?
+    1
+    kll@minemacs:~/yang-test$ 
+#+END_SRC
+
+With a rather clear error message too! YANG tools have come some way over the years! yanglint supports instance data in JSON format too, so you can validate that directly.
+
+While there is normally no generic method to convert XML to JSON or vice versa, due to the difference in the data formats, it is possible when you have a YANG model because YANG defines both XML and JSON representations of the same instance data and so it becomes possible to convert the data in a generic way with no ambiguities. yanglint provides this capability, so if we prefer to read JSON we can convert the above XML config to JSON:
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+    {
+      "tubecats:internet": {
+        "cat": [
+          {
+            "name": "jingles"
+          },
+          {
+            "name": "fluffy"
+          }
+        ]
+      }
+    }
+
+    kll@minemacs:~/yang-test$ echo $?
+#+END_SRC
+
+some people prefer YAML to JSON and while there is no YAML representation defined for YANG modeled instance data, YAML is similar enough to JSON that we can easily convert JSON to YAML. Using python (and install =python3-yaml= on Debian/Ubuntu) we can write a simple program to convert JSON to YAML:
+
+#+BEGIN_SRC python3
+    #!/usr/bin/env python3
+    import json
+    import sys
+    import yaml
+
+    jf = open(sys.argv[1])
+
+    print(yaml.dump(json.load(jf)))
+#+END_SRC
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+    tubecats:internet:
+      cat:
+      - {name: jingles}
+      - {name: fluffy}
+
+    kll@minemacs:~/yang-test$
+#+END_SRC
+
+Similarly converting in the other direction, we reverse the python program:
+
+#+BEGIN_SRC python3
+    #!/usr/bin/env python3
+    import json
+    import sys
+    import yaml
+
+    yf = open(sys.argv[1])
+
+    print(json.dumps(yaml.load(yf)))
+#+END_SRC
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+    {
+      "tubecats:internet": {
+        "cat": [
+          {
+            "name": "jingles"
+          },
+          {
+            "name": "fluffy"
+          }
+        ]
+      }
+    }
+#+END_SRC
+
+I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as =json.dumps= just writes the whole JSON string on one line.
+
+Now go validate all that config, in whatever format you prefer, before you try to configure your router :)
+
+** Appendix
+
+*** What is the difficulty of converting XML to JSON or vice versa?
+
+JSON has built in data structures that are presented with the data, for example =[1,2,3]= is a list / array while ={'a': 1}= is a dict / hash / associative array. In XML there are no such data structure in the data format itself so taking a few nodes of XML it is impossible to know whether it should be converted to multiple dicts or a list or something else. However, if we have a YANG model then we have the definiton of the data structure and so we know what it should be converted to. The simplest example of this is that it is impossible to differentiate between a list with a single element and a container, just by reading the XML file.
