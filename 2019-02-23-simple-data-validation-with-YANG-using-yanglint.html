@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Simple data validation with YANG using yanglint</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
+<body>
+<div id="preamble" class="status">
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<div class="post-date">23 Feb 2019</div><h1 class="post-title"><a href="2019-02-23-simple-data-validation-with-YANG-using-yanglint.html">Simple data validation with YANG using yanglint</a></h1>
+<p>
+I've shown in the past how I used pyang and yang2dsdl to validate XML instance data against a YANG model. It's not the best user experience though; it'd be better with an integrated tool not exposing things like DSDL and something that provides better error message. Enter yanglint!
+</p>
+
+<p>
+yanglint comes as a part of libyang. Install libyang and you'll get yanglint.
+</p>
+
+<p>
+Operation of it is rather simple, I'll show it using the same example I used when showing yang2dsdl.
+</p>
+
+<p>
+The YANG module tubecats.yang:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+Some instance data, which is supposedly valid:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+We did validate this instance data against the YANG model <a href="file:///validating-data-with-YANG"><i>with yang2dsdl</i></a> so we can be fairly certain but let's test it again with yanglint:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml 
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+<span style="color: #a45bad;">0</span>
+kll@minemacs:~/yang-test$ 
+</pre>
+</div>
+
+<p>
+And let's introduce an error, a 'foo' node under the second cat entry which isn't in the model:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;bar&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+lo and behold as this time around it complains loudly:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data2.xml 
+err : Unknown element <span style="color: #2d9574;">"foo"</span>. <span style="color: #4f97d7;">(</span>/tubecats:internet/cat<span style="color: #bc6ec5;">[</span><span style="color: #7590db;">name</span>=<span style="color: #2d9574;">'fluffy'</span><span style="color: #bc6ec5;">]</span><span style="color: #4f97d7;">)</span>
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+<span style="color: #a45bad;">1</span>
+kll@minemacs:~/yang-test$ 
+</pre>
+</div>
+
+<p>
+With a rather clear error message too! YANG tools have come some way over the years! yanglint supports instance data in JSON format too, so you can validate that directly.
+</p>
+
+<p>
+While there is normally no generic method to convert XML to JSON or vice versa, due to the difference in the data formats, it is possible when you have a YANG model because YANG defines both XML and JSON representations of the same instance data and so it becomes possible to convert the data in a generic way with no ambiguities. yanglint provides this capability, so if we prefer to read JSON we can convert the above XML config to JSON:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+<span style="color: #4f97d7;">{</span>
+  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+      <span style="color: #67b11d;">}</span>,
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+      <span style="color: #67b11d;">}</span>
+    <span style="color: #2d9574;">]</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+</pre>
+</div>
+
+<p>
+some people prefer YAML to JSON and while there is no YAML representation defined for YANG modeled instance data, YAML is similar enough to JSON that we can easily convert JSON to YAML. Using python (and install <code>python3-yaml</code> on Debian/Ubuntu) we can write a simple program to convert JSON to YAML:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+jf = open(sys.argv[1])
+
+print(yaml.dump(json.load(jf)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+tubecats:internet:
+  cat:
+  - <span style="color: #4f97d7;">{</span>name: jingles<span style="color: #4f97d7;">}</span>
+  - <span style="color: #4f97d7;">{</span>name: fluffy<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$
+</pre>
+</div>
+
+<p>
+Similarly converting in the other direction, we reverse the python program:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+yf = open(sys.argv[1])
+
+print(json.dumps(yaml.load(yf)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+<span style="color: #4f97d7;">{</span>
+  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+      <span style="color: #67b11d;">}</span>,
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+      <span style="color: #67b11d;">}</span>
+    <span style="color: #2d9574;">]</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as <code>json.dumps</code> just writes the whole JSON string on one line.
+</p>
+
+<p>
+Now go validate all that config, in whatever format you prefer, before you try to configure your router :)
+</p>
+
+<div id="outline-container-org3809299" class="outline-2">
+<h2 id="org3809299">Appendix</h2>
+<div class="outline-text-2" id="text-org3809299">
+</div>
+<div id="outline-container-org6faf02d" class="outline-3">
+<h3 id="org6faf02d">What is the difficulty of converting XML to JSON or vice versa?</h3>
+<div class="outline-text-3" id="text-org6faf02d">
+<p>
+JSON has built in data structures that are presented with the data, for example <code>[1,2,3]</code> is a list / array while <code>{'a': 1}</code> is a dict / hash / associative array. In XML there are no such data structure in the data format itself so taking a few nodes of XML it is impossible to know whether it should be converted to multiple dicts or a list or something else. However, if we have a YANG model then we have the definiton of the data structure and so we know what it should be converted to. The simplest example of this is that it is impossible to differentiate between a list with a single element and a container, just by reading the XML file.
+</p>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div id="postamble" class="status"><br/><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
+</body>
+</html>
