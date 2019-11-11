@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>What's the use of presence containers in YANG?</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
+<body>
+<div id="preamble" class="status">
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
+<p>
+I got the question on what presence containers are good for - what makes them useful?
+</p>
+
+<p>
+P-containers is often used a short term for presence containers, meaning a container that has a <code>presence</code> statement in under in. In contract there are also NP-containers, or non-presence containers, which are really just plain containers without a <code>presence</code> statement but sometimes it's easier being explicit what the container is about.
+</p>
+
+<p>
+YANG is a rather neat data modeling language. It is simple yet expressive enough to often allow something to be modeled in multiple different ways. While we are de facto defining a model when we write something in YANG, I think of it more as describing something already existing. Like how you have a thought in your mind and when you speak it out aloud, all you do is dress it with words from the English (or some other) language. There are many ways in which you can express something in English and the meaning you convey will differ ever so slightly, yet that thought in your mind isn't shaped by the words you use to describe it. The words are there to describe the thought, not the other way around. Similarly with YANG, you have an object, something that exists in reality or in thought and now you must model it. It will very likely be a simplified model and lack some of the detail of the original but nonetheless it will be a model.
+</p>
+
+<p>
+A container, in it's most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
+</p>
+
+<p>
+Let's do a simple example. For the sake of brevity, I'm skipping various required nodes like namespace etc.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. It's presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
+</p>
+
+<p>
+Now let's say we want to refine our model a bit. It's not possible to run a BGP daemon without having the <code>asn</code> and <code>router-id</code> configured, thus we make the two leaves mandatory!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+However, this raises the next problem. Now you <b>always</b> have to configure both <code>asn</code> and <code>router-id</code>, even when you don't want to run BGP! How do we fix this? We could add an <code>enabled</code> leaf under BGP, conveying whether BGP is enabled or not and only if it is enabled then must <code>asn</code> and <code>router-id</code> be set!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"Enable BGP"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">false</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+      <span style="color: #4f97d7; font-weight: bold;">when</span> <span style="color: #2d9574;">"../enabled='true'"</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+      <span style="color: #4f97d7; font-weight: bold;">when</span> <span style="color: #2d9574;">"../enabled='true'"</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+We also add a <code>when</code> statement to the <code>asn</code> and <code>router-id</code> leaves so they only show up after enabled has been set. The <code>mandatory</code> statement only has effect when the <code>when</code> statement evaluates to <code>true</code>. This works&#x2026; but it's not <i>natural</i>. Remember how we aren't really defining the thing we are modeling? We are just observing it and then expressing what we see through the YANG model. There are occasions for when this <code>when</code> statement in combination with a <code>mandatory true</code> is the right solution but this is not it. I think the <i>natural</i> way of modeling this is by making the <code>bgp</code> container into a presence container!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #ce537a; font-weight: bold;">bgp</span>;
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+Now it becomes possible to explicitly configure the <code>bgp</code> container node itself. As soon as we have created the <code>bgp</code> node, the <code>mandatory</code> statements in under <code>asn</code> and <code>router-id</code> force us to also enter values for them, but without having set the <code>bgp</code> node, like when we simply don't want to run BGP, then we also are not required to enter the <code>asn</code> and <code>router-id</code>.
+</p>
+
+<p>
+While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
+</p>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div id="postamble" class="status"><br/><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
+</body>
+</html>
