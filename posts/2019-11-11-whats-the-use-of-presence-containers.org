@@ -1,0 +1,105 @@
+#+TITLE: What's the use of presence containers in YANG?
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2019-11-11 Mon 08:00>
+#+LANGUAGE: en
+#+FILETAGS: YANG
+#+OPTIONS: toc:nil num:3 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+I got the question on what presence containers are good for - what makes them useful?
+
+P-containers is often used a short term for presence containers, meaning a container that has a ~presence~ statement in under in. In contract there are also NP-containers, or non-presence containers, which are really just plain containers without a ~presence~ statement but sometimes it's easier being explicit what the container is about.
+
+YANG is a rather neat data modeling language. It is simple yet expressive enough to often allow something to be modeled in multiple different ways. While we are de facto defining a model when we write something in YANG, I think of it more as describing something already existing. Like how you have a thought in your mind and when you speak it out aloud, all you do is dress it with words from the English (or some other) language. There are many ways in which you can express something in English and the meaning you convey will differ ever so slightly, yet that thought in your mind isn't shaped by the words you use to describe it. The words are there to describe the thought, not the other way around. Similarly with YANG, you have an object, something that exists in reality or in thought and now you must model it. It will very likely be a simplified model and lack some of the detail of the original but nonetheless it will be a model.
+
+A container, in it's most basic shape and form, offer nothing besides acting as a /container/ - something that contains other things. Adding the ~presence~ statement to a container in YANG allows the presence of the container in the configuration to mean something.
+
+Let's do a simple example. For the sake of brevity, I'm skipping various required nodes like namespace etc.
+
+#+BEGIN_SRC yang
+  module router {
+    container bgp {
+      leaf asn {
+        type uint32;
+        description "AS number of this router";
+      }
+      leaf router-id {
+        type uint32;
+        description "router-id of this router";
+      }
+    }
+  }
+#+END_SRC
+
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf ~asn~. Similarly, we have the leaf ~router-id~ which can be set to the router-id of the device. The ~bgp~ container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither ~asn~ nor ~router-id~ is set, the ~bgp~ container won't show up in the configuration whereas if either ~asn~ or ~router-id~ is set, the ~bgp~ container will show up. It's presence or not does not carry any meaning beyond containing the ~asn~ and ~router-id~ leaf.
+
+Now let's say we want to refine our model a bit. It's not possible to run a BGP daemon without having the ~asn~ and ~router-id~ configured, thus we make the two leaves mandatory!
+
+#+BEGIN_SRC yang
+  module router {
+    container bgp {
+      leaf asn {
+        type uint32;
+        description "AS number of this router";
+        mandatory true;
+      }
+      leaf router-id {
+        type uint32;
+        description "router-id of this router";
+        mandatory true;
+      }
+    }
+  }
+#+END_SRC
+
+However, this raises the next problem. Now you *always* have to configure both ~asn~ and ~router-id~, even when you don't want to run BGP! How do we fix this? We could add an ~enabled~ leaf under BGP, conveying whether BGP is enabled or not and only if it is enabled then must ~asn~ and ~router-id~ be set!
+
+#+BEGIN_SRC yang
+  module router {
+    container bgp {
+      leaf enabled {
+        type boolean;
+        description "Enable BGP";
+        default false;
+      }
+      leaf asn {
+        type uint32;
+        description "AS number of this router";
+        mandatory true;
+        when "../enabled='true'";
+      }
+      leaf router-id {
+        type uint32;
+        description "router-id of this router";
+        mandatory true;
+        when "../enabled='true'";
+      }
+    }
+  }
+#+END_SRC
+
+We also add a ~when~ statement to the ~asn~ and ~router-id~ leaves so they only show up after enabled has been set. The ~mandatory~ statement only has effect when the ~when~ statement evaluates to ~true~. This works... but it's not /natural/. Remember how we aren't really defining the thing we are modeling? We are just observing it and then expressing what we see through the YANG model. There are occasions for when this ~when~ statement in combination with a ~mandatory true~ is the right solution but this is not it. I think the /natural/ way of modeling this is by making the ~bgp~ container into a presence container!
+
+#+BEGIN_SRC yang
+  module router {
+    container bgp {
+      presence bgp;
+      leaf asn {
+        type uint32;
+        description "AS number of this router";
+        mandatory true;
+      }
+      leaf router-id {
+        type uint32;
+        description "router-id of this router";
+        mandatory true;
+      }
+    }
+  }
+#+END_SRC
+
+Now it becomes possible to explicitly configure the ~bgp~ container node itself. As soon as we have created the ~bgp~ node, the ~mandatory~ statements in under ~asn~ and ~router-id~ force us to also enter values for them, but without having set the ~bgp~ node, like when we simply don't want to run BGP, then we also are not required to enter the ~asn~ and ~router-id~.
+
+While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
