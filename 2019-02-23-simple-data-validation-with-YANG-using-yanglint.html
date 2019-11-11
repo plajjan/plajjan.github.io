@@ -218,20 +218,20 @@ I wrote the program to read a file and not stdin so when piping we give it the f
 Now go validate all that config, in whatever format you prefer, before you try to configure your router :)
 </p>
 
-<div id="outline-container-org3809299" class="outline-2">
-<h2 id="org3809299">Appendix</h2>
-<div class="outline-text-2" id="text-org3809299">
+<div id="outline-container-org3897179" class="outline-2">
+<h2 id="org3897179">Appendix</h2>
+<div class="outline-text-2" id="text-org3897179">
 </div>
-<div id="outline-container-org6faf02d" class="outline-3">
-<h3 id="org6faf02d">What is the difficulty of converting XML to JSON or vice versa?</h3>
-<div class="outline-text-3" id="text-org6faf02d">
+<div id="outline-container-orge600fd0" class="outline-3">
+<h3 id="orge600fd0">What is the difficulty of converting XML to JSON or vice versa?</h3>
+<div class="outline-text-3" id="text-orge600fd0">
 <p>
 JSON has built in data structures that are presented with the data, for example <code>[1,2,3]</code> is a list / array while <code>{'a': 1}</code> is a dict / hash / associative array. In XML there are no such data structure in the data format itself so taking a few nodes of XML it is impossible to know whether it should be converted to multiple dicts or a list or something else. However, if we have a YANG model then we have the definiton of the data structure and so we know what it should be converted to. The simplest example of this is that it is impossible to differentiate between a list with a single element and a container, just by reading the XML file.
 </p>
 </div>
 </div>
 </div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
 <div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
 </div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
