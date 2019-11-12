@@ -102,4 +102,29 @@ We also add a ~when~ statement to the ~asn~ and ~router-id~ leaves so they only 
 
 Now it becomes possible to explicitly configure the ~bgp~ container node itself. As soon as we have created the ~bgp~ node, the ~mandatory~ statements in under ~asn~ and ~router-id~ force us to also enter values for them, but without having set the ~bgp~ node, like when we simply don't want to run BGP, then we also are not required to enter the ~asn~ and ~router-id~.
 
+Even with ~bgp~ as a P-container, there's a reason to keep the enabled leaf; we might want to be able to configure BGP but not /enable/ it. At least for a human, to shut down the BGP daemon, it is a lot easier to flip a single enabled leaf than it is to remove the entire BGP configuration. Having an enabled leaf allows this.
+
+#+BEGIN_SRC yang
+  module router {
+    container bgp {
+      presence bgp;
+      leaf enabled {
+        type boolean;
+        description "Enable BGP";
+        default true;
+      }
+      leaf asn {
+        type uint32;
+        description "AS number of this router";
+        mandatory true;
+      }
+      leaf router-id {
+        type uint32;
+        description "router-id of this router";
+        mandatory true;
+      }
+    }
+  }
+#+END_SRC
+
 While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
