@@ -143,11 +143,39 @@ Now it becomes possible to explicitly configure the <code>bgp</code> container n
 </p>
 
 <p>
+Even with <code>bgp</code> as a P-container, there's a reason to keep the enabled leaf; we might want to be able to configure BGP but not <i>enable</i> it. At least for a human, to shut down the BGP daemon, it is a lot easier to flip a single enabled leaf than it is to remove the entire BGP configuration. Having an enabled leaf allows this.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #ce537a; font-weight: bold;">bgp</span>;
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"Enable BGP"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
 While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
 </p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
 <div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
-</div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
+</div></div>
 </body>
 </html>

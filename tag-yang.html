@@ -23,214 +23,156 @@
 </nav></div>
 <div id="content">
 <h1 class="title">Posts tagged "YANG":</h1>
-<div class="post-date">23 Feb 2019</div><h1 class="post-title"><a href="2019-02-23-simple-data-validation-with-YANG-using-yanglint.html">Simple data validation with YANG using yanglint</a></h1>
+<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
 <p>
-I've shown in the past how I used pyang and yang2dsdl to validate XML instance data against a YANG model. It's not the best user experience though; it'd be better with an integrated tool not exposing things like DSDL and something that provides better error message. Enter yanglint!
+I got the question on what presence containers are good for - what makes them useful?
 </p>
 
 <p>
-yanglint comes as a part of libyang. Install libyang and you'll get yanglint.
+P-containers is often used a short term for presence containers, meaning a container that has a <code>presence</code> statement in under in. In contract there are also NP-containers, or non-presence containers, which are really just plain containers without a <code>presence</code> statement but sometimes it's easier being explicit what the container is about.
 </p>
 
 <p>
-Operation of it is rather simple, I'll show it using the same example I used when showing yang2dsdl.
+YANG is a rather neat data modeling language. It is simple yet expressive enough to often allow something to be modeled in multiple different ways. While we are de facto defining a model when we write something in YANG, I think of it more as describing something already existing. Like how you have a thought in your mind and when you speak it out aloud, all you do is dress it with words from the English (or some other) language. There are many ways in which you can express something in English and the meaning you convey will differ ever so slightly, yet that thought in your mind isn't shaped by the words you use to describe it. The words are there to describe the thought, not the other way around. Similarly with YANG, you have an object, something that exists in reality or in thought and now you must model it. It will very likely be a simplified model and lack some of the detail of the original but nonetheless it will be a model.
 </p>
 
 <p>
-The YANG module tubecats.yang:
+A container, in it's most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
 </p>
 
-<div class="org-src-container">
-<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
-    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
-    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
-
-    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
-        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
-    <span style="color: #bc6ec5;">}</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
-        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
-            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
-            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
-                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
-            <span style="color: #67b11d;">}</span>
-        <span style="color: #2d9574;">}</span>
-    <span style="color: #bc6ec5;">}</span>
-<span style="color: #4f97d7;">}</span>
-</pre>
-</div>
-
 <p>
-Some instance data, which is supposedly valid:
+Let's do a simple example. For the sake of brevity, I'm skipping various required nodes like namespace etc.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
-    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
-&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
-</pre>
-</div>
-
-<p>
-We did validate this instance data against the YANG model <a href="file:///validating-data-with-YANG"><i>with yang2dsdl</i></a> so we can be fairly certain but let's test it again with yanglint:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml 
-kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
-<span style="color: #a45bad;">0</span>
-kll@minemacs:~/yang-test$ 
-</pre>
-</div>
-
-<p>
-And let's introduce an error, a 'foo' node under the second cat entry which isn't in the model:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
-    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
-            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;bar&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">foo</span>&gt;
-        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
-    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
-&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
-</pre>
-</div>
-
-<p>
-lo and behold as this time around it complains loudly:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data2.xml 
-err : Unknown element <span style="color: #2d9574;">"foo"</span>. <span style="color: #4f97d7;">(</span>/tubecats:internet/cat<span style="color: #bc6ec5;">[</span><span style="color: #7590db;">name</span>=<span style="color: #2d9574;">'fluffy'</span><span style="color: #bc6ec5;">]</span><span style="color: #4f97d7;">)</span>
-kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
-<span style="color: #a45bad;">1</span>
-kll@minemacs:~/yang-test$ 
-</pre>
-</div>
-
-<p>
-With a rather clear error message too! YANG tools have come some way over the years! yanglint supports instance data in JSON format too, so you can validate that directly.
-</p>
-
-<p>
-While there is normally no generic method to convert XML to JSON or vice versa, due to the difference in the data formats, it is possible when you have a YANG model because YANG defines both XML and JSON representations of the same instance data and so it becomes possible to convert the data in a generic way with no ambiguities. yanglint provides this capability, so if we prefer to read JSON we can convert the above XML config to JSON:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
-<span style="color: #4f97d7;">{</span>
-  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
-    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
-      <span style="color: #67b11d;">{</span>
-        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
-      <span style="color: #67b11d;">}</span>,
-      <span style="color: #67b11d;">{</span>
-        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
-      <span style="color: #67b11d;">}</span>
-    <span style="color: #2d9574;">]</span>
-  <span style="color: #bc6ec5;">}</span>
-<span style="color: #4f97d7;">}</span>
-
-kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
-</pre>
-</div>
-
-<p>
-some people prefer YAML to JSON and while there is no YAML representation defined for YANG modeled instance data, YAML is similar enough to JSON that we can easily convert JSON to YAML. Using python (and install <code>python3-yaml</code> on Debian/Ubuntu) we can write a simple program to convert JSON to YAML:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python3">#!/usr/bin/env python3
-import json
-import sys
-import yaml
-
-jf = open(sys.argv[1])
-
-print(yaml.dump(json.load(jf)))
-</pre>
-</div>
-
-<div class="org-src-container">
-<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
-tubecats:internet:
-  cat:
-  - <span style="color: #4f97d7;">{</span>name: jingles<span style="color: #4f97d7;">}</span>
-  - <span style="color: #4f97d7;">{</span>name: fluffy<span style="color: #4f97d7;">}</span>
-
-kll@minemacs:~/yang-test$
-</pre>
-</div>
-
-<p>
-Similarly converting in the other direction, we reverse the python program:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python3">#!/usr/bin/env python3
-import json
-import sys
-import yaml
-
-yf = open(sys.argv[1])
-
-print(json.dumps(yaml.load(yf)))
-</pre>
-</div>
-
-<div class="org-src-container">
-<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
-<span style="color: #4f97d7;">{</span>
-  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
-    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
-      <span style="color: #67b11d;">{</span>
-        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
-      <span style="color: #67b11d;">}</span>,
-      <span style="color: #67b11d;">{</span>
-        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
-      <span style="color: #67b11d;">}</span>
-    <span style="color: #2d9574;">]</span>
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+    <span style="color: #2d9574;">}</span>
   <span style="color: #bc6ec5;">}</span>
 <span style="color: #4f97d7;">}</span>
 </pre>
 </div>
 
 <p>
-I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as <code>json.dumps</code> just writes the whole JSON string on one line.
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. It's presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
 </p>
 
 <p>
-Now go validate all that config, in whatever format you prefer, before you try to configure your router :)
+Now let's say we want to refine our model a bit. It's not possible to run a BGP daemon without having the <code>asn</code> and <code>router-id</code> configured, thus we make the two leaves mandatory!
 </p>
 
-<div id="outline-container-org3897179" class="outline-2">
-<h2 id="org3897179">Appendix</h2>
-<div class="outline-text-2" id="text-org3897179">
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
 </div>
-<div id="outline-container-orge600fd0" class="outline-3">
-<h3 id="orge600fd0">What is the difficulty of converting XML to JSON or vice versa?</h3>
-<div class="outline-text-3" id="text-orge600fd0">
+
 <p>
-JSON has built in data structures that are presented with the data, for example <code>[1,2,3]</code> is a list / array while <code>{'a': 1}</code> is a dict / hash / associative array. In XML there are no such data structure in the data format itself so taking a few nodes of XML it is impossible to know whether it should be converted to multiple dicts or a list or something else. However, if we have a YANG model then we have the definiton of the data structure and so we know what it should be converted to. The simplest example of this is that it is impossible to differentiate between a list with a single element and a container, just by reading the XML file.
+However, this raises the next problem. Now you <b>always</b> have to configure both <code>asn</code> and <code>router-id</code>, even when you don't want to run BGP! How do we fix this? We could add an <code>enabled</code> leaf under BGP, conveying whether BGP is enabled or not and only if it is enabled then must <code>asn</code> and <code>router-id</code> be set!
 </p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"Enable BGP"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">false</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+      <span style="color: #4f97d7; font-weight: bold;">when</span> <span style="color: #2d9574;">"../enabled='true'"</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+      <span style="color: #4f97d7; font-weight: bold;">when</span> <span style="color: #2d9574;">"../enabled='true'"</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
 </div>
+
+<p>
+We also add a <code>when</code> statement to the <code>asn</code> and <code>router-id</code> leaves so they only show up after enabled has been set. The <code>mandatory</code> statement only has effect when the <code>when</code> statement evaluates to <code>true</code>. This works&#x2026; but it's not <i>natural</i>. Remember how we aren't really defining the thing we are modeling? We are just observing it and then expressing what we see through the YANG model. There are occasions for when this <code>when</code> statement in combination with a <code>mandatory true</code> is the right solution but this is not it. I think the <i>natural</i> way of modeling this is by making the <code>bgp</code> container into a presence container!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #ce537a; font-weight: bold;">bgp</span>;
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
 </div>
+
+<p>
+Now it becomes possible to explicitly configure the <code>bgp</code> container node itself. As soon as we have created the <code>bgp</code> node, the <code>mandatory</code> statements in under <code>asn</code> and <code>router-id</code> force us to also enter values for them, but without having set the <code>bgp</code> node, like when we simply don't want to run BGP, then we also are not required to enter the <code>asn</code> and <code>router-id</code>.
+</p>
+
+<p>
+Even with <code>bgp</code> as a P-container, there's a reason to keep the enabled leaf; we might want to be able to configure BGP but not <i>enable</i> it. At least for a human, to shut down the BGP daemon, it is a lot easier to flip a single enabled leaf than it is to remove the entire BGP configuration. Having an enabled leaf allows this.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #ce537a; font-weight: bold;">bgp</span>;
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"Enable BGP"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
 </div>
+
+<p>
+While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
+</p>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
 <div class="post-date">30 Oct 2017</div><h1 class="post-title"><a href="2017-10-30-yang-validation-in-the-real-world.html">YANG validation in the real world</a></h1>
 <p>

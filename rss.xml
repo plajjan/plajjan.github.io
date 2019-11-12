@@ -4,7 +4,7 @@
 <title>Network Automation ramblings by Kristian Larsson</title>
 <description>Network Automation ramblings by Kristian Larsson</description>
 <link>https://plajjan.github.io/</link>
-<lastBuildDate>Mon, 11 Nov 2019 22:36:35 +0100</lastBuildDate>
+<lastBuildDate>Tue, 12 Nov 2019 08:50:49 +0100</lastBuildDate>
 <item>
   <title>What's the use of presence containers in YANG?</title>
   <description><![CDATA[
@@ -127,10 +127,38 @@ Now it becomes possible to explicitly configure the <code>bgp</code> container n
 </p>
 
 <p>
+Even with <code>bgp</code> as a P-container, there's a reason to keep the enabled leaf; we might want to be able to configure BGP but not <i>enable</i> it. At least for a human, to shut down the BGP daemon, it is a lot easier to flip a single enabled leaf than it is to remove the entire BGP configuration. Having an enabled leaf allows this.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">router</span> <span style="color: #4f97d7;">{</span>
+  <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">bgp</span> <span style="color: #bc6ec5;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">presence</span> <span style="color: #ce537a; font-weight: bold;">bgp</span>;
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">enabled</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">boolean</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"Enable BGP"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">default</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">asn</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"AS number of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+    <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">router-id</span> <span style="color: #2d9574;">{</span>
+      <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">uint32</span>;
+      <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"router-id of this router"</span>;
+      <span style="color: #4f97d7; font-weight: bold;">mandatory</span> <span style="color: #a45bad;">true</span>;
+    <span style="color: #2d9574;">}</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
 While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
 </p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>]]></description>
-  <category>NSO</category>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>]]></description>
+  <category>YANG</category>
   <link>https://plajjan.github.io/2019-11-11-whats-the-use-of-presence-containers.html</link>
   <pubDate>Mon, 11 Nov 2019 08:00:00 +0100</pubDate>
 </item>
@@ -2590,7 +2618,7 @@ JSON has built in data structures that are presented with the data, for example 
 </div>
 </div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>]]></description>
-  <category>YANG</category>
+  <category>NSO</category>
   <link>https://plajjan.github.io/2019-02-23-simple-data-validation-with-YANG-using-yanglint.html</link>
   <pubDate>Sat, 23 Feb 2019 08:00:00 +0100</pubDate>
 </item>
