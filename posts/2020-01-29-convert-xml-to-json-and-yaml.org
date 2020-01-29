@@ -3,7 +3,7 @@
 #+EMAIL: kristian@spritelink.net
 #+DATE: <2020-01-29 Wed 11:00>
 #+LANGUAGE: en
-#+FILETAGS: NSO
+#+FILETAGS: XML JSON YAML YANG
 #+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
 #+OPTIONS: html-style:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>

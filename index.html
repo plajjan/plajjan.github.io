@@ -106,9 +106,9 @@ And here is the YANG module that defines the schema for the data:
 </pre>
 </div>
 
-<div id="outline-container-org2392796" class="outline-2">
-<h2 id="org2392796">Conversion to and from YAML</h2>
-<div class="outline-text-2" id="text-org2392796">
+<div id="outline-container-org0e6787b" class="outline-2">
+<h2 id="org0e6787b">Conversion to and from YAML</h2>
+<div class="outline-text-2" id="text-org0e6787b">
 <p>
 As there is no standardized representation of YANG modeled data for YAML, <code>yanglint</code> does not support YAML as an input or output format. However, as the encoding of data in YAML has the same concepts as JSON, it is trivial to convert from JSON to YAML or vice versa with standard tools. Here is an example Python script that will do the conversion:
 </p>
@@ -182,9 +182,9 @@ I wrote the program to read a file and not stdin so when piping we give it the f
 </div>
 </div>
 
-<div id="outline-container-org6f97c6a" class="outline-2">
-<h2 id="org6f97c6a">Why is it difficult to convert XML to JSON?</h2>
-<div class="outline-text-2" id="text-org6f97c6a">
+<div id="outline-container-orgf294f31" class="outline-2">
+<h2 id="orgf294f31">Why is it difficult to convert XML to JSON?</h2>
+<div class="outline-text-2" id="text-orgf294f31">
 <p>
 XML is a markup language to express nodes. A node can be contained within another node and there can be sibling nodes. There are no constructs for things like lists (arrays) or associative lists (hashes/dicts). JSON or YAML on the other hand has constructs for lists - it is embedded in the format itself. When converting to JSON we must know if something is a list but that information is simply not contained within XML, thus there is no generic conversion that produces a standardized output.
 </p>
@@ -194,7 +194,7 @@ However, with YANG we have two standardized representations with XML and JSON. T
 </p>
 </div>
 </div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-xml.html">XML</a> <a href="tag-json.html">JSON</a> <a href="tag-yaml.html">YAML</a> <a href="tag-yang.html">YANG</a> </div>
 <div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
 <p>
 I got the question on what presence containers are good for - what makes them useful?
