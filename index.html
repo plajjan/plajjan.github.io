@@ -23,6 +23,178 @@
 </nav></div>
 <div id="content">
 
+<div class="post-date">29 Jan 2020</div><h1 class="post-title"><a href="2020-01-29-convert-xml-to-json-and-yaml.html">Convert XML to JSON</a></h1>
+<p>
+Any network device that has a NETCONF interface will send data using XML. NETCONF interfaces are typically YANG modeled. If you prefer JSON or YAML, you can easily convert YANG modeled data from an XML representation.
+</p>
+
+<p>
+This is a hands on guide. Read on to the end if you want to understand why this can only be correctly done for YANG modeled data or why it's otherwise difficult and why you need the YANG model.
+</p>
+
+<p>
+We'll use <code>yanglint</code>. <code>yanglint</code> comes as a part of <code>libyang</code>. Install <code>libyang</code> and you'll get <code>yanglint</code>.
+</p>
+
+<p>
+Feed the XML together with the YANG model(s) describing the data into yanglint and ask for a conversion of the data by using <code>--format json</code>. <code>yanglint</code> will also validate the XML data according to YANG model.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+<span style="color: #4f97d7;">{</span>
+  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+      <span style="color: #67b11d;">}</span>,
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+      <span style="color: #67b11d;">}</span>
+    <span style="color: #2d9574;">]</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+</pre>
+</div>
+
+<p>
+The output is a JSON document. You can pipe it to a file or use <code>-o FILE</code> to specify the output filename.
+</p>
+
+<p>
+The output was converted from this input XML:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+And here is the YANG module that defines the schema for the data:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<div id="outline-container-org2392796" class="outline-2">
+<h2 id="org2392796">Conversion to and from YAML</h2>
+<div class="outline-text-2" id="text-org2392796">
+<p>
+As there is no standardized representation of YANG modeled data for YAML, <code>yanglint</code> does not support YAML as an input or output format. However, as the encoding of data in YAML has the same concepts as JSON, it is trivial to convert from JSON to YAML or vice versa with standard tools. Here is an example Python script that will do the conversion:
+</p>
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+jf = open(sys.argv[1])
+
+print(yaml.dump(json.load(jf)))
+</pre>
+</div>
+
+<p>
+and similarly in the reverse direction:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+yf = open(sys.argv[1])
+
+print(json.dumps(yaml.load(yf)))
+</pre>
+</div>
+
+<p>
+To use it, we pipe the output from our XML to JSON conversion on to the Python script that does JSON to YAML conversion. Behold:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+tubecats:internet:
+cat:
+- <span style="color: #4f97d7;">{</span>name: jingles<span style="color: #4f97d7;">}</span>
+- <span style="color: #4f97d7;">{</span>name: fluffy<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$
+</pre>
+</div>
+
+<p>
+And again, for the reverse direction we pipe it yet another time to the YAML to JSON Python script and end up with JSON data again.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+<span style="color: #4f97d7;">{</span>
+    <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+        <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+            <span style="color: #67b11d;">}</span>,
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">]</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as <code>json.dumps</code> just writes the whole JSON string on one line.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6f97c6a" class="outline-2">
+<h2 id="org6f97c6a">Why is it difficult to convert XML to JSON?</h2>
+<div class="outline-text-2" id="text-org6f97c6a">
+<p>
+XML is a markup language to express nodes. A node can be contained within another node and there can be sibling nodes. There are no constructs for things like lists (arrays) or associative lists (hashes/dicts). JSON or YAML on the other hand has constructs for lists - it is embedded in the format itself. When converting to JSON we must know if something is a list but that information is simply not contained within XML, thus there is no generic conversion that produces a standardized output.
+</p>
+
+<p>
+However, with YANG we have two standardized representations with XML and JSON. These standards define what, for example a YANG list, looks like in XML or JSON. With the support of a YANG schema we can thus convert in a precise and lossless fashion between the two formats.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
 <div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
 <p>
 I got the question on what presence containers are good for - what makes them useful?
@@ -1034,246 +1206,6 @@ It should also be noted that org-mode does so much more. My calendar, todo list 
 <p>
 Anyway, I'm not trying to sell org-mode, just saying I'm now using it to power this blog. I use org-static-blog to actually render the org files into HTML. Not super happy with it but it works for now (I can switch to something else that also is based on org, like org-publish, without having to rewrite all my posts). In the end, what this switch to org-mode might mean is that the threshold for me to write something is lowered just a tiny bit and that might just result in a slightly increased post publishing cadence.
 </p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
-<div class="post-date">26 Jul 2019</div><h1 class="post-title"><a href="2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">Writing a Python background worker for Cisco NSO - part deux</a></h1>
-
-<div id="outline-container-org9284543" class="outline-2">
-<h2 id="org9284543"><span class="section-number-2">1</span> Writing a Python background worker for Cisco NSO - part deux (2)</h2>
-<div class="outline-text-2" id="text-1">
-<p>
-We ended the first part with a chunk of code that implements all the functionality we had listed as our requirements. You'll find the code <a href="https://github.com/plajjan/bgworker/commit/281324399c56f520f99920d00075c9c23557cb1c">in this commit</a> in case you want to look at it in more detail and how it then evolved, which is what I'll detail in this post.
-</p>
-
-<p>
-First thing I did, after having played around with this code myself for some time, was to hand it over to my colleague Marko. Marko just happened to be implementing an NSO component that needed to run in the background and so he was in need of the background_process design that I had been working on. I couldn't find a better beta tester than Marko, as he was in fact involved in the design of this background worker process pattern and so was familiar with the whole idea but hadn't, up to this point, written any code on it. I expected to get some feedback on if the interface was any good or how documentation was lacking. Instead he comes back saying NSO <i>hangs</i>.
-</p>
-</div>
-
-<div id="outline-container-orgc51092b" class="outline-3">
-<h3 id="orgc51092b"><span class="section-number-3">1.1</span> Debugging a <i>hung</i> Python VM</h3>
-<div class="outline-text-3" id="text-1-1">
-<p>
-At work we have a rather sleek way of starting up a development environment for NSO. We call it a <i>playground</i> and it consists of one or more containers running NSO and a number of virtual routers or other support containers that together form a small topology. Starting a playground is just a matter of executing one script, waiting a few minutes (both NSO and virtual routers are slow in starting up) and then you can start coding. There are different topologies you can choose from as well as options for controlling persistence of data or restarting playgrounds until tests fail (for finding bug reproduction cases). We start the same topologies in CI for testing. All in all it gives a rather good guarantee that the environment we develop and test in are all uniform.
-</p>
-
-<p>
-When Marko said his NSO had hung I was perplexed as it had worked so well for me. We started looking into differences but there were none, or very few. We ran the same playground topology using the same code versions and we were even running it on the same physical machine. Yet mine worked fine, being able to consistently redeploy the bgworker package and his didn't. It was clear we needed to find out what was going on and fix it.
-</p>
-
-<p>
-To reproduce the hang, using the bgworker <a href="https://github.com/plajjan/bgworker/commit/281324399c56f520f99920d00075c9c23557cb1c">as it looked then</a> all that is required is to redeploy the package a few times and you are likely to encounter the hang. The background worker would periodically log a message and when it was hung there would simply be no message. We tried adding print statements but it made little difference. We tried to instead write some data to a temporary file but it didn't work.
-</p>
-
-<p>
-Increasing the log level to debug from a lower level seemed to increase the likelihood of the hang but we still didn't understand why. We added a stack dumper and a signal handler so when we sent a USR1 signal we would dump the stack to a file which we could inspect to understand what the program was doing. The stack:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-text">File "/usr/lib/python3.5/logging/__init__.py", line 1487, in callHandlers
-  hdlr.handle(record)
-
-File "/usr/lib/python3.5/logging/__init__.py", line 853, in handle
-  self.acquire()
-
-File "/usr/lib/python3.5/logging/__init__.py", line 804, in acquire
-  self.lock.acquire()
-</pre>
-</div>
-
-<p>
-Finally some progress. We repeated this, taking a stack dump for multiple invocations when Python had hung and they all showed the same stack. We were waiting on acquiring a lock!
-</p>
-</div>
-</div>
-
-<div id="outline-container-orgfb4c911" class="outline-3">
-<h3 id="orgfb4c911"><span class="section-number-3">1.2</span> A ten year old bug</h3>
-<div class="outline-text-3" id="text-1-2">
-<p>
-The stack dump further reveals that the lock is being acquired in the logging module, which simply takes a lock around the output in the handler when it is emitting a log message. I didn't actually know the logging module took locks - mostly because I never thought about how it worked internally - but it's fairly natural since we would otherwise risk two log messages emitted at the same time overwriting each other.
-</p>
-
-<p>
-The bgworker uses a mix of logging, threads and multiprocessing. As it turns out, <a href="https://bugs.python.org/issue6721">there is a bug related to this exact mix</a> that Marko found. The bug is ten years old and hadn't yet been fixed.
-</p>
-
-<p>
-The multiprocessing module uses fork to create a child process. <code>fork()</code> works by creating a copy of itself, the running process, so that there are two processes after the <code>fork()</code> call, one parent and one child process. The child process thus has a copy of all the file handles, sockets and other things in memory.. and if a lock happened to be taken while the child was forked then the lock would be held in both the parent and child, although it is at this time different locks as they had been copied.
-</p>
-
-<p>
-Just using multiprocessing and logging is safe since a single threaded program will only do one thing at a time; it will either be logging a message or starting a new child process through fork. As we also mix in the threading module and run multiple threads there is a possibility that we will be forking at the exact moment when a separate thread is logging a message and then the lock will be held! In the parent process the thread emitting a log message will release the lock as soon as it is done but in the child process that never happens since the logging thread isn't running there and the lock is thus held indefinitely. When we then try to log something in the child we first try to acquire the lock but since it is indefinitely held, our Python VM <i>hangs</i>.
-</p>
-
-<p>
-When bgworker starts up, it is starting multiple threads and forks off the child all around the same time. It also logs quite a few things on startup which means the likelihood of forking while emitting a log message is actually quite high. Raising the log level to debug naturally increases the likelihood even more.
-</p>
-
-<p>
-It now also became clear why this hadn't manifested itself for me as I was developing bgworker in a standalone instance whereas Marko was integrating it into a larger package that also ran a number of other threads - also emitting log messages on startup, thus increasing the likelihood of a hang.
-</p>
-</div>
-</div>
-
-<div id="outline-container-orgb55dfd7" class="outline-3">
-<h3 id="orgb55dfd7"><span class="section-number-3">1.3</span> Incredible timing</h3>
-<div class="outline-text-3" id="text-1-3">
-<p>
-Note that the version of bgworker that we are talking about was committed on the 5th of July. After that it took us a few days, till the 8th, to hunt this bug down. 8th of July is also the day that Python 3.7.4rc2 was released and 3.7.4rc2 should address this issue!
-</p>
-
-<p>
-<b>We find a bug that is over ten years old and on the day we find it, a fixed version of Python is released. What are the odds?</b>
-</p>
-</div>
-</div>
-
-<div id="outline-container-org796f2df" class="outline-3">
-<h3 id="org796f2df"><span class="section-number-3">1.4</span> Revamping the NSO docker container</h3>
-<div class="outline-text-3" id="text-1-4">
-<p>
-We run NSO in a docker container so switching Python version is relatively simple, but we still have various components and NEDs that include a couple too many dependencies, which does make it trickier to upgrade. We also try to rely on official packages from the distribution repositories rather than pulling down and compiling our own Python build&#x2026; but we wanted to make progress, so that had to go out the window.
-</p>
-
-<p>
-Marko and I each rewrote the Dockerfile producing our NSO image, getting multiple alternatives of how we could get a newer Python version in there. We tried pyenv, manual install, some PPA (which wasn't on 3.7.4 yet but we figured we could have waited a few days).
-</p>
-
-<p>
-In the end however, it turns out 3.7.4 doesn't really fix our issue. While it does bring improvements it ultimately does not address our issue. More code would be needed for that (you can't just remove the locks - so trying to log to the same file from what is now two UNIX processes would instead require inter-process locks). Anyway, we needed to fix the real problem through a redesign of our application code.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org14bc75f" class="outline-3">
-<h3 id="org14bc75f"><span class="section-number-3">1.5</span> A fresh start</h3>
-<div class="outline-text-3" id="text-1-5">
-<p>
-The multiprocessing library uses <code>fork()</code> per default on UNIX like operating systems but this can be influenced through an argument and instead of <code>fork()</code> we can tell the multiprocessing library to <code>spawn</code> which I'm pretty sure maps to <code>posix_spawn()</code> under the hood. Unlike <code>fork()</code>, <code>posix_spawn()</code> doesn't copy all of the memory of the parent to the child process and so we won't get a copy of the held locks - instead we start off fresh. It also means we don't have any loggers at all so we have to set those up. What we want to provide to the user of our background_process micro-framework is a smooth experience and it's just nice if the loggers are already set up for you so you can focus on your own code instead of overhead stuff like logging.
-</p>
-
-<p>
-We wanted to continue using the same log files that NCS uses per default, like ncs-python-vm-bgworker.log, so that the operations aspect remain the same regardless if you are writing standard Python components for NSO or if you are using the backgrund process design. Since we couldn't write to the same log file from two processes we would have to ship the logs from the child process to the parent process which then could write the messages to the file.
-</p>
-
-<p>
-Marko quickly put together a queue listener and emitter so we could send log messages over a multiprocessing.Queue. The logging tree in Python is a singleton so we can attach a queue emitting handler in the child process and wrap all this away so that the user of our framework don't have to think about this. We do all this through a wrapping function, like this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">_bg_wrapper</span><span style="color: #4f97d7;">(</span>bg_fun, q, log_level, *bg_fun_args<span style="color: #4f97d7;">)</span>:
-    <span style="color: #9f8766;">"""Internal wrapper for the background worker function.</span>
-<span style="color: #9f8766;">    Used to set up logging via a QueueHandler in the child process. The other end</span>
-<span style="color: #9f8766;">    of the queue is observed by a QueueListener in the parent process.</span>
-<span style="color: #9f8766;">    """</span>
-    <span style="color: #7590db;">queue_hdlr</span> = logging.handlers.QueueHandler<span style="color: #4f97d7;">(</span>q<span style="color: #4f97d7;">)</span>
-    <span style="color: #7590db;">root</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
-    root.setLevel<span style="color: #4f97d7;">(</span>log_level<span style="color: #4f97d7;">)</span>
-    root.addHandler<span style="color: #4f97d7;">(</span>queue_hdlr<span style="color: #4f97d7;">)</span>
-    <span style="color: #7590db;">logger</span> = logging.getLogger<span style="color: #4f97d7;">(</span>bg_fun.<span style="color: #4f97d7;">__name__</span><span style="color: #4f97d7;">)</span>
-    bg_fun<span style="color: #4f97d7;">(</span>logger, *bg_fun_args<span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-
-<p>
-The queue log handler is set up and after this we run the bg_function provided to us by the user of the framework.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org39f679a" class="outline-3">
-<h3 id="org39f679a"><span class="section-number-3">1.6</span> The promise of efficient logging</h3>
-<div class="outline-text-3" id="text-1-6">
-<p>
-Logging can be tricky. We often want to add log messages in various places to easily understand what our program is doing. However, logging itself comes at a cost, not just writing the messages but actually doing the string formatting of them can be relatively expensive. Python's standard logging module is pretty clever and will only format+emit a message if the log level is set high enough. If you have a tight loop and a <code>log.debug()</code> statement it won't actually run unless the log level is set to debug. This makes it possible to leave the logging statements in your code and know it will normally run fast. You will only incur a performance penalty when you actually turn on debugging.
-</p>
-
-<p>
-We can easily show this using a simple program:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;">#</span><span style="color: #2aa1ae; background-color: #292e34;">!/usr/bin/env python3</span>
-
-<span style="color: #4f97d7; font-weight: bold;">import</span> logging
-<span style="color: #4f97d7; font-weight: bold;">import</span> timeit
-
-<span style="color: #7590db;">log</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
-<span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">noop</span><span style="color: #4f97d7;">()</span>:
-    <span style="color: #7590db;">a</span> = <span style="color: #a45bad;">1</span>
-
-<span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">log_some</span><span style="color: #4f97d7;">()</span>:
-    <span style="color: #7590db;">a</span> = <span style="color: #a45bad;">1</span>
-    log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"foo"</span><span style="color: #4f97d7;">)</span>
-
-<span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7;">__name__</span> == <span style="color: #2d9574;">'__main__'</span>:
-    <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Noop                     : {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>timeit.timeit<span style="color: #2d9574;">(</span>noop, number=<span style="color: #a45bad;">100000</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-    log.setLevel<span style="color: #4f97d7;">(</span>logging.INFO<span style="color: #4f97d7;">)</span>
-    <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Without debug log level  : {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>timeit.timeit<span style="color: #2d9574;">(</span>log_some, number=<span style="color: #a45bad;">100000</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-    log.setLevel<span style="color: #4f97d7;">(</span>logging.DEBUG<span style="color: #4f97d7;">)</span>
-    <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"With debug log level     : {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>timeit.timeit<span style="color: #2d9574;">(</span>log_some, number=<span style="color: #a45bad;">100000</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-    <span style="color: #7590db;">ch</span> = logging.FileHandler<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'foo.log'</span><span style="color: #4f97d7;">)</span>
-    ch.setLevel<span style="color: #4f97d7;">(</span>logging.DEBUG<span style="color: #4f97d7;">)</span>
-    log.addHandler<span style="color: #4f97d7;">(</span>ch<span style="color: #4f97d7;">)</span>
-    <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"With debug log level + FH: {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>timeit.timeit<span style="color: #2d9574;">(</span>log_some, number=<span style="color: #a45bad;">100000</span><span style="color: #2d9574;">)</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-    log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"foo"</span><span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-
-<div class="org-src-container">
-<pre class="src src-shell">kll@nuc:~$ python3 slowlog.py 
-Noop                     : <span style="color: #a45bad;">0.005788944661617279</span>
-Without debug log level  : <span style="color: #a45bad;">0.03270535729825497</span>
-With debug log level     : <span style="color: #a45bad;">0.7911096690222621</span>
-With debug log level + FH: <span style="color: #a45bad;">1.8663266659714282</span>
-kll@nuc:~$ 
-</pre>
-</div>
-
-<p>
-As we can see, calling a function that doesn't call <code>log.debug()</code> at all is vastly faster than calling a function that does call <code>log.debug()</code> - it's roughly an order of magnitude. Then enabling the DEBUG log level makes it roughly an order of magnitude slower and finally, actually writing the messages to a file slows it down to about half the speed.
-</p>
-
-<p>
-I think of this as a promise to the programmer. You should be able to put log statements in tight loops that need to run fast (obviously not the tightest of loops - there you simply need to strip out your log statements for running in production). The log calls, when the debug logging isn't enabled, should be very very cheap.
-</p>
-
-<p>
-Reconfiguring log levels in NCS will only reconfigure the log handler level in the parent process. The child process will remain oblivious. For us to be able to capture all log messages the child process must therefore always emit all log messages, including debug messages, to the queue and then we can filter them away in the parent process in case the current log level doesn't include debug messages.
-</p>
-
-<p>
-This is however a rather naive implementation design and it breaks the promise of cheap logging. We need to do better.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org6e91913" class="outline-3">
-<h3 id="org6e91913"><span class="section-number-3">1.7</span> Log control queue</h3>
-<div class="outline-text-3" id="text-1-7">
-<p>
-To uphold the promise of cheap logging in an environment with multiple processes like ours we need to propagate the log level configuration to the child process so it doesn't need to format and emit the log messages unless enabled by the currently configured logging level.
-</p>
-
-<p>
-<a href="https://github.com/plajjan/bgworker/commit/c6ff59c3e72f152ec9706a97549b389d3c7546e4">I implemented</a> a CDB subscriber that listens to changes of the logging configuration and then passes this through a queue to the child process which then reconfigures its logging handler with the appropriate level.
-</p>
-
-<p>
-Mission accomplished!
-</p>
-<ul class="org-ul">
-<li>No more hangs of the Python VM</li>
-<li>Consistent logging ergonomics with and without the background process framework</li>
-<li>Cheap logging calls when debug is disabled</li>
-</ul>
-
-<p>
-Read the <a href="./2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">final part</a> on how to avoid busy polling and efficiently implementing process monitoring!
-</p>
-</div>
-</div>
-</div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div><div id="archive">
 <a href="archive.html">Other posts</a>
 </div>

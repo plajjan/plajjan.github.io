@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Convert XML to JSON</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
+<body>
+<div id="preamble" class="status">
+<div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<div class="post-date">29 Jan 2020</div><h1 class="post-title"><a href="2020-01-29-convert-xml-to-json-and-yaml.html">Convert XML to JSON</a></h1>
+<p>
+Any network device that has a NETCONF interface will send data using XML. NETCONF interfaces are typically YANG modeled. If you prefer JSON or YAML, you can easily convert YANG modeled data from an XML representation.
+</p>
+
+<p>
+This is a hands on guide. Read on to the end if you want to understand why this can only be correctly done for YANG modeled data or why it's otherwise difficult and why you need the YANG model.
+</p>
+
+<p>
+We'll use <code>yanglint</code>. <code>yanglint</code> comes as a part of <code>libyang</code>. Install <code>libyang</code> and you'll get <code>yanglint</code>.
+</p>
+
+<p>
+Feed the XML together with the YANG model(s) describing the data into yanglint and ask for a conversion of the data by using <code>--format json</code>. <code>yanglint</code> will also validate the XML data according to YANG model.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+<span style="color: #4f97d7;">{</span>
+  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+      <span style="color: #67b11d;">}</span>,
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+      <span style="color: #67b11d;">}</span>
+    <span style="color: #2d9574;">]</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+</pre>
+</div>
+
+<p>
+The output is a JSON document. You can pipe it to a file or use <code>-o FILE</code> to specify the output filename.
+</p>
+
+<p>
+The output was converted from this input XML:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+And here is the YANG module that defines the schema for the data:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<div id="outline-container-org2392796" class="outline-2">
+<h2 id="org2392796">Conversion to and from YAML</h2>
+<div class="outline-text-2" id="text-org2392796">
+<p>
+As there is no standardized representation of YANG modeled data for YAML, <code>yanglint</code> does not support YAML as an input or output format. However, as the encoding of data in YAML has the same concepts as JSON, it is trivial to convert from JSON to YAML or vice versa with standard tools. Here is an example Python script that will do the conversion:
+</p>
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+jf = open(sys.argv[1])
+
+print(yaml.dump(json.load(jf)))
+</pre>
+</div>
+
+<p>
+and similarly in the reverse direction:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+yf = open(sys.argv[1])
+
+print(json.dumps(yaml.load(yf)))
+</pre>
+</div>
+
+<p>
+To use it, we pipe the output from our XML to JSON conversion on to the Python script that does JSON to YAML conversion. Behold:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+tubecats:internet:
+cat:
+- <span style="color: #4f97d7;">{</span>name: jingles<span style="color: #4f97d7;">}</span>
+- <span style="color: #4f97d7;">{</span>name: fluffy<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$
+</pre>
+</div>
+
+<p>
+And again, for the reverse direction we pipe it yet another time to the YAML to JSON Python script and end up with JSON data again.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+<span style="color: #4f97d7;">{</span>
+    <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+        <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+            <span style="color: #67b11d;">}</span>,
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">]</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as <code>json.dumps</code> just writes the whole JSON string on one line.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6f97c6a" class="outline-2">
+<h2 id="org6f97c6a">Why is it difficult to convert XML to JSON?</h2>
+<div class="outline-text-2" id="text-org6f97c6a">
+<p>
+XML is a markup language to express nodes. A node can be contained within another node and there can be sibling nodes. There are no constructs for things like lists (arrays) or associative lists (hashes/dicts). JSON or YAML on the other hand has constructs for lists - it is embedded in the format itself. When converting to JSON we must know if something is a list but that information is simply not contained within XML, thus there is no generic conversion that produces a standardized output.
+</p>
+
+<p>
+However, with YANG we have two standardized representations with XML and JSON. These standards define what, for example a YANG list, looks like in XML or JSON. With the support of a YANG schema we can thus convert in a precise and lossless fashion between the two formats.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div></div>
+<div id="postamble" class="status"><br/><div id="archive">
+  <a href="/archive.html">Other posts</a>
+</div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
+</body>
+</html>
