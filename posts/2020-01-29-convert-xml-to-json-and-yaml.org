@@ -1,0 +1,138 @@
+#+TITLE: Convert XML to JSON
+#+AUTHOR: Kristian Larsson
+#+EMAIL: kristian@spritelink.net
+#+DATE: <2020-01-29 Wed 11:00>
+#+LANGUAGE: en
+#+FILETAGS: NSO
+#+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
+#+OPTIONS: html-style:nil
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
+
+Any network device that has a NETCONF interface will send data using XML. NETCONF interfaces are typically YANG modeled. If you prefer JSON or YAML, you can easily convert YANG modeled data from an XML representation.
+
+This is a hands on guide. Read on to the end if you want to understand why this can only be correctly done for YANG modeled data or why it's otherwise difficult and why you need the YANG model.
+
+We'll use =yanglint=. =yanglint= comes as a part of =libyang=. Install =libyang= and you'll get =yanglint=.
+
+Feed the XML together with the YANG model(s) describing the data into yanglint and ask for a conversion of the data by using ~--format json~. =yanglint= will also validate the XML data according to YANG model.
+
+#+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+    {
+      "tubecats:internet": {
+        "cat": [
+          {
+            "name": "jingles"
+          },
+          {
+            "name": "fluffy"
+          }
+        ]
+      }
+    }
+
+    kll@minemacs:~/yang-test$ echo $?
+#+END_SRC
+
+The output is a JSON document. You can pipe it to a file or use ~-o FILE~ to specify the output filename.
+
+The output was converted from this input XML:
+
+#+BEGIN_SRC xml
+    <ns0:data xmlns:ns0="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <tc:internet xmlns:tc="http://plajjan.github.io/ns/yang/tubecats">
+            <tc:cat>
+                <tc:name>jingles</tc:name>
+            </tc:cat>
+            <tc:cat>
+                <tc:name>fluffy</tc:name>
+            </tc:cat>
+        </tc:internet>
+    </ns0:data>
+#+END_SRC
+
+And here is the YANG module that defines the schema for the data:
+
+#+BEGIN_SRC yang
+    module tubecats {
+        namespace "http://plajjan.github.io/ns/yang/tubecats";
+        prefix tc;
+
+        revision 2017-03-15 {
+            description "First and only version";
+        }
+
+        container internet {
+            list cat {
+                key name;
+                leaf name {
+                    type string;
+                }
+            }
+        }
+    }
+#+END_SRC
+
+* Conversion to and from YAML
+  As there is no standardized representation of YANG modeled data for YAML, =yanglint= does not support YAML as an input or output format. However, as the encoding of data in YAML has the same concepts as JSON, it is trivial to convert from JSON to YAML or vice versa with standard tools. Here is an example Python script that will do the conversion:
+  #+BEGIN_SRC python3
+    #!/usr/bin/env python3
+    import json
+    import sys
+    import yaml
+
+    jf = open(sys.argv[1])
+
+    print(yaml.dump(json.load(jf)))
+  #+END_SRC
+
+  and similarly in the reverse direction:
+
+  #+BEGIN_SRC python3
+    #!/usr/bin/env python3
+    import json
+    import sys
+    import yaml
+
+    yf = open(sys.argv[1])
+
+    print(json.dumps(yaml.load(yf)))
+  #+END_SRC
+  
+  To use it, we pipe the output from our XML to JSON conversion on to the Python script that does JSON to YAML conversion. Behold:
+
+  #+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+    tubecats:internet:
+    cat:
+    - {name: jingles}
+    - {name: fluffy}
+
+    kll@minemacs:~/yang-test$
+  #+END_SRC
+
+  And again, for the reverse direction we pipe it yet another time to the YAML to JSON Python script and end up with JSON data again.
+
+  #+BEGIN_SRC sh
+    kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+    {
+        "tubecats:internet": {
+            "cat": [
+                {
+                    "name": "jingles"
+                },
+                {
+                    "name": "fluffy"
+                }
+            ]
+        }
+    }
+  #+END_SRC
+
+  I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as =json.dumps= just writes the whole JSON string on one line.
+
+* Why is it difficult to convert XML to JSON? 
+  
+  XML is a markup language to express nodes. A node can be contained within another node and there can be sibling nodes. There are no constructs for things like lists (arrays) or associative lists (hashes/dicts). JSON or YAML on the other hand has constructs for lists - it is embedded in the format itself. When converting to JSON we must know if something is a list but that information is simply not contained within XML, thus there is no generic conversion that produces a standardized output.
+  
+  However, with YANG we have two standardized representations with XML and JSON. These standards define what, for example a YANG list, looks like in XML or JSON. With the support of a YANG schema we can thus convert in a precise and lossless fashion between the two formats.
