@@ -14,7 +14,7 @@ P-containers is often used a short term for presence containers, meaning a conta
 
 YANG is a rather neat data modeling language. It is simple yet expressive enough to often allow something to be modeled in multiple different ways. While we are de facto defining a model when we write something in YANG, I think of it more as describing something already existing. Like how you have a thought in your mind and when you speak it out aloud, all you do is dress it with words from the English (or some other) language. There are many ways in which you can express something in English and the meaning you convey will differ ever so slightly, yet that thought in your mind isn't shaped by the words you use to describe it. The words are there to describe the thought, not the other way around. Similarly with YANG, you have an object, something that exists in reality or in thought and now you must model it. It will very likely be a simplified model and lack some of the detail of the original but nonetheless it will be a model.
 
-A container, in it's most basic shape and form, offer nothing besides acting as a /container/ - something that contains other things. Adding the ~presence~ statement to a container in YANG allows the presence of the container in the configuration to mean something.
+A container, in its most basic shape and form, offer nothing besides acting as a /container/ - something that contains other things. Adding the ~presence~ statement to a container in YANG allows the presence of the container in the configuration to mean something.
 
 Let's do a simple example. For the sake of brevity, I'm skipping various required nodes like namespace etc.
 
@@ -33,7 +33,7 @@ Let's do a simple example. For the sake of brevity, I'm skipping various require
   }
 #+END_SRC
 
-On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf ~asn~. Similarly, we have the leaf ~router-id~ which can be set to the router-id of the device. The ~bgp~ container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither ~asn~ nor ~router-id~ is set, the ~bgp~ container won't show up in the configuration whereas if either ~asn~ or ~router-id~ is set, the ~bgp~ container will show up. It's presence or not does not carry any meaning beyond containing the ~asn~ and ~router-id~ leaf.
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf ~asn~. Similarly, we have the leaf ~router-id~ which can be set to the router-id of the device. The ~bgp~ container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither ~asn~ nor ~router-id~ is set, the ~bgp~ container won't show up in the configuration whereas if either ~asn~ or ~router-id~ is set, the ~bgp~ container will show up. Its presence or not does not carry any meaning beyond containing the ~asn~ and ~router-id~ leaf.
 
 Now let's say we want to refine our model a bit. It's not possible to run a BGP daemon without having the ~asn~ and ~router-id~ configured, thus we make the two leaves mandatory!
 
