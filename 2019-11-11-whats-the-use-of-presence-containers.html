@@ -23,7 +23,7 @@
 <a href='/about.html'>About</a>
 </nav></div>
 <div id="content">
-<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
+<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="https://plajjan.github.io/2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
 <p>
 I got the question on what presence containers are good for - what makes them useful?
 </p>
@@ -37,7 +37,7 @@ YANG is a rather neat data modeling language. It is simple yet expressive enough
 </p>
 
 <p>
-A container, in it's most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
+A container, in its most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
 </p>
 
 <p>
@@ -61,7 +61,7 @@ Let's do a simple example. For the sake of brevity, I'm skipping various require
 </div>
 
 <p>
-On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. It's presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. Its presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
 </p>
 
 <p>
@@ -173,9 +173,9 @@ Even with <code>bgp</code> as a P-container, there's a reason to keep the enable
 <p>
 While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
 </p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div></div>
+<div class="taglist"><a href="https://plajjan.github.io/tags.html">Tags</a>: <a href="https://plajjan.github.io/tag-yang.html">YANG</a> </div></div>
 <div id="postamble" class="status"><br/><div id="archive">
   <a href="/archive.html">Other posts</a>
-</div></div>
+</div><div><a href="https://twitter.com/plajjan">Twitter</a></div></div>
 </body>
 </html>
