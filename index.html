@@ -23,6 +23,661 @@
 </nav></div>
 <div id="content">
 
+<div class="post-date">07 Jul 2020</div><h1 class="post-title"><a href="2020-07-07-retro-video-conferencing.html">Retro SIP video conferencing to Webex et al using a Cisco C40 TelePresence codec</a></h1>
+
+<div id="outline-container-org8b0d6c0" class="outline-2">
+<h2 id="org8b0d6c0">Modern? video conferencing on retro hardware</h2>
+<div class="outline-text-2" id="text-org8b0d6c0">
+<p>
+I use a ten year old Cisco C40 Telepresence codec for my daily video conferencing and I love it. It lets me join Webex conferences and share the screen of my Linux computer!
+</p>
+
+<p>
+I grew up with IRC. Sleek, fast and efficient. Today we have things like Slack. Pretty much the polar opposite. It is slow, sluggish and I don't particularly enjoy the user experience at all.
+</p>
+
+<p>
+Similarly, I feel that video conferencing of today is a rather horrible experience. Or let me be more specific; I love video conferencing, but video conferencing software on computers cause me all sorts of headache.
+</p>
+
+<p>
+I've been working remote for over 5 years in a distributed team. Asynchronous tools and workflows like Gitlab issues and email are the backbone of internal team communication. Video conferencing is the perfect compliment for quickly hashing things out or just seeing the face of your colleagues. Voice only (telephony) is nowhere near it. I love video conferencing!
+</p>
+
+<p>
+The bulk of my work, like emailing and writing code, is carried out on Linux. I often want to share my screen to coworkers in order to discuss some aspect of code or similar.
+</p>
+
+<p>
+Video conferencing software for Linux or any non-Windows/OS X platform is mostly an abysmal experience. Most of it is confined to a browser, as there are no native clients (though many "native" programs today are really just a web browser anyway). A lot of the times it won't work, even when you can join the conference itself, something else, like screen sharing will fail.
+</p>
+
+<p>
+Even on OS X or Windows, video conference software has a tendency to deal you the "I'm just going to install this upgrade" just as you are about to join a conference. This might not happen for the software you use in your team, as you use it every day, but then you have a slew of other video conferencing apps installed for the more infrequent meetings. I heard Zoom (I think) fixed this by scheduling the upgrade just after you had your meeting, which is great. How much in advance of your actual meeting do you need to fire up a video conferencing app to ensure you are ready on time? This is a broader issue with modern software - a form of arrogance.
+</p>
+
+<p>
+Needing multiple installed video conferencing applications highlights another problem. Just like modern chat applications each live in their own universe and won't interoperate with anything else, many video conferencing or collaboration solutions are walled gardens. I want the lions share of communications to be based on federated technology, like email or SIP, both relying on DNS as the distributed directory. It's beautiful! I'm afraid email was the last widely spread truly federated application.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgeafcbdf" class="outline-2">
+<h2 id="orgeafcbdf">My solution; a decade old video conference hardware</h2>
+<div class="outline-text-2" id="text-orgeafcbdf">
+<p>
+Anyway, so back to the Cisco C40. It is my solution to everyday video conferencing and I couldn't be happier!
+</p>
+
+<p>
+In my position at Deutsche Telekom, Cisco Jabber Video is used, which happens to present a SIP interface for video conferencing. My other work is with Cisco, which naturally is based on Webex (Teams) these days. It too exposes a SIP interface.
+</p>
+
+<p>
+The Cisco Telepresence line of products are originally an acquisition of Tandberg. The Cisco C40 I have was originally called the Tandberg C40 and it is of the generation where Tandberg just got acquired by Cisco, released in late 2010. I actually have three C40 of which two have a Cisco logo on the front and the third reads TANDBERG. Regardless of logo on the front, the C40 can speak SIP and so I can use it to dial into Webex meetings and Cisco Jabber Video meetings. Never any dialogues prompting me to upgrade software just before a meeting. It's rock solid and I bought it off of eBay for about £200!
+</p>
+</div>
+</div>
+
+<div id="outline-container-org13e1b95" class="outline-2">
+<h2 id="org13e1b95">Linux screen sharing</h2>
+<div class="outline-text-2" id="text-org13e1b95">
+<p>
+The C40 sports a HDMI input so I can connect my Linux computer and share my screen. No more hassle with things not working. Did I say it is rock solid?
+</p>
+
+<p>
+I use the xmonad windows manager which is a tiling window manager and one that works exceptionally well with multiple screens through its clever virtual desktop concept. Virtual desktops aren't tied to a screen, rather you have a global list of desktops and you pick which screen should map to which virtual desktop through keyboard shortcut. Since it is a tiling window manager, window placement is an automated task. Switching a virtual desktop between two screens of different resolution, such as my normal 4K screen and the 1080p of the C40, doesn't require any manual resizing or moving of windows. I do typically need to increase font size a bit though, which I have conveniently mapped for my normal applications;
+</p>
+<ul class="org-ul">
+<li>Spacemacs: <code>SPC z f</code> to enter zoom mode, followed by <code>+</code> / <code>-</code> to increase or decrease respectively</li>
+<li>terminal (urxvt): <code>^+</code> / <code>^-</code></li>
+<li>Firefox: <code>^+</code> / <code>^-</code></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org488f75f" class="outline-2">
+<h2 id="org488f75f">Full HD 1080p resolution</h2>
+<div class="outline-text-2" id="text-org488f75f">
+<p>
+It might be old, but the C40 supports 1080p both from the camera and for screen sharing which is pretty much on par with what more modern solutions support.
+</p>
+
+<p>
+The C40 is actually just a codec unit. A 1U piece of specialized hardware (I looked at some debug logs and it appears to contain FPGAs, so it's not just a PC (also see <a href="https://www.youtube.com/watch?v=34FLhwkrwoQ">https://www.youtube.com/watch?v=34FLhwkrwoQ</a> if you are interested in the success of Tandberg overall and some details on HW)). The camera is an external unit connected via a HDMI cable and a serial cable (which I originally assumed was for controlling the motor, but that doesn't appear to be the case). From the C40 perspective, the camera HDMI port is really just another HDMI port and you could potentially connect something else, like another computer to it. Overall the C40 has three inputs;
+</p>
+<ul class="org-ul">
+<li>HDMI for camera (but again, you can connect something else)</li>
+<li>HDMI for computer or second camera</li>
+<li>DVI for computer</li>
+</ul>
+
+<p>
+I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to my Linux workstation and have one loose HDMI cable on my desktop which I can connect to another laptop when needed.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org880ba98" class="outline-2">
+<h2 id="org880ba98">Camera picture quality</h2>
+<div class="outline-text-2" id="text-org880ba98">
+<p>
+I use a PrecisionHD 4x (TTC8-04) camera. It's actually just 720p but still delivers better quality video than most of my colleagues who are on the latest MacBook Pro or similar new laptop. 10 year old digital camera sensors aren't great but it has pretty decent optics - big pieces of glass that just don't get out of date. The motors are fairly quiet. I have the 12x zoom camera too, which has 1080p output and it is noticeably (or not, heh) quieter. Unfortunately, there is some form of analog noise from that camera which is why I am not using it.
+</p>
+
+<p>
+I find that the bit rate used, usually has a larger effect on qualitative experience than the sheer resolution. This is in comparison to most modern laptops, which for some weird reason come with really poor cameras. Buy a $4000 laptop and get a $4 camera. Why does the iPhone or an iPad have so much better cameras than a MacBook Pro? I haven't used either my iPhone or an iPad extensively for video conferencing professionally so I can't speak to how it works in reality. I do however use my iPhone for Facetime and Whatsapp with family, which usually results in rather crappy video, I suspect it is because both end points are behind NAT and whatever relay is used is severely rate limiting the video stream.
+</p>
+
+<p>
+Modern laptops usually have crappy cameras resulting in an overall crappy picture.
+</p>
+
+<p>
+Mobile phones and tablets have decent cameras but in my experience often end up with crappy picture due to low bitrate (large blocks visible from low bit rate encoding).
+</p>
+
+<p>
+In practice, my C40 achieves high bit rate video and with good lenses it more than compensates for its aged camera sensor. It has very good picture. Oh did I say it has a motor too? I never get tired of that ;)
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgaf8637a" class="outline-2">
+<h2 id="orgaf8637a">Audio</h2>
+<div class="outline-text-2" id="text-orgaf8637a">
+<p>
+Audio is great. You have to connect external speakers, so that is largely up to your own choice of speakers. My kit came equipped with a desktop microphone with a micro-XLR output that is jacked up to the XLR input of the codec. Since there's an XLR input, the choices are endless.
+</p>
+
+<p>
+Echo cancellation works well and I've understood (from my colleagues) that the mic doesn't pick up much noise. They hear me well and audio quality is overall good.
+</p>
+
+<p>
+Noise and echoes are probably the two most common challenges for audio conferencing. I used to work on a fairly large IP telephony system back in the day, where we used hardware DSPs for echo cancellation. I haven't kept up to date on the advances in this area but would have assumed that like for everything else, software have caught up and perhaps surpassed hardware. Every day use of video conferencing applications point in the opposite direction though. I find that there are often echoes caused by participants using laptops. I'm not quite sure why.
+</p>
+
+<p>
+One effect that I've sometimes noticed (not super common but not super rare either) is that when a participant start speaking I will miss the first part of what they are saying (not related to the C40, it happens on software clients too). It is as if their local microphone was muted or the signal level was very low and it is ramped up when they start speaking. The ramp-up takes a moment during which a word or two is lost. I'm not sure what component introduces this, like if it is the video conferencing software (I've noticed it across multiple different solutions) or in the client endpoint hardware, like many microphone arrays have local echo cancellation - but I've noticed it on MacBook while not on all MacBooks. Is it a setting? Automatic microphone level adjustment in combination with something else? Nonetheless, my C40 suffers from no such problems when I'm speaking.
+</p>
+
+<p>
+Another problem I've noticed with software clients are that participants tend to speak over one another and I don't mean by a small amount, like with a high latency link two participants start speaking, notice they are colliding and one or both will stop (similar to Ethernet). No, I mean, two participants will just continue speaking over each other for complete sentences. I think the problem is that the software client, when it detects that you are speaking, it will lower the audio level from remote participants causing you simply to not notice anyone else speaking. The result for anyone but the two speaking parties is a cacophony. Horrible. This doesn't happen with the C40. It has good echo cancellation circuits so I suspect it doesn't need to employ tricks like lowering the audio volume of remote participants and thus this scenario doesn't really happen.
+</p>
+
+<p>
+I don't really know what would cause this ramp-up problem and speaking-over-each-other problem - it is just based on observation and what I can only assume are solutions to mitigate noise and echo problems. Feel free to reach out to me if you have any insights!
+</p>
+</div>
+</div>
+
+<div id="outline-container-org133d474" class="outline-2">
+<h2 id="org133d474">IPv6</h2>
+<div class="outline-text-2" id="text-org133d474">
+<p>
+It supports IPv6. What else needs to be said?
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc61583d" class="outline-2">
+<h2 id="orgc61583d">Standalone vs SIP infrastructure</h2>
+<div class="outline-text-2" id="text-orgc61583d">
+<p>
+It is possible to operate the C40 standalone and directly call to IP addresses. Incoming calls can be placed directly to the public IP address of your C40 (or through forwarded ports if you are behind NAT).
+</p>
+
+<p>
+The more elegant approach is of course to use a SIP registrar that answers for like your domain, so you can get <code>username@example.com</code> as your SIP address, just like your email address! I have not yet gotten this far though - I just dial out to various meetings, even for one-on-one calls (I use my personal webex room).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6dd7051" class="outline-2">
+<h2 id="org6dd7051">Interoperating with other systems, i.e. what speaks SIP?</h2>
+<div class="outline-text-2" id="text-org6dd7051">
+<p>
+Unfortunately, not many other video conferencing solutions appear to speak SIP. Many are walled gardens.
+</p>
+</div>
+
+<div id="outline-container-org82a600f" class="outline-3">
+<h3 id="org82a600f">Cisco Webex (Teams)</h3>
+<div class="outline-text-3" id="text-org82a600f">
+<p>
+AFAIK, all Webex meetings support dialing in with SIP. You can reach personal rooms using <code>sip:NAME@ORG.webex.com</code>, for example, my personal Cisco room is <code>sip:krlarsso@cisco.webex.com</code>. Meetings have a unique identifier consisting of 9 digits and you can dial in to them by dialing <code>sip:MEETING_ID@webex.com</code>.
+</p>
+
+<p>
+There is a native Webex client for OS X and Windows. Without having measured, it feels like it provides for a lower latency experience than using the Webex Teams client to connect to the same meeting. Perhaps there is an additional proxy involved, like all media goes to some central webex teams service. Perhaps that service is in the US so my video streams are bounding across the Atlantic (I'm in Sweden). Connecting with my C40 I get considerably lower lag than when using the Webex teams client. I have not done a direct comparison with the native Webex clients but have the feeling that the C40 is on par or slightly better.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdde2db1" class="outline-3">
+<h3 id="orgdde2db1">Cisco Jabber Video and other Cisco collaboration solutions</h3>
+<div class="outline-text-3" id="text-orgdde2db1">
+<p>
+Cisco offers on-premise solutions for video conferencing that are popular with many enterprises. AFAIK they all support SIP. I have friends working for companies that have such solutions and when connected using the Cisco C40 to a client on his computer, the latency is exceptionally low - a very nice experience indeed. The point of video conferencing is to take away the parts that make it feel unnatural, it should be a close to a physical meeting as possible. Latency is one of the worst enemies here. With enough lag, we get people speaking over each other.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org18ee997" class="outline-3">
+<h3 id="org18ee997">Zoom</h3>
+<div class="outline-text-3" id="text-org18ee997">
+<p>
+SIP dial-in is an extra feature for Zoom, where the organizing party need to ensure it is enabled. Zoom comes as cloud hosted or can be installed on-premise. I am familiar with the details of each option and how it influences the ability of SIP dial-in. It sure doesn't provide the always-on SIP functionality that Cisco's solutions have, which is a pity. I don't understand why SIP, not being tied to any particular hardware (people talk about SIP trunks like it was a ISDN-PRI, but common), wouldn't just be enabled per default.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge01f96e" class="outline-3">
+<h3 id="orge01f96e">Microsoft Teams</h3>
+<div class="outline-text-3" id="text-orge01f96e">
+<p>
+There is some form of Direct Routing option for Microsoft Teams that allow a SIP trunk to be setup so that it's possible to dial-in with SIP. I have never been invited to a meeting that have this supported.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org71ba7ac" class="outline-3">
+<h3 id="org71ba7ac">Jitsi</h3>
+<div class="outline-text-3" id="text-org71ba7ac">
+<p>
+Jitsi is a web video conference solution based on WebRTC. It has a component called jigasi which acts as a SIP gateway. Unfortunately, it is audio only. This was a big disappointment to me as I spent a few hours setting up Jitsi thinking it would be my one stop solution for SIP video conferencing while also being able to invite random people on the Internet to use WebRTC (after all, I am aware not everyone has a SIP video conferencing system like me).
+</p>
+
+<p>
+There is Jibri, which is another component of Jitsi that can perform various video functions, like streaming to YouTube and also SIP video conferencing supposedly. Jibri is implemented by running a windowless Chrome instance. Eek. It only supports a single stream, so bridging into a Jitsi meeting would be limited to the number of Jibri instances. That would probably work for me but I stopped at virtual FB chrome - yuck.
+</p>
+
+<p>
+I should probably get over my feelings on the implementation and just set it up as it would probably be rather useful since I can invite other to my Jitsi instance.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1decf9f" class="outline-3">
+<h3 id="org1decf9f">Lifesize</h3>
+<div class="outline-text-3" id="text-org1decf9f">
+<p>
+I have never tried but Lifesize devices should be SIP standards compliant and should work well both in conferencing and for direct calls.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge66c324" class="outline-3">
+<h3 id="orge66c324">Polycom</h3>
+<div class="outline-text-3" id="text-orge66c324">
+<p>
+I have never tried but Polycom devices should be SIP standards compliant and should work well both in conferencing and for direct calls.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0de60ec" class="outline-2">
+<h2 id="org0de60ec">Support</h2>
+<div class="outline-text-2" id="text-org0de60ec">
+<p>
+The Cisco C40 and all gear of its generation is pretty much out of support. However, it does what I need so I am not very troubled of this.
+</p>
+
+<p>
+It is obviously a risk running unpatched software. You can mitigate this by placing it behind a firewall and using a SIP registrar etc in between.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org025f32b" class="outline-2">
+<h2 id="org025f32b">Software</h2>
+<div class="outline-text-2" id="text-org025f32b">
+<p>
+The C40 runs the TC series software. It appears to have been superceded by EC software. Newer codecs like the SX80 can run both TC and CE.
+</p>
+
+<p>
+For my use cases, TC software seems just fine. I don't know what I would gain by using CE software.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org197e700" class="outline-2">
+<h2 id="org197e700">API</h2>
+<div class="outline-text-2" id="text-org197e700">
+<p>
+The C40, or rather the TC software it runs, supports multiple APIs. There is a SSH CLI to configure things and a HTTP API that you can feed XML payloads to get it to do things.
+</p>
+
+<p>
+I wrote a small shell script so I can dial directly from the command line of my computers;
+</p>
+<div class="org-src-container">
+<pre class="src src-shell"><span style="color: #2aa1ae; background-color: #292e34;">#</span><span style="color: #2aa1ae; background-color: #292e34;">!/bin/</span><span style="color: #4f97d7; font-weight: bold;">sh</span>
+<span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Use the Cisco C40 in my office to dial a SIP address!</span>
+<span style="color: #2aa1ae; background-color: #292e34;">#</span>
+
+<span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7;">[</span> -z <span style="color: #2d9574;">"$1"</span> <span style="color: #4f97d7;">]</span>; <span style="color: #4f97d7; font-weight: bold;">then</span>
+  <span style="color: #4f97d7;">echo</span> <span style="color: #2d9574;">"ERROR: You must provide a SIP number to dial!"</span>
+  <span style="color: #4f97d7; font-weight: bold;">exit</span> <span style="color: #a45bad;">1</span>
+<span style="color: #4f97d7; font-weight: bold;">fi</span>
+
+curl --request POST --data <span style="color: #2d9574;">"&lt;Command&gt;&lt;Dial command=\"True\"&gt;&lt;Number&gt;$1&lt;/Number&gt;&lt;Protocol&gt;SIP&lt;/Protocol&gt;&lt;/Dial&gt;&lt;/Command&gt;"</span>  -H <span style="color: #2d9574;">'Content-Type: text/xml'</span> -u <span style="color: #2d9574;">"admin:$(</span><span style="color: #fa8072;">pass</span><span style="color: #2d9574;"> show web/${C40_ADDRESS} | head -n1)"</span>  http://$<span style="color: #4f97d7;">{</span><span style="color: #7590db;">C40_ADDRESS</span><span style="color: #4f97d7;">}</span>/putxml
+</pre>
+</div>
+
+<p>
+I have the local IP address of my C40 hard-coded in the <code>C40_ADDRESS</code> environment variable. I can then do <code>dial 123456789@webex.com</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org370589e" class="outline-2">
+<h2 id="org370589e">What I bought</h2>
+<div class="outline-text-2" id="text-org370589e">
+<p>
+I mentioned I have three C40 units. I bought the first as a complete kit including:
+</p>
+<ul class="org-ul">
+<li>C40 codec</li>
+<li>12x camera</li>
+<li>microphone</li>
+<li>remote control</li>
+<li>2x HDMI cables</li>
+<li>serial cable between codec and camera</li>
+<li>XLR to mini-XLR for microphone</li>
+<li>power cable</li>
+</ul>
+
+<p>
+Unfortunately there was some problem with the codec. After a software upgrade from 4.x to the latest TC software (7.3.21) it failed to start up properly. Fortunately I was able to get a new one from the seller. Meanwhile I was so eager to get going that I ordered another unit, just the codec, so I could start playing around. Thus, I have three codecs, of which two are working and one is broken. I suppose I'll throw away the broken one or reuse the case for some other project.
+</p>
+
+<p>
+Out of curiosity, I also bought a C20 and another camera. I wanted to be able to setup a call locally and for that I obviously need two complete end points.
+</p>
+
+<p>
+As it turned out, the 12x camera has some analog noise, so I'm using the second 4x zoom camera that I bought as my primary camera right now. The lense on that 12x is to die for though :/
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3896065" class="outline-2">
+<h2 id="org3896065">System components</h2>
+<div class="outline-text-2" id="text-org3896065">
+<p>
+For a system like mine, you need:
+</p>
+<ul class="org-ul">
+<li>codec unit (C20, C40, C60, C90)</li>
+<li>camera
+<ul class="org-ul">
+<li>TTC8-02 - the 12x camera I have</li>
+<li>TTC8-04 - the 4x camera I have</li>
+<li>TTC8-05 - newer 4x camera doing 1080p</li>
+<li>TTC8-06 - 2.5x zoom - seems crappy</li>
+</ul></li>
+<li>microphone
+<ul class="org-ul">
+<li>AudioTecnica, JAVS etc sell desk microphones with XLR connections</li>
+<li>you can be creative and get anything you want</li>
+<li>how about a Condor MT600 beam forming microphone array?
+<ul class="org-ul">
+<li>or a Sennheiser TeamConnect Ceiling 2 beam forming array so you can be anywhere in your 100 sqm living room? ;)</li>
+</ul></li>
+</ul></li>
+<li>remote control (there's also a touch screen display but it's more costly)</li>
+<li>a TV / monitor</li>
+</ul>
+
+<p>
+You need to be aware of compatibility. The C40/C60/C90 codecs work with all the cameras listed above as they all feature that serial port to connect to the camera. Newer cameras like the Precision60 (TTC8-07) doesn't have a serial port AFAIK, instead it uses Ethernet, as the C40/C60/C90 have a secondary Ethernet, this still works. The C20 however only has a single Ethernet so I'm not sure about its compatibility.
+</p>
+
+<p>
+The camera cable for the SX20 looks like a HDMI fused together with something else - I'm not sure what is is compatible with as I don't have that generation of gear.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org2687133" class="outline-2">
+<h2 id="org2687133">Automatic camera follows speaker</h2>
+<div class="outline-text-2" id="text-org2687133">
+<p>
+There is a component called SpeakerTrack that is able to follow the currently speaking presenter. It's a marvelous piece of technology. It uses two cameras to allow focusing on one speaker while moving the other camera to be ready to cut to the next "scene", for example an overview of all participants in a meeting. I'm not entirely sure how it works but it has a large microphone array which I assume is for localizing the speaker in a room and then probably do fine adjustments based on video analysis. I have a hard time imagining that finding the speaker could be based purely on a microphone array since it also properly finds your head regardless if you are sitting down or standing up. That <i>has</i> to come out of image analysis. I've seen there are debug settings related to face detection, so this seems likely. The same technology is used in the MX700/MX800 (two large monitors with camera built-in) Telepresence systems.
+</p>
+
+<p>
+SpeakerTrack 60, as its called, is a large beast. Probably not something you want in a home office, but nonetheless a very cool piece of technology. I believe all the clever analysis is done in the SpeakerTrack unit itself and so it is compatible with the C40, C60 and C90. It's connected mostly like any other camera via HDMI inputs though also uses the Ethernet jack but I suspect that is mostly for management.
+</p>
+
+<p>
+While SpeakerTrack is a product, there is a feature called PresenterTrack that allows the same functionality of following the currently speaking presenter but with a single camera. It does however require the Precision 60 camera and a SX80 codec at a minimum. I have no idea of the underlying implementation. Both the SX80 and Precision 60 is considerably more expensive than the C40 and camera I have, so I probably won't be upgrading for a while. They are cheaper in the US so perhaps during my next trip there I'll get the chance but in the current situation, no one knows when that will be.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6f6bda3" class="outline-2">
+<h2 id="org6f6bda3">Similar systems</h2>
+<div class="outline-text-2" id="text-org6f6bda3">
+</div>
+<div id="outline-container-org3a2d42e" class="outline-3">
+<h3 id="org3a2d42e">C20</h3>
+<div class="outline-text-3" id="text-org3a2d42e">
+<p>
+The C20 codec is a smaller codec, both physically and in terms of features and capabilities. It supports up to 720p content and has fewer inputs and outputs.
+</p>
+
+<p>
+It is intended for use in smaller locations, like huddle rooms.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org10e8b2e" class="outline-3">
+<h3 id="org10e8b2e">C60 / C90</h3>
+<div class="outline-text-3" id="text-org10e8b2e">
+<p>
+Same capabilities as C40 in terms of resolutions (1080p) and features, just with more inputs and outputs.
+</p>
+
+<p>
+All three (C40, C60 and C90) are intended for installation in (small to large) conference rooms by systems integrators and have a wide range of features for this audience. You can customize what output is displayed on different screens, camera locations, integration with automatic blinds and similar.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd3269cb" class="outline-3">
+<h3 id="orgd3269cb">SX20 / SX80</h3>
+<div class="outline-text-3" id="text-orgd3269cb">
+<p>
+This is the generation after the Cxx devices with SX20 supposedly roughly mapping to the C20 (think huddle room) whereas the SX80 is somewhere in between the C60 and C90 in number of inputs/outputs. Being of a later generation, they can run more modern software and are still supported.
+</p>
+
+<p>
+The only feature I've seen that seems way cooler is the PresenterTrack feature available in the SX80.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4c8b465" class="outline-2">
+<h2 id="org4c8b465">4K</h2>
+<div class="outline-text-2" id="text-org4c8b465">
+<p>
+I love high resolution screens. I use a 32" 4K monitor at home so I can fit a lot of text on it. My laptops have high DPI screens. Unfortunately the C40 is a 1080p system. I would love to do 4K video conferencing. Judging overall, the world isn't ready for it. Video calling apps on phones are mostly using low bit rates. Many video conferencing software is also falling back to lower bit rate video stream as the computer can't keep up or the Internet connection can't.
+</p>
+
+<p>
+Given that my MacBook Pro runs hot with todays relatively low rate video conferencing, I doubt it would run particularly well with a 4K video source. I think hardware is currently required for a good low latency experience.
+</p>
+
+<p>
+Lifesize latest series of video conference equipment supports 4K. They cost an arm and a leg. While I do want 4K, I doubt it would make much of a difference to most video conference sessions and the high price doesn't justify it. I'll live with my C40 for the next decade so I can get a 4K one when they're the price of a C40 today ;)
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge44a92f" class="outline-2">
+<h2 id="orge44a92f">Buying one</h2>
+<div class="outline-text-2" id="text-orge44a92f">
+<p>
+The prices in the US is considerably lower than in Europe. You can get a C40 for $50 or less. Some of the cameras are available at $20-30. Good mics are also fairly cheap. Assembling a complete system from individual parts is likely the cheapest way as people will sell it as untested gear. People tend to overcharge for the cables though and it might be a little tricky getting hold of the special serial cable (I haven't actually checked the pin-out - perhaps it isn't that special?).
+</p>
+
+<p>
+There is somewhat of a risk in buying these units though. They are old and many sellers on eBay will sell them without any warranty. You might see failures. Getting a complete system from one seller is a safer way to a working system but could cost more. If you are willing to experiment a bit, buying a few cheap pieces and trying to assemble a system out of it might be a relatively safe and cheap way.
+</p>
+
+<p>
+You can also try looking at the Lifesize equipment which should also work fine as standalone SIP endpoints and comes in quite cheap.
+</p>
+
+<p>
+Feel free to reach out to me with questions or your experience in this area!
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-sip.html">SIP</a> </div>
+<div class="post-date">29 Jan 2020</div><h1 class="post-title"><a href="2020-01-29-working-with-yang-modeled-data-in-python.html">Working with YANG modeled data in Python</a></h1>
+<p>
+This isn't really just 
+Any network device that has a NETCONF interface will send data using XML. NETCONF interfaces are typically YANG modeled. If you prefer JSON or YAML, you can easily convert YANG modeled data from an XML representation.
+</p>
+
+<p>
+This is a hands on guide. Read on to the end if you want to understand why this can only be correctly done for YANG modeled data or why it's otherwise difficult and why you need the YANG model.
+</p>
+
+<p>
+We'll use <code>yanglint</code>. <code>yanglint</code> comes as a part of <code>libyang</code>. Install <code>libyang</code> and you'll get <code>yanglint</code>.
+</p>
+
+<p>
+Feed the XML together with the YANG model(s) describing the data into yanglint and ask for a conversion of the data by using <code>--format json</code>. <code>yanglint</code> will also validate the XML data according to YANG model.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json 
+<span style="color: #4f97d7;">{</span>
+  <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+    <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+      <span style="color: #67b11d;">}</span>,
+      <span style="color: #67b11d;">{</span>
+        <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+      <span style="color: #67b11d;">}</span>
+    <span style="color: #2d9574;">]</span>
+  <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$ echo $<span style="color: #7590db;">?</span>
+</pre>
+</div>
+
+<p>
+The output is a JSON document. You can pipe it to a file or use <code>-o FILE</code> to specify the output filename.
+</p>
+
+<p>
+The output was converted from this input XML:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-xml">&lt;<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">ns0</span>=<span style="color: #2d9574;">"urn:ietf:params:xml:ns:netconf:base:1.0"</span>&gt;
+    &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span> <span style="color: #4f97d7;">xmlns</span>:<span style="color: #7590db;">tc</span>=<span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;jingles&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+        &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+            &lt;<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;fluffy&lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">name</span>&gt;
+        &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">cat</span>&gt;
+    &lt;/<span style="color: #4f97d7;">tc</span>:<span style="color: #bc6ec5; font-weight: bold;">internet</span>&gt;
+&lt;/<span style="color: #4f97d7;">ns0</span>:<span style="color: #bc6ec5; font-weight: bold;">data</span>&gt;
+</pre>
+</div>
+
+<p>
+And here is the YANG module that defines the schema for the data:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-yang"><span style="color: #4f97d7; font-weight: bold;">module</span> <span style="color: #ce537a; font-weight: bold;">tubecats</span> <span style="color: #4f97d7;">{</span>
+    <span style="color: #4f97d7; font-weight: bold;">namespace</span> <span style="color: #2d9574;">"http://plajjan.github.io/ns/yang/tubecats"</span>;
+    <span style="color: #4f97d7; font-weight: bold;">prefix</span> <span style="color: #ce537a; font-weight: bold;">tc</span>;
+
+    <span style="color: #4f97d7; font-weight: bold;">revision</span> <span style="color: #a45bad;">2017-03-15</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">description</span> <span style="color: #2d9574;">"First and only version"</span>;
+    <span style="color: #bc6ec5;">}</span>
+
+    <span style="color: #4f97d7; font-weight: bold;">container</span> <span style="color: #ce537a; font-weight: bold;">internet</span> <span style="color: #bc6ec5;">{</span>
+        <span style="color: #4f97d7; font-weight: bold;">list</span> <span style="color: #ce537a; font-weight: bold;">cat</span> <span style="color: #2d9574;">{</span>
+            <span style="color: #4f97d7; font-weight: bold;">key</span> <span style="color: #ce537a; font-weight: bold;">name</span>;
+            <span style="color: #4f97d7; font-weight: bold;">leaf</span> <span style="color: #ce537a; font-weight: bold;">name</span> <span style="color: #67b11d;">{</span>
+                <span style="color: #4f97d7; font-weight: bold;">type</span> <span style="color: #ce537a; font-weight: bold;">string</span>;
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">}</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<div id="outline-container-orgcaa9db7" class="outline-2">
+<h2 id="orgcaa9db7">Conversion to and from YAML</h2>
+<div class="outline-text-2" id="text-orgcaa9db7">
+<p>
+As there is no standardized representation of YANG modeled data for YAML, <code>yanglint</code> does not support YAML as an input or output format. However, as the encoding of data in YAML has the same concepts as JSON, it is trivial to convert from JSON to YAML or vice versa with standard tools. Here is an example Python script that will do the conversion:
+</p>
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+jf = open(sys.argv[1])
+
+print(yaml.dump(json.load(jf)))
+</pre>
+</div>
+
+<p>
+and similarly in the reverse direction:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python3">#!/usr/bin/env python3
+import json
+import sys
+import yaml
+
+yf = open(sys.argv[1])
+
+print(json.dumps(yaml.load(yf)))
+</pre>
+</div>
+
+<p>
+To use it, we pipe the output from our XML to JSON conversion on to the Python script that does JSON to YAML conversion. Behold:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin
+tubecats:internet:
+cat:
+- <span style="color: #4f97d7;">{</span>name: jingles<span style="color: #4f97d7;">}</span>
+- <span style="color: #4f97d7;">{</span>name: fluffy<span style="color: #4f97d7;">}</span>
+
+kll@minemacs:~/yang-test$
+</pre>
+</div>
+
+<p>
+And again, for the reverse direction we pipe it yet another time to the YAML to JSON Python script and end up with JSON data again.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">kll@minemacs:~/yang-test$ yanglint --strict tubecats.yang data1.xml --format json | ./j2y.py /dev/stdin | ./y2j.py /dev/stdin | jq
+<span style="color: #4f97d7;">{</span>
+    <span style="color: #2d9574;">"tubecats:internet"</span>: <span style="color: #bc6ec5;">{</span>
+        <span style="color: #2d9574;">"cat"</span>: <span style="color: #2d9574;">[</span>
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"jingles"</span>
+            <span style="color: #67b11d;">}</span>,
+            <span style="color: #67b11d;">{</span>
+                <span style="color: #2d9574;">"name"</span>: <span style="color: #2d9574;">"fluffy"</span>
+            <span style="color: #67b11d;">}</span>
+        <span style="color: #2d9574;">]</span>
+    <span style="color: #bc6ec5;">}</span>
+<span style="color: #4f97d7;">}</span>
+</pre>
+</div>
+
+<p>
+I wrote the program to read a file and not stdin so when piping we give it the file /dev/stdin which then accomplishes the same thing. I also run jq at the end to nicely format the JSON output as <code>json.dumps</code> just writes the whole JSON string on one line.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4877c91" class="outline-2">
+<h2 id="org4877c91">Why is it difficult to convert XML to JSON?</h2>
+<div class="outline-text-2" id="text-org4877c91">
+<p>
+XML is a markup language to express nodes. A node can be contained within another node and there can be sibling nodes. There are no constructs for things like lists (arrays) or associative lists (hashes/dicts). JSON or YAML on the other hand has constructs for lists - it is embedded in the format itself. When converting to JSON we must know if something is a list but that information is simply not contained within XML, thus there is no generic conversion that produces a standardized output.
+</p>
+
+<p>
+However, with YANG we have two standardized representations with XML and JSON. These standards define what, for example a YANG list, looks like in XML or JSON. With the support of a YANG schema we can thus convert in a precise and lossless fashion between the two formats.
+</p>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-xml.html">XML</a> <a href="tag-json.html">JSON</a> <a href="tag-yaml.html">YAML</a> <a href="tag-yang.html">YANG</a> <a href="tag-python.html">Python</a> <a href="tag-programming.html">programming</a> </div>
 <div class="post-date">29 Jan 2020</div><h1 class="post-title"><a href="2020-01-29-convert-xml-to-json-and-yaml.html">Convert XML to JSON</a></h1>
 <p>
 Any network device that has a NETCONF interface will send data using XML. NETCONF interfaces are typically YANG modeled. If you prefer JSON or YAML, you can easily convert YANG modeled data from an XML representation.
@@ -195,7 +850,7 @@ However, with YANG we have two standardized representations with XML and JSON. T
 </div>
 </div>
 <div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-xml.html">XML</a> <a href="tag-json.html">JSON</a> <a href="tag-yaml.html">YAML</a> <a href="tag-yang.html">YANG</a> </div>
-<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
+<div class="post-date">11 Nov 2019</div><h1 class="post-title"><a href="https://plajjan.github.io/2019-11-11-whats-the-use-of-presence-containers.html">What's the use of presence containers in YANG?</a></h1>
 <p>
 I got the question on what presence containers are good for - what makes them useful?
 </p>
@@ -209,7 +864,7 @@ YANG is a rather neat data modeling language. It is simple yet expressive enough
 </p>
 
 <p>
-A container, in it's most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
+A container, in its most basic shape and form, offer nothing besides acting as a <i>container</i> - something that contains other things. Adding the <code>presence</code> statement to a container in YANG allows the presence of the container in the configuration to mean something.
 </p>
 
 <p>
@@ -233,7 +888,7 @@ Let's do a simple example. For the sake of brevity, I'm skipping various require
 </div>
 
 <p>
-On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. It's presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
+On this router we can configure the AS number to be used for its BGP daemon through the configuration leaf <code>asn</code>. Similarly, we have the leaf <code>router-id</code> which can be set to the router-id of the device. The <code>bgp</code> container is a standard container, or NP-container, meaning that it only exists when a child node of it exists. If neither <code>asn</code> nor <code>router-id</code> is set, the <code>bgp</code> container won't show up in the configuration whereas if either <code>asn</code> or <code>router-id</code> is set, the <code>bgp</code> container will show up. Its presence or not does not carry any meaning beyond containing the <code>asn</code> and <code>router-id</code> leaf.
 </p>
 
 <p>
@@ -345,7 +1000,7 @@ Even with <code>bgp</code> as a P-container, there's a reason to keep the enable
 <p>
 While my example is somewhat contrived I think it brings the point of across of what an elegant model might look like and when a P-container helps us achieve that goal. Happy modeling!
 </p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-yang.html">YANG</a> </div>
+<div class="taglist"><a href="https://plajjan.github.io/tags.html">Tags</a>: <a href="https://plajjan.github.io/tag-yang.html">YANG</a> </div>
 <div class="post-date">24 Sep 2019</div><h1 class="post-title"><a href="2019-09-24-there-is-no-golden-configuration.html">There is no golden configuration - using Cisco NSO services for everything</a></h1>
 <div class="abstract">
 <p>
@@ -446,767 +1101,7 @@ Enable the power of FASTMAP. Use services for everything you configure on your d
 </p>
 </div>
 </div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div>
-<div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-writing-a-background-worker-for-cisco-nso-finale.html">Writing a Python background worker for Cisco NSO - finale</a></h1>
-
-<div id="outline-container-org11370df" class="outline-2">
-<h2 id="org11370df">Writing a Python background worker for Cisco NSO - finale</h2>
-<div class="outline-text-2" id="text-org11370df">
-<p>
-Having read through the previous two parts (<a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">1</a>, <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">2</a>) you know we now have an implementation that actually works and behaves, at least in regards to the most important properties, the way we want. In this last part I would like to explain some of the implementation details, in particular how we efficiently wait for events.
-</p>
-
-<p>
-All daemons, or computer applications running in the background, typically have a number of things they need to continuously perform. If it's a web server, we need to look for new incoming connections and then perform the relevant HTTP query handling. A naive implementation could repeatedly ask, or <i>poll</i>, the socket if there is anything new. If we want to react quickly, then we would have to poll very frequently which in turn means that we will use up a lot of CPU. If there are a lot of requests then this could make sense, in fact many network interface drivers use polling as it is much more efficient than being interrupt based. Polling 1000 times per second means that we will notice anything incoming within a maximum of 1 millisecond and for each poll we can efficiently batch handle all the incoming requests (assuming there are more than 1000 request per second). If there aren't that many incoming requests though, it is probably better finding a pattern where we can sleep and be awoken only when there is a request. This is what interrupts can provide to the CPU. UNIX processes don't have interrupts, instead there are signals which act in a similar way and can interrupt what the program is currently doing. It's often used for stopping the application (KILL signal) or reconfiguring it (HUP signal).
-</p>
-
-<p>
-There are good use cases for signals but overall they are not the primary means of driving an application control flow. They are meant as simple inputs to a UNIX process from the <i>outside</i>.
-</p>
-
-<p>
-Smart people realized many moons ago that we needed ways to efficiently wait for input and this is why we have things like <code>select()</code> and <code>poll()</code> which can efficiently wait for a file descriptor to become readable.
-</p>
-
-<p>
-By <i>efficiently</i>, I mean it is able to wait for something to happen without consuming a lot of CPU resources yet is able to immediately wake up and return when something has happened. Not only can <code>select()</code> efficiently wait for something to happen on a file descriptor, it can wait on <b>multiple</b> file descriptors.
-</p>
-
-<p>
-Everything in UNIX is a file, which means that sockets have file descriptors too, so we can <i>wait</i> on a bunch of sockets and multiple files all using the same <code>select()</code> call. This is the basis for many of the daemons that exist today.
-</p>
-
-<p>
-Now for the background worker in NCS we have multiple events we want to observe and react to:
-</p>
-<ul class="org-ul">
-<li>react to NCS package events (redeploy primarily)</li>
-<li>react to the background worker dying (supervisor style)</li>
-<li>react to changes of the configuration for our background worker (enabled or not)</li>
-<li>react to HA events</li>
-</ul>
-
-<p>
-Are all these sockets or file descriptors that we can wait on with a <code>select()</code> call? As it turns out, yes, but it wasn't very obvious from the beginning.
-</p>
-</div>
-
-
-<div id="outline-container-org9577b2e" class="outline-3">
-<h3 id="org9577b2e">Thread whispering</h3>
-<div class="outline-text-3" id="text-org9577b2e">
-<p>
-When a package is redeployed or reloaded, NCS will stop the currently running instance by calling the <code>teardown()</code> function of each component thread. This is where we then in turn can call the <code>stop()</code> function on the various threads or processes we are running. Thus, the interface here for the incoming data is a function but we then have to propagate this information from our function to our main thread. If you remember from the <a href="./2019-07-25-writing-a-background-worker-for-cisco-nso.html">first part</a> we had a silly naive implementation of a background worker that looked like this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
-<span style="color: #4f97d7; font-weight: bold;">import</span> threading
-<span style="color: #4f97d7; font-weight: bold;">import</span> time
-
-<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
-<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
-            time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
-</pre>
-</div>
-
-<p>
-and since it had no way to signal to the threads <code>run()</code> function that it should stop, it would never stop. We quickly realized this and improved it to:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
-<span style="color: #4f97d7; font-weight: bold;">import</span> threading
-<span style="color: #4f97d7; font-weight: bold;">import</span> time
-
-<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
-<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag = threading.Event<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.wait<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>:
-            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>._exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
-</pre>
-</div>
-
-<p>
-where we use a <code>threading.Event</code> as the means to signal into the thread <code>run()</code> method that we want it to stop. In <code>run()</code> we read the <code>threading.Event</code> exit flag in a blocking fashion for a second and then perform our main functionality only to return and wait on the <code>Event</code>.
-</p>
-
-<p>
-Using <code>wait()</code> on that Event means we can only wait for a single thing at a time. That's not good enough - we have multiple things we need to observe. In the main supervisor thread we replaced this with a queue since we can feed things into the queue from multiple publishers. Something like this (this isn't our actual supervisor function, just an example showing how we would wait on a queue instead):
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
-<span style="color: #4f97d7; font-weight: bold;">import</span> threading
-<span style="color: #4f97d7; font-weight: bold;">import</span> time
-
-<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
-<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">BgWorker</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        threading.Thread.__init__<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = queue.Queue<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-            <span style="color: #4f97d7; font-weight: bold;">print</span><span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker"</span><span style="color: #4f97d7;">)</span>
-
-            <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">try</span>:
-                <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">except</span> queue.Empty:
-                <span style="color: #4f97d7; font-weight: bold;">continue</span>
-
-            <span style="color: #4f97d7; font-weight: bold;">if</span> item == <span style="color: #2d9574;">'exit'</span>:
-                <span style="color: #4f97d7; font-weight: bold;">return</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'exit'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
-
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw = BgWorker<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bgw.stop<span style="color: #4f97d7;">()</span>
-</pre>
-</div>
-
-<p>
-Thus far we have just replaced the <code>threading.Event</code> with a <code>queue.Queue</code> and unlike the <code>Event</code>, which effectively just carries a boolean value, the queue could carry close to anything. We use a simple string value of <code>exit</code> to signal the thread that it should stop. Now that we have a queue though, we can put more things on the queue and this is why a queue was picked for the supervisor.
-</p>
-
-<p>
-When implementing a thread for monitoring something, the important thing to remember is that the <code>run()</code> loop of the thread has to be able to monitor its primary object and be signaled from the <code>stop()</code> function using the same method so that it can be efficiently waited upon in the <code>run()</code> loop.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org1898578" class="outline-3">
-<h3 id="org1898578">CDB configuration changes</h3>
-<div class="outline-text-3" id="text-org1898578">
-<p>
-CDB subscribers are using a design pattern provided by Cisco and we can't influence it much. Instead we have to integrate with it. With a queue to the supervisor this becomes trivial. The config CDB subscriber simply runs as a separate thread and will take whatever updates it receives on CDB changes and publish them on the queue so the supervisor can react to it.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org654ee50" class="outline-3">
-<h3 id="org654ee50">Monitoring HA events</h3>
-<div class="outline-text-3" id="text-org654ee50">
-<p>
-HA events come from NSO over the notifications API which we access through a socket from Python. Unlike the CDB subscriber, there is no ready to go class that we can just subclass and get moving with. Instead we have to implement the thread <code>run()</code> method ourselves. Efficiently waiting on a socket is easy, as already covered, we can use <code>select()</code> for this. However, how can we signal the thread to stop using something that is selectable? I chose to implement a WaitableEvent that sends its data over a pipe, which has a file descriptor and thus is waitable. The code for that looks like this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">WaitableEvent</span>:
-    <span style="color: #9f8766;">"""Provides an abstract object that can be used to resume select loops with</span>
-<span style="color: #9f8766;">    indefinite waits from another thread or process. This mimics the standard</span>
-<span style="color: #9f8766;">    threading.Event interface."""</span>
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd = os.pipe<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">wait</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, timeout=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #7590db;">rfds</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span>, timeout<span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd <span style="color: #4f97d7; font-weight: bold;">in</span> rfds
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">is_set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">isSet</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.wait<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">clear</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
-            os.read<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd, <span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">set</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.isSet<span style="color: #4f97d7;">()</span>:
-            os.write<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd, b<span style="color: #2d9574;">'1'</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">fileno</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #9f8766;">"""Return the FD number of the read side of the pipe, allows this</span>
-<span style="color: #9f8766;">        object to be used with select.select()</span>
-<span style="color: #9f8766;">        """</span>
-        <span style="color: #4f97d7; font-weight: bold;">return</span> <span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__del__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._read_fd<span style="color: #4f97d7;">)</span>
-        os.close<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>._write_fd<span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-
-<p>
-and we can use it much the same way as <code>threading.Event</code> since it implements the same interface, however, note how the underlying transport is an <code>os.pipe</code> and we thus can use that in our <code>select()</code> call simply by digging out <code>self._read_fd</code>. Also note that I didn't write the code for this myself. After realizing what I needed I searched and the Internet delivered.
-</p>
-
-<p>
-Here is the code for the HA event monitor using a <code>WaitableEvent</code>:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">HaEventListener</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
-    <span style="color: #9f8766;">"""HA Event Listener</span>
-<span style="color: #9f8766;">    HA events, like HA-mode transitions, are exposed over a notification API.</span>
-<span style="color: #9f8766;">    We listen on that and forward relevant messages over the queue to the</span>
-<span style="color: #9f8766;">    supervisor which can act accordingly.</span>
-
-<span style="color: #9f8766;">    We use a WaitableEvent rather than a threading.Event since the former</span>
-<span style="color: #9f8766;">    allows us to wait on it using a select loop. The HA events are received</span>
-<span style="color: #9f8766;">    over a socket which can also be waited upon using a select loop, thus</span>
-<span style="color: #9f8766;">    making it possible to wait for the two inputs we have using a single select</span>
-<span style="color: #9f8766;">    loop.</span>
-<span style="color: #9f8766;">    """</span>
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, q<span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>HaEventListener, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = q
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'{} supervisor: init'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag = WaitableEvent<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'run() HA event listener'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">from</span> _ncs <span style="color: #4f97d7; font-weight: bold;">import</span> events
-        <span style="color: #7590db;">mask</span> = events.NOTIF_HA_INFO
-        <span style="color: #7590db;">event_socket</span> = socket.socket<span style="color: #4f97d7;">()</span>
-        events.notifications_connect<span style="color: #4f97d7;">(</span>event_socket, mask, ip=<span style="color: #2d9574;">'127.0.0.1'</span>, port=ncs.PORT<span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-            <span style="color: #7590db;">rl</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag, event_socket<span style="color: #bc6ec5;">]</span>, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag <span style="color: #4f97d7; font-weight: bold;">in</span> rl:
-                event_socket.close<span style="color: #4f97d7;">()</span>
-                <span style="color: #4f97d7; font-weight: bold;">return</span>
-
-            <span style="color: #7590db;">notification</span> = events.read_notification<span style="color: #4f97d7;">(</span>event_socket<span style="color: #4f97d7;">)</span>
-            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Can this fail? Could we get a KeyError here? Afraid to catch it</span>
-            <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">because I don't know what it could mean.</span>
-            <span style="color: #7590db;">ha_notif_type</span> = notification<span style="color: #4f97d7;">[</span><span style="color: #2d9574;">'hnot'</span><span style="color: #4f97d7;">][</span><span style="color: #2d9574;">'type'</span><span style="color: #4f97d7;">]</span>
-
-            <span style="color: #4f97d7; font-weight: bold;">if</span> ha_notif_type == events.HA_INFO_IS_MASTER:
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">True</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">elif</span> ha_notif_type == events.HA_INFO_IS_NONE:
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">False</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">elif</span> ha_notif_type == events.HA_INFO_SLAVE_INITIALIZED:
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'ha-master'</span>, <span style="color: #a45bad;">False</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.exit_flag.<span style="color: #4f97d7;">set</span><span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.__class__.<span style="color: #4f97d7;">__name__</span> + <span style="color: #2d9574;">' (HA event listener)'</span><span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-
-<p>
-It selects on the <code>exit_flag</code> (which is a <code>WaitableEvent</code>) and the event socket itself. The <code>stop()</code> method simply sets the <code>WaitableEvent</code>. If <code>exit_flag</code> is readable it means the thread should exit while if the <code>event_socket</code> is readable we have a HA event.
-</p>
-
-<p>
-We use multiple threads with different methods so we can efficiently monitor different <i>classes</i> of objects.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org601d88e" class="outline-3">
-<h3 id="org601d88e">Child process liveness monitor</h3>
-<div class="outline-text-3" id="text-org601d88e">
-<p>
-If the process we started to run the background worker function dies for whatever reason, we want to notice this and restart it. How can we efficiently monitor the liveness of a child process?
-</p>
-
-<p>
-This was the last thing we wanted to monitor that remained as a half busy poll. The supervisor would wait for things coming in on the supervisor queue for one second, then go and check if the child process was alive only to continue monitoring the queue.
-</p>
-
-<p>
-The supervisor <code>run()</code> function:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-        <span style="color: #7590db;">should_run</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master<span style="color: #4f97d7;">)</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">if</span> should_run <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process should run but is not running, starting"</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_start<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">not</span> should_run:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process is running but should not run, stopping"</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">try</span>:
-            <span style="color: #7590db;">item</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">except</span> queue.Empty:
-            <span style="color: #4f97d7; font-weight: bold;">continue</span>
-
-        <span style="color: #7590db;">k</span>, <span style="color: #7590db;">v</span> = item
-        <span style="color: #4f97d7; font-weight: bold;">if</span> k == <span style="color: #2d9574;">'exit'</span>:
-            <span style="color: #4f97d7; font-weight: bold;">return</span>
-        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">'enabled'</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = v
-</pre>
-</div>
-
-<p>
-This irked me. Waking up once a second to check on the child process doesn't exactly qualify as busy polling - only looping once a second won't increase CPU utilization by much, yet child processes dying should be enough of a rare event that not reacting quicker than 1 second is still good enough. It was a simple and pragmatic solution that was enough for production use. But it irked me.
-</p>
-
-<p>
-I wanted to remove the last <i>busy</i> poll and so I started researching the problem. It turns out that it is possible, through a rather clever hack, to detect when a child process is no longer alive.
-</p>
-
-<p>
-<b>When the write end of a POSIX pipe is in the sole possession of a process and that process dies, the read end becomes readable</b>
-</p>
-
-<p>
-And so this is exactly what we've implemented.
-</p>
-<ul class="org-ul">
-<li>setup a pipe</li>
-<li>fork child process (actually 'spawn'), passing write end of pipe to child</li>
-<li>close write end of pipe in parent process</li>
-<li>wait for read end of pipe to become readable, which only happens when the child process has died</li>
-</ul>
-
-<p>
-Since a pipe has a file descriptor we can wait on it using our <code>select()</code> loop and this is what we do in the later versions of bgworker.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org72d9440" class="outline-3">
-<h3 id="org72d9440">Hiding things from the bg function</h3>
-<div class="outline-text-3" id="text-org72d9440">
-<p>
-We want to make it dead simple to use the background process library. Passing in a pipe, and the logging objects that need to be set up, as described in the <a href="./2019-07-26-writing-a-background-worker-for-cisco-nso-part-deux.html">previous part</a>, should have to be done by the user of our library. We want to take care of that, but how?
-</p>
-
-<p>
-When we start the child process, it doesn't immediately run the user provided function. Instead we have a wrapper function that takes care of these things and then hands over control to the user provided function! Like this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">_bg_wrapper</span><span style="color: #4f97d7;">(</span>pipe_unused, log_q, log_config_q, log_level, bg_fun, *bg_fun_args<span style="color: #4f97d7;">)</span>:
-    <span style="color: #9f8766;">"""Internal wrapper for the background worker function.</span>
-
-<span style="color: #9f8766;">    Used to set up logging via a QueueHandler in the child process. The other end</span>
-<span style="color: #9f8766;">    of the queue is observed by a QueueListener in the parent process.</span>
-<span style="color: #9f8766;">    """</span>
-    <span style="color: #7590db;">queue_hdlr</span> = logging.handlers.QueueHandler<span style="color: #4f97d7;">(</span>log_q<span style="color: #4f97d7;">)</span>
-    <span style="color: #7590db;">root</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
-    root.setLevel<span style="color: #4f97d7;">(</span>log_level<span style="color: #4f97d7;">)</span>
-    root.addHandler<span style="color: #4f97d7;">(</span>queue_hdlr<span style="color: #4f97d7;">)</span>
-
-    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">thread to monitor log level changes and reconfigure the root logger level</span>
-    <span style="color: #7590db;">log_reconf</span> = LogReconfigurator<span style="color: #4f97d7;">(</span>log_config_q, root<span style="color: #4f97d7;">)</span>
-    log_reconf.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">try</span>:
-        bg_fun<span style="color: #4f97d7;">(</span>*bg_fun_args<span style="color: #4f97d7;">)</span>
-    <span style="color: #4f97d7; font-weight: bold;">except</span> <span style="color: #ce537a; font-weight: bold;">Exception</span> <span style="color: #4f97d7; font-weight: bold;">as</span> e:
-        root.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Unhandled error in {} - {}: {}'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>bg_fun.<span style="color: #4f97d7;">__name__</span>, <span style="color: #4f97d7;">type</span><span style="color: #2d9574;">(</span>e<span style="color: #2d9574;">)</span>.<span style="color: #4f97d7;">__name__</span>, e<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        root.debug<span style="color: #4f97d7;">(</span>traceback.format_exc<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>
-
-</pre>
-</div>
-
-<p>
-Note how the first argument, accepting the pipe is unused, but it is enough to receive the write end of the pipe. Then we configure logging etc and implement a big exception handler.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org81f998b" class="outline-3">
-<h3 id="org81f998b">A selectable queue</h3>
-<div class="outline-text-3" id="text-org81f998b">
-<p>
-Monitoring the child process liveness happens through a pipe which is waitable using select. As previously described though, we placed a queue at the center of the supervisor thread and send messages from other threads over this queue. Now we have a queue and a pipe to wait on, how?
-</p>
-
-<p>
-We could probably abandon the queue and have those messages be sent over a pipe, which we could then <code>select()</code> on&#x2026; but the queue is so convenient!
-</p>
-
-<p>
-The <code>multiprocessing</code> library also has a queue which works across multiple processes. It uses a pipe under the hood to pass the messages and deals with things like sharing the the file descriptor when you spawn your child process (which is what we do). By simply switching from <code>queue.Queue</code> to <code>multiprocessing.Queue</code> (they feature the exact same interface) we have gained a pipe under the hood that we can <code>select()</code> on. Voilà!
-</p>
-
-<p>
-Here's the code for the supervisor thread showing both the selectable queue (well, pipe) and the clever child process liveness monitor. To read the full up to date code for the whole background process library, just head over to <a href="https://github.com/plajjan/bgworker/">the bgworker repo on Github</a>.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Process</span><span style="color: #4f97d7;">(</span>threading.Thread<span style="color: #4f97d7;">)</span>:
-    <span style="color: #9f8766;">"""Supervisor for running the main background process and reacting to</span>
-<span style="color: #9f8766;">    various events</span>
-<span style="color: #9f8766;">    """</span>
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">__init__</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, app, bg_fun, bg_fun_args=<span style="color: #a45bad;">None</span>, config_path=<span style="color: #a45bad;">None</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7;">super</span><span style="color: #4f97d7;">(</span>Process, <span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>.__init__<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app = app
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun = bg_fun
-        <span style="color: #4f97d7; font-weight: bold;">if</span> bg_fun_args <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span>:
-            <span style="color: #7590db;">bg_fun_args</span> = <span style="color: #4f97d7;">[]</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args = bg_fun_args
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path = config_path
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe = <span style="color: #a45bad;">None</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log = app.log
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.name = <span style="color: #2d9574;">"{}.{}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.__module__,
-                                   <span style="color: #4f97d7; font-weight: bold;">self</span>.app.__class__.<span style="color: #4f97d7;">__name__</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{} supervisor starting"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.vmid = <span style="color: #4f97d7; font-weight: bold;">self</span>.app._ncs_id
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx = multiprocessing.get_context<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'spawn'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.q = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the config subscriber thread</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber = Subscriber<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
-            <span style="color: #7590db;">subscriber_iter</span> = ConfigSubscriber<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.q, <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
-            subscriber_iter.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber<span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.start<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the HA event listener thread</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener = HaEventListener<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, q=<span style="color: #4f97d7; font-weight: bold;">self</span>.q<span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.start<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start the logging QueueListener thread</span>
-        <span style="color: #7590db;">hdlrs</span> = <span style="color: #4f97d7;">list</span><span style="color: #4f97d7;">(</span>_get_handler_impls<span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.app._logger<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener = logging.handlers.QueueListener<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue, *hdlrs, respect_handler_level=<span style="color: #a45bad;">True</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener.start<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.current_log_level = <span style="color: #4f97d7; font-weight: bold;">self</span>.app._logger.getEffectiveLevel<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">start log config CDB subscriber</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Queue<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber = Subscriber<span style="color: #4f97d7;">(</span>app=<span style="color: #4f97d7; font-weight: bold;">self</span>.app, log=<span style="color: #4f97d7; font-weight: bold;">self</span>.log<span style="color: #4f97d7;">)</span>
-        <span style="color: #7590db;">log_subscriber_iter</span> = LogConfigSubscriber<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q, <span style="color: #4f97d7; font-weight: bold;">self</span>.vmid<span style="color: #4f97d7;">)</span>
-        log_subscriber_iter.register<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber<span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber.start<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = <span style="color: #a45bad;">None</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Read initial configuration, using two separate transactions</span>
-        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Maapi<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> m:
-            <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.Session<span style="color: #4f97d7;">(</span>m, <span style="color: #2d9574;">'{}_supervisor'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span>, <span style="color: #2d9574;">'system'</span><span style="color: #4f97d7;">)</span>:
-                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">in the 1st transaction read config data from the 'enabled' leaf</span>
-                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">as</span> t_read:
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
-                        <span style="color: #7590db;">enabled</span> = t_read.get_elem<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.config_path<span style="color: #4f97d7;">)</span>
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #4f97d7;">bool</span><span style="color: #4f97d7;">(</span>enabled<span style="color: #4f97d7;">)</span>
-                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
-                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">if there is no config_path we assume the process is always enabled</span>
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = <span style="color: #a45bad;">True</span>
-
-                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">In the 2nd transaction read operational data regarding HA.</span>
-                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This is an expensive operation invoking a data provider, thus</span>
-                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">we don't want to incur any unnecessary locks</span>
-                <span style="color: #4f97d7; font-weight: bold;">with</span> m.start_read_trans<span style="color: #4f97d7;">(</span>db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_t_read:
-                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">check if HA is enabled</span>
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> oper_t_read.exists<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"/tfnm:ncs-state/tfnm:ha"</span><span style="color: #4f97d7;">)</span>:
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">True</span>
-                    <span style="color: #4f97d7; font-weight: bold;">else</span>:
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled = <span style="color: #a45bad;">False</span>
-
-                    <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">determine HA state if HA is enabled</span>
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled:
-                        <span style="color: #7590db;">ha_mode</span> = <span style="color: #4f97d7;">str</span><span style="color: #4f97d7;">(</span>ncs.maagic.get_node<span style="color: #bc6ec5;">(</span>oper_t_read, <span style="color: #2d9574;">'/tfnm:ncs-state/tfnm:ha/tfnm:mode'</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master = <span style="color: #4f97d7;">(</span>ha_mode == <span style="color: #2d9574;">'master'</span><span style="color: #4f97d7;">)</span>
-
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">run</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.add_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-            <span style="color: #4f97d7; font-weight: bold;">try</span>:
-                <span style="color: #7590db;">should_run</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_enabled <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master<span style="color: #4f97d7;">)</span>
-
-                <span style="color: #4f97d7; font-weight: bold;">if</span> should_run <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">or</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>:
-                    <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process should run but is not running, starting"</span><span style="color: #4f97d7;">)</span>
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
-                    <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_start<span style="color: #4f97d7;">()</span>
-                <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span> <span style="color: #4f97d7; font-weight: bold;">and</span> <span style="color: #4f97d7; font-weight: bold;">not</span> should_run:
-                    <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Background worker process is running but should not run, stopping"</span><span style="color: #4f97d7;">)</span>
-                    <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
-
-                <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">check for input</span>
-                <span style="color: #7590db;">waitable_rfds</span> = <span style="color: #4f97d7;">[</span><span style="color: #4f97d7; font-weight: bold;">self</span>.q._reader<span style="color: #4f97d7;">]</span>
-                <span style="color: #4f97d7; font-weight: bold;">if</span> should_run:
-                    waitable_rfds.append<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe<span style="color: #4f97d7;">)</span>
-
-                <span style="color: #7590db;">rfds</span>, <span style="color: #7590db;">_</span>, <span style="color: #7590db;">_</span> = select.select<span style="color: #4f97d7;">(</span>waitable_rfds, <span style="color: #bc6ec5;">[]</span>, <span style="color: #bc6ec5;">[]</span><span style="color: #4f97d7;">)</span>
-                <span style="color: #4f97d7; font-weight: bold;">for</span> rfd <span style="color: #4f97d7; font-weight: bold;">in</span> rfds:
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> rfd == <span style="color: #4f97d7; font-weight: bold;">self</span>.q._reader:
-                        <span style="color: #7590db;">k</span>, <span style="color: #7590db;">v</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.q.get<span style="color: #4f97d7;">()</span>
-
-                        <span style="color: #4f97d7; font-weight: bold;">if</span> k == <span style="color: #2d9574;">'exit'</span>:
-                            <span style="color: #4f97d7; font-weight: bold;">return</span>
-                        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">'enabled'</span>:
-                            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_enabled = v
-                        <span style="color: #4f97d7; font-weight: bold;">elif</span> k == <span style="color: #2d9574;">"ha-master"</span>:
-                            <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_master = v
-
-                    <span style="color: #4f97d7; font-weight: bold;">if</span> rfd == <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe:
-                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">getting a readable event on the pipe should mean the</span>
-                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">child is dead - wait for it to die and start again</span>
-                        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">we'll restart it at the top of the loop</span>
-                        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Child process died"</span><span style="color: #4f97d7;">)</span>
-                        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
-                            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.join<span style="color: #4f97d7;">()</span>
-
-            <span style="color: #4f97d7; font-weight: bold;">except</span> <span style="color: #ce537a; font-weight: bold;">Exception</span> <span style="color: #4f97d7; font-weight: bold;">as</span> e:
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Unhandled exception in the supervisor thread: {} ({})'</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7;">type</span><span style="color: #2d9574;">(</span>e<span style="color: #2d9574;">)</span>.<span style="color: #4f97d7;">__name__</span>, e<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-                <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span>traceback.format_exc<span style="color: #bc6ec5;">()</span><span style="color: #4f97d7;">)</span>
-                time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #9f8766;">"""stop is called when the supervisor thread should stop and is part of</span>
-<span style="color: #9f8766;">        the standard Python interface for threading.Thread</span>
-<span style="color: #9f8766;">        """</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the HA event listener</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping HA event listener"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.ha_event_listener.stop<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop config CDB subscriber</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping config CDB subscriber"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.config_path <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #4f97d7; font-weight: bold;">not</span> <span style="color: #a45bad;">None</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.config_subscriber.stop<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop log config CDB subscriber</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping log config CDB subscriber"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_subscriber.stop<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the logging QueueListener</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping logging QueueListener"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.queue_listener.stop<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop us, the supervisor</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping supervisor thread"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.q.put<span style="color: #4f97d7;">(</span><span style="color: #bc6ec5;">(</span><span style="color: #2d9574;">'exit'</span>, <span style="color: #a45bad;">None</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.join<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.app.del_running_thread<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name + <span style="color: #2d9574;">' (Supervisor)'</span><span style="color: #4f97d7;">)</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">stop the background worker process</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker_stop<span style="color: #4f97d7;">()</span>
-
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_start</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #9f8766;">"""Starts the background worker process</span>
-<span style="color: #9f8766;">        """</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: starting the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Instead of using the usual worker thread, we use a separate process here.</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">This allows us to terminate the process on package reload / NSO shutdown.</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">using multiprocessing.Pipe which is shareable across a spawned</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">process, while os.pipe only works, per default over to a forked</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">child</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.parent_pipe, <span style="color: #7590db;">child_pipe</span> = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Pipe<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">Instead of calling the bg_fun worker function directly, call our</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">internal wrapper to set up things like inter-process logging through</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">a queue.</span>
-        <span style="color: #7590db;">args</span> = <span style="color: #4f97d7;">[</span>child_pipe, <span style="color: #4f97d7; font-weight: bold;">self</span>.log_queue, <span style="color: #4f97d7; font-weight: bold;">self</span>.log_config_q, <span style="color: #4f97d7; font-weight: bold;">self</span>.current_log_level, <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun<span style="color: #4f97d7;">]</span> + <span style="color: #4f97d7; font-weight: bold;">self</span>.bg_fun_args
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker = <span style="color: #4f97d7; font-weight: bold;">self</span>.mp_ctx.Process<span style="color: #4f97d7;">(</span>target=_bg_wrapper, args=args<span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.start<span style="color: #4f97d7;">()</span>
-
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">close child pipe in parent so only child is in possession of file</span>
-        <span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">handle, which means we get EOF when the child dies</span>
-        child_pipe.close<span style="color: #4f97d7;">()</span>
-
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">worker_stop</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #9f8766;">"""Stops the background worker process</span>
-<span style="color: #9f8766;">        """</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker <span style="color: #4f97d7; font-weight: bold;">is</span> <span style="color: #a45bad;">None</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: asked to stop worker but background worker does not exist"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">return</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: stopping the background worker process"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>.name<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.terminate<span style="color: #4f97d7;">()</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.join<span style="color: #4f97d7;">(</span>timeout=<span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #4f97d7;">()</span>:
-            <span style="color: #4f97d7; font-weight: bold;">self</span>.log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"{}: worker not terminated on time, alive: {}  process: {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker.is_alive<span style="color: #2d9574;">()</span>, <span style="color: #4f97d7; font-weight: bold;">self</span>.worker<span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orga78faa4" class="outline-3">
-<h3 id="orga78faa4">A library with a simple user interface</h3>
-<div class="outline-text-3" id="text-orga78faa4">
-<p>
-As we've gone through over in these three posts, there's quite a bit of code that needs to be written to implement a proper NSO background worker. The idea was that we would write it in such a way that it could be reused. Someone wanting to implement a background worker should not have to understand, much less implement, all of this. This is why we've structured the surrounding code for running a background worker as a library that can be reused. We effectively hide the complexity by exposing a simple user interface to the developer. Using the bgworker background process library could look like this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #2aa1ae; background-color: #292e34;"># </span><span style="color: #2aa1ae; background-color: #292e34;">-*- mode: python; python-indent: 4 -*-</span>
-<span style="color: #4f97d7; font-weight: bold;">import</span> logging
-<span style="color: #4f97d7; font-weight: bold;">import</span> random
-<span style="color: #4f97d7; font-weight: bold;">import</span> sys
-<span style="color: #4f97d7; font-weight: bold;">import</span> time
-
-<span style="color: #4f97d7; font-weight: bold;">import</span> ncs
-<span style="color: #4f97d7; font-weight: bold;">from</span> ncs.application <span style="color: #4f97d7; font-weight: bold;">import</span> Service
-
-<span style="color: #4f97d7; font-weight: bold;">from</span> . <span style="color: #4f97d7; font-weight: bold;">import</span> background_process
-
-<span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">bg_worker</span><span style="color: #4f97d7;">()</span>:
-    <span style="color: #7590db;">log</span> = logging.getLogger<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">while</span> <span style="color: #a45bad;">True</span>:
-        <span style="color: #4f97d7; font-weight: bold;">with</span> ncs.maapi.single_write_trans<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'bgworker'</span>, <span style="color: #2d9574;">'system'</span>, db=ncs.OPERATIONAL<span style="color: #4f97d7;">)</span> <span style="color: #4f97d7; font-weight: bold;">as</span> oper_trans_write:
-            <span style="color: #7590db;">root</span> = ncs.maagic.get_root<span style="color: #4f97d7;">(</span>oper_trans_write<span style="color: #4f97d7;">)</span>
-            <span style="color: #7590db;">cur_val</span> = root.bgworker.counter
-            <span style="color: #7590db;">root.bgworker.counter</span> += <span style="color: #a45bad;">1</span>
-            oper_trans_write.<span style="color: #4f97d7;">apply</span><span style="color: #4f97d7;">()</span>
-
-        log.debug<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Hello from background worker process, increment counter from {} to {}"</span>.<span style="color: #4f97d7;">format</span><span style="color: #bc6ec5;">(</span>cur_val, cur_val+<span style="color: #a45bad;">1</span><span style="color: #bc6ec5;">)</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">if</span> random.randint<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">0</span>, <span style="color: #a45bad;">10</span><span style="color: #4f97d7;">)</span> == <span style="color: #a45bad;">9</span>:
-            log.error<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">"Bad dice value"</span><span style="color: #4f97d7;">)</span>
-            sys.<span style="color: #a45bad;">exit</span><span style="color: #4f97d7;">(</span><span style="color: #a45bad;">1</span><span style="color: #4f97d7;">)</span>
-        time.sleep<span style="color: #4f97d7;">(</span><span style="color: #a45bad;">2</span><span style="color: #4f97d7;">)</span>
-
-<span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p = background_process.Process<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, bg_worker, config_path=<span style="color: #2d9574;">'/bgworker/enabled'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.stop<span style="color: #4f97d7;">()</span>
-</pre>
-</div>
-
-<p>
-This is the example in the <a href="https://github.com/plajjan/bgworker">bgworker repo</a> and it shows the simple worker that increments an operational state value once per second. Every now and then it dies, which then shows that the supervisor correctly monitors the child process and restarts it. You can disable it by setting <code>/bgworker/enabled</code> to <code>false</code>.
-</p>
-
-<p>
-The main functionality is implemented in the <code>bg_worker()</code> function and we use the background process library to run that function in the background.
-</p>
-
-<p>
-It is the following lines, which are part of a standard NSO Application definition, where we hook in and run the background process by instantiating <code>background_process.Process()</code> and feeding it the function we want it to run. Further we tell it that the path to the enable/disable leaf of this background worker is <code>/bgworker/enabled</code>. The library then takes over and does the needful.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-python"><span style="color: #4f97d7; font-weight: bold;">class</span> <span style="color: #ce537a; font-weight: bold;">Main</span><span style="color: #4f97d7;">(</span>ncs.application.Application<span style="color: #4f97d7;">)</span>:
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">setup</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main RUNNING'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p = background_process.Process<span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span>, bg_worker, config_path=<span style="color: #2d9574;">'/bgworker/enabled'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.start<span style="color: #4f97d7;">()</span>
-
-    <span style="color: #4f97d7; font-weight: bold;">def</span> <span style="color: #bc6ec5; font-weight: bold;">teardown</span><span style="color: #4f97d7;">(</span><span style="color: #4f97d7; font-weight: bold;">self</span><span style="color: #4f97d7;">)</span>:
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.log.info<span style="color: #4f97d7;">(</span><span style="color: #2d9574;">'Main FINISHED'</span><span style="color: #4f97d7;">)</span>
-        <span style="color: #4f97d7; font-weight: bold;">self</span>.p.stop<span style="color: #4f97d7;">()</span>
-</pre>
-</div>
-
-<p>
-We aimed for a simple interface and I think we succeeded.
-</p>
-
-<p>
-The idea behind placing all of this functionality into a library is that we hide the complexity from the user of our library. A developer that needs a background worker wants to spend 90% of the time on the actual functionality of the background worker rather than writing the surrounding overhead code necessary for running the background worker function. This is essentially the promise of any programming language or technique ever written - <i>spend your time on your business logic and not on overhead tasks</i> - nonetheless I think we accomplished what we set out to do.
-</p>
-</div>
-</div>
-
-<div id="outline-container-orgde8b56e" class="outline-3">
-<h3 id="orgde8b56e">Finale</h3>
-<div class="outline-text-3" id="text-orgde8b56e">
-<p>
-And with that, we conclude the interesting parts of how to implement a background worker for Cisco NSO. I hope you've found it interesting to read about. It was fun and interesting implementing, in particular as it's been a while for me since I was this deep into the low level workings of things. I am a staunch believer that we generally need to use libraries when implementing network automation or other application/business logic so we can focus on the right set of the problems rather than interweaving say the low level details of POSIX processes with our application logic. In essence; using the right abstraction layers. Our human brains can only focus on so many things at a time and using the right abstractions is therefore crucial. Most of the time I mostly deal with high level languages touching high level things - exactly as I want it to be. However, once in a while, when the framework (NSO in this case) doesn't provide what you need (a way to run background workers), you just have to do it yourself.
-</p>
-
-<p>
-I hope you will also appreciate the amount of energy that went into writing the <a href="https://github.com/plajjan/bgworker">bgworker</a> package.py library that you can reuse. It is a rewrite of the common set of core functionality of the background workers we already had, resulting in a much better and cleaner implementation using a generic library style interface allowing anyone to use it. If you have the need for running background workers in NSO I strongly recommend that you make use of it. There's a lot of lessons learned here and starting over from scratch with a naive implementation means you will learn all of them the hard way. If bgworker doesn't fit in your architecture then feel free to give feedback and perhaps we can find a way forward together.
-</p>
-</div>
-</div>
-</div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div>
-<div class="post-date">29 Jul 2019</div><h1 class="post-title"><a href="2019-07-29-this-blog-now-powered-by-org-mode.html">This blog now powered by org-mode</a></h1>
-
-<figure>
-<img src="./images/1920px-Org-mode-unicorn.svg.png" alt="1920px-Org-mode-unicorn.svg.png" width="300px" style="float:left;">
-
-</figure>
-
-<p>
-I've used Jekyll for quite some time to power my blog. I would commit markdown files to a git repository and then the magic sauce of Jekyll and Github Pages would turn this into beautiful HTML pages and publish it. It worked fine but as I have switched to Emacs as my primary editor, which features something called org-mode, that among other things feature a syntax that I find way better and more intuitive than markdown, I decided to switch over my blogging to this format.
-</p>
-
-<p>
-org-mode is a markup language, just like markdown, but it's been around for a wee bit longer. I use quite a lot of markdown in various places and its popularity means its widely accepted. I naturally prefer it over something like Word documents. However, it has limitations, it is inconsistent and not very intuitive. The arguments have been made before and I won't repeat it all here, instead if you are interested in org-mode vs *, <a href="https://karl-voit.at/2017/09/23/orgmode-as-markup-only/">Karl Voit sums it up</a> best.
-</p>
-
-<p>
-It should also be noted that org-mode does so much more. My calendar, todo list and various notes are all in org-mode and it provides various useful tools to work with it. It's often listed as a unique selling point for Emacs. If you are technology oriented, likes to tinker and setup tools your way, care about your time (efficiency), then org-mode might be for you.
-</p>
-
-<p>
-Anyway, I'm not trying to sell org-mode, just saying I'm now using it to power this blog. I use org-static-blog to actually render the org files into HTML. Not super happy with it but it works for now (I can switch to something else that also is based on org, like org-publish, without having to rewrite all my posts). In the end, what this switch to org-mode might mean is that the threshold for me to write something is lowered just a tiny bit and that might just result in a slightly increased post publishing cadence.
-</p>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso.html">NSO</a> </div><div id="archive">
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-nso,.html">NSO,</a> <a href="tag-ncs,.html">NCS,</a> <a href="tag-network.html">network</a> <a href="tag-automation.html">automation</a> </div><div id="archive">
 <a href="archive.html">Other posts</a>
 </div>
 </div>
