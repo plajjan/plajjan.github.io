@@ -8,9 +8,9 @@
 #+OPTIONS: html-style:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
 
-* Modern? video conferencing on retro hardware
+I use a ten year old Cisco C40 Telepresence codec for my daily video conferencing and I love it. It lets me join Webex conferences and share the screen of my Linux computer with no hassle!
 
-I use a ten year old Cisco C40 Telepresence codec for my daily video conferencing and I love it. It lets me join Webex conferences and share the screen of my Linux computer!
+* An irk for crappy UX
 
 I grew up with IRC. Sleek, fast and efficient. Today we have things like Slack. Pretty much the polar opposite. It is slow, sluggish and I don't particularly enjoy the user experience at all.
 

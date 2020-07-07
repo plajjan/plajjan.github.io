@@ -4,18 +4,17 @@
 <title>Network Automation ramblings by Kristian Larsson</title>
 <description>Network Automation ramblings by Kristian Larsson</description>
 <link>https://plajjan.github.io/</link>
-<lastBuildDate>Tue, 07 Jul 2020 16:45:36 +0200</lastBuildDate>
+<lastBuildDate>Tue, 07 Jul 2020 22:52:01 +0200</lastBuildDate>
 <item>
   <title>Retro SIP video conferencing to Webex et al using a Cisco C40 TelePresence codec</title>
   <description><![CDATA[
-
-<div id="outline-container-org8b0d6c0" class="outline-2">
-<h2 id="org8b0d6c0">Modern? video conferencing on retro hardware</h2>
-<div class="outline-text-2" id="text-org8b0d6c0">
 <p>
-I use a ten year old Cisco C40 Telepresence codec for my daily video conferencing and I love it. It lets me join Webex conferences and share the screen of my Linux computer!
+I use a ten year old Cisco C40 Telepresence codec for my daily video conferencing and I love it. It lets me join Webex conferences and share the screen of my Linux computer with no hassle!
 </p>
 
+<div id="outline-container-org1b47c51" class="outline-2">
+<h2 id="org1b47c51">An irk for crappy UX</h2>
+<div class="outline-text-2" id="text-org1b47c51">
 <p>
 I grew up with IRC. Sleek, fast and efficient. Today we have things like Slack. Pretty much the polar opposite. It is slow, sluggish and I don't particularly enjoy the user experience at all.
 </p>
@@ -47,9 +46,9 @@ Needing multiple installed video conferencing applications highlights another pr
 </div>
 
 
-<div id="outline-container-orgeafcbdf" class="outline-2">
-<h2 id="orgeafcbdf">My solution; a decade old video conference hardware</h2>
-<div class="outline-text-2" id="text-orgeafcbdf">
+<div id="outline-container-orgc558b30" class="outline-2">
+<h2 id="orgc558b30">My solution; a decade old video conference hardware</h2>
+<div class="outline-text-2" id="text-orgc558b30">
 <p>
 Anyway, so back to the Cisco C40. It is my solution to everyday video conferencing and I couldn't be happier!
 </p>
@@ -64,9 +63,9 @@ The Cisco Telepresence line of products are originally an acquisition of Tandber
 </div>
 </div>
 
-<div id="outline-container-org13e1b95" class="outline-2">
-<h2 id="org13e1b95">Linux screen sharing</h2>
-<div class="outline-text-2" id="text-org13e1b95">
+<div id="outline-container-orge266aea" class="outline-2">
+<h2 id="orge266aea">Linux screen sharing</h2>
+<div class="outline-text-2" id="text-orge266aea">
 <p>
 The C40 sports a HDMI input so I can connect my Linux computer and share my screen. No more hassle with things not working. Did I say it is rock solid?
 </p>
@@ -82,9 +81,9 @@ I use the xmonad windows manager which is a tiling window manager and one that w
 </div>
 </div>
 
-<div id="outline-container-org488f75f" class="outline-2">
-<h2 id="org488f75f">Full HD 1080p resolution</h2>
-<div class="outline-text-2" id="text-org488f75f">
+<div id="outline-container-org89fafcf" class="outline-2">
+<h2 id="org89fafcf">Full HD 1080p resolution</h2>
+<div class="outline-text-2" id="text-org89fafcf">
 <p>
 It might be old, but the C40 supports 1080p both from the camera and for screen sharing which is pretty much on par with what more modern solutions support.
 </p>
@@ -104,9 +103,9 @@ I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to 
 </div>
 </div>
 
-<div id="outline-container-org880ba98" class="outline-2">
-<h2 id="org880ba98">Camera picture quality</h2>
-<div class="outline-text-2" id="text-org880ba98">
+<div id="outline-container-org6f79640" class="outline-2">
+<h2 id="org6f79640">Camera picture quality</h2>
+<div class="outline-text-2" id="text-org6f79640">
 <p>
 I use a PrecisionHD 4x (TTC8-04) camera. It's actually just 720p but still delivers better quality video than most of my colleagues who are on the latest MacBook Pro or similar new laptop. 10 year old digital camera sensors aren't great but it has pretty decent optics - big pieces of glass that just don't get out of date. The motors are fairly quiet. I have the 12x zoom camera too, which has 1080p output and it is noticeably (or not, heh) quieter. Unfortunately, there is some form of analog noise from that camera which is why I am not using it.
 </p>
@@ -129,9 +128,9 @@ In practice, my C40 achieves high bit rate video and with good lenses it more th
 </div>
 </div>
 
-<div id="outline-container-orgaf8637a" class="outline-2">
-<h2 id="orgaf8637a">Audio</h2>
-<div class="outline-text-2" id="text-orgaf8637a">
+<div id="outline-container-orga49df43" class="outline-2">
+<h2 id="orga49df43">Audio</h2>
+<div class="outline-text-2" id="text-orga49df43">
 <p>
 Audio is great. You have to connect external speakers, so that is largely up to your own choice of speakers. My kit came equipped with a desktop microphone with a micro-XLR output that is jacked up to the XLR input of the codec. Since there's an XLR input, the choices are endless.
 </p>
@@ -158,18 +157,18 @@ I don't really know what would cause this ramp-up problem and speaking-over-each
 </div>
 </div>
 
-<div id="outline-container-org133d474" class="outline-2">
-<h2 id="org133d474">IPv6</h2>
-<div class="outline-text-2" id="text-org133d474">
+<div id="outline-container-org775c97f" class="outline-2">
+<h2 id="org775c97f">IPv6</h2>
+<div class="outline-text-2" id="text-org775c97f">
 <p>
 It supports IPv6. What else needs to be said?
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgc61583d" class="outline-2">
-<h2 id="orgc61583d">Standalone vs SIP infrastructure</h2>
-<div class="outline-text-2" id="text-orgc61583d">
+<div id="outline-container-orgf437e9d" class="outline-2">
+<h2 id="orgf437e9d">Standalone vs SIP infrastructure</h2>
+<div class="outline-text-2" id="text-orgf437e9d">
 <p>
 It is possible to operate the C40 standalone and directly call to IP addresses. Incoming calls can be placed directly to the public IP address of your C40 (or through forwarded ports if you are behind NAT).
 </p>
@@ -180,17 +179,17 @@ The more elegant approach is of course to use a SIP registrar that answers for l
 </div>
 </div>
 
-<div id="outline-container-org6dd7051" class="outline-2">
-<h2 id="org6dd7051">Interoperating with other systems, i.e. what speaks SIP?</h2>
-<div class="outline-text-2" id="text-org6dd7051">
+<div id="outline-container-org692356b" class="outline-2">
+<h2 id="org692356b">Interoperating with other systems, i.e. what speaks SIP?</h2>
+<div class="outline-text-2" id="text-org692356b">
 <p>
 Unfortunately, not many other video conferencing solutions appear to speak SIP. Many are walled gardens.
 </p>
 </div>
 
-<div id="outline-container-org82a600f" class="outline-3">
-<h3 id="org82a600f">Cisco Webex (Teams)</h3>
-<div class="outline-text-3" id="text-org82a600f">
+<div id="outline-container-org403a343" class="outline-3">
+<h3 id="org403a343">Cisco Webex (Teams)</h3>
+<div class="outline-text-3" id="text-org403a343">
 <p>
 AFAIK, all Webex meetings support dialing in with SIP. You can reach personal rooms using <code>sip:NAME@ORG.webex.com</code>, for example, my personal Cisco room is <code>sip:krlarsso@cisco.webex.com</code>. Meetings have a unique identifier consisting of 9 digits and you can dial in to them by dialing <code>sip:MEETING_ID@webex.com</code>.
 </p>
@@ -201,36 +200,36 @@ There is a native Webex client for OS X and Windows. Without having measured, it
 </div>
 </div>
 
-<div id="outline-container-orgdde2db1" class="outline-3">
-<h3 id="orgdde2db1">Cisco Jabber Video and other Cisco collaboration solutions</h3>
-<div class="outline-text-3" id="text-orgdde2db1">
+<div id="outline-container-orgcc0124c" class="outline-3">
+<h3 id="orgcc0124c">Cisco Jabber Video and other Cisco collaboration solutions</h3>
+<div class="outline-text-3" id="text-orgcc0124c">
 <p>
 Cisco offers on-premise solutions for video conferencing that are popular with many enterprises. AFAIK they all support SIP. I have friends working for companies that have such solutions and when connected using the Cisco C40 to a client on his computer, the latency is exceptionally low - a very nice experience indeed. The point of video conferencing is to take away the parts that make it feel unnatural, it should be a close to a physical meeting as possible. Latency is one of the worst enemies here. With enough lag, we get people speaking over each other.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org18ee997" class="outline-3">
-<h3 id="org18ee997">Zoom</h3>
-<div class="outline-text-3" id="text-org18ee997">
+<div id="outline-container-org58f8021" class="outline-3">
+<h3 id="org58f8021">Zoom</h3>
+<div class="outline-text-3" id="text-org58f8021">
 <p>
 SIP dial-in is an extra feature for Zoom, where the organizing party need to ensure it is enabled. Zoom comes as cloud hosted or can be installed on-premise. I am familiar with the details of each option and how it influences the ability of SIP dial-in. It sure doesn't provide the always-on SIP functionality that Cisco's solutions have, which is a pity. I don't understand why SIP, not being tied to any particular hardware (people talk about SIP trunks like it was a ISDN-PRI, but common), wouldn't just be enabled per default.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge01f96e" class="outline-3">
-<h3 id="orge01f96e">Microsoft Teams</h3>
-<div class="outline-text-3" id="text-orge01f96e">
+<div id="outline-container-orgf4273a9" class="outline-3">
+<h3 id="orgf4273a9">Microsoft Teams</h3>
+<div class="outline-text-3" id="text-orgf4273a9">
 <p>
 There is some form of Direct Routing option for Microsoft Teams that allow a SIP trunk to be setup so that it's possible to dial-in with SIP. I have never been invited to a meeting that have this supported.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org71ba7ac" class="outline-3">
-<h3 id="org71ba7ac">Jitsi</h3>
-<div class="outline-text-3" id="text-org71ba7ac">
+<div id="outline-container-org1fbb658" class="outline-3">
+<h3 id="org1fbb658">Jitsi</h3>
+<div class="outline-text-3" id="text-org1fbb658">
 <p>
 Jitsi is a web video conference solution based on WebRTC. It has a component called jigasi which acts as a SIP gateway. Unfortunately, it is audio only. This was a big disappointment to me as I spent a few hours setting up Jitsi thinking it would be my one stop solution for SIP video conferencing while also being able to invite random people on the Internet to use WebRTC (after all, I am aware not everyone has a SIP video conferencing system like me).
 </p>
@@ -245,18 +244,18 @@ I should probably get over my feelings on the implementation and just set it up 
 </div>
 </div>
 
-<div id="outline-container-org1decf9f" class="outline-3">
-<h3 id="org1decf9f">Lifesize</h3>
-<div class="outline-text-3" id="text-org1decf9f">
+<div id="outline-container-org088fa51" class="outline-3">
+<h3 id="org088fa51">Lifesize</h3>
+<div class="outline-text-3" id="text-org088fa51">
 <p>
 I have never tried but Lifesize devices should be SIP standards compliant and should work well both in conferencing and for direct calls.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge66c324" class="outline-3">
-<h3 id="orge66c324">Polycom</h3>
-<div class="outline-text-3" id="text-orge66c324">
+<div id="outline-container-orga461105" class="outline-3">
+<h3 id="orga461105">Polycom</h3>
+<div class="outline-text-3" id="text-orga461105">
 <p>
 I have never tried but Polycom devices should be SIP standards compliant and should work well both in conferencing and for direct calls.
 </p>
@@ -264,9 +263,9 @@ I have never tried but Polycom devices should be SIP standards compliant and sho
 </div>
 </div>
 
-<div id="outline-container-org0de60ec" class="outline-2">
-<h2 id="org0de60ec">Support</h2>
-<div class="outline-text-2" id="text-org0de60ec">
+<div id="outline-container-orgc179fdb" class="outline-2">
+<h2 id="orgc179fdb">Support</h2>
+<div class="outline-text-2" id="text-orgc179fdb">
 <p>
 The Cisco C40 and all gear of its generation is pretty much out of support. However, it does what I need so I am not very troubled of this.
 </p>
@@ -277,9 +276,9 @@ It is obviously a risk running unpatched software. You can mitigate this by plac
 </div>
 </div>
 
-<div id="outline-container-org025f32b" class="outline-2">
-<h2 id="org025f32b">Software</h2>
-<div class="outline-text-2" id="text-org025f32b">
+<div id="outline-container-org10fde66" class="outline-2">
+<h2 id="org10fde66">Software</h2>
+<div class="outline-text-2" id="text-org10fde66">
 <p>
 The C40 runs the TC series software. It appears to have been superceded by EC software. Newer codecs like the SX80 can run both TC and CE.
 </p>
@@ -290,9 +289,9 @@ For my use cases, TC software seems just fine. I don't know what I would gain by
 </div>
 </div>
 
-<div id="outline-container-org197e700" class="outline-2">
-<h2 id="org197e700">API</h2>
-<div class="outline-text-2" id="text-org197e700">
+<div id="outline-container-orgadd8cee" class="outline-2">
+<h2 id="orgadd8cee">API</h2>
+<div class="outline-text-2" id="text-orgadd8cee">
 <p>
 The C40, or rather the TC software it runs, supports multiple APIs. There is a SSH CLI to configure things and a HTTP API that you can feed XML payloads to get it to do things.
 </p>
@@ -320,9 +319,9 @@ I have the local IP address of my C40 hard-coded in the <code>C40_ADDRESS</code>
 </div>
 </div>
 
-<div id="outline-container-org370589e" class="outline-2">
-<h2 id="org370589e">What I bought</h2>
-<div class="outline-text-2" id="text-org370589e">
+<div id="outline-container-orgbf891cd" class="outline-2">
+<h2 id="orgbf891cd">What I bought</h2>
+<div class="outline-text-2" id="text-orgbf891cd">
 <p>
 I mentioned I have three C40 units. I bought the first as a complete kit including:
 </p>
@@ -351,9 +350,9 @@ As it turned out, the 12x camera has some analog noise, so I'm using the second 
 </div>
 </div>
 
-<div id="outline-container-org3896065" class="outline-2">
-<h2 id="org3896065">System components</h2>
-<div class="outline-text-2" id="text-org3896065">
+<div id="outline-container-org5be1995" class="outline-2">
+<h2 id="org5be1995">System components</h2>
+<div class="outline-text-2" id="text-org5be1995">
 <p>
 For a system like mine, you need:
 </p>
@@ -390,9 +389,9 @@ The camera cable for the SX20 looks like a HDMI fused together with something el
 </div>
 
 
-<div id="outline-container-org2687133" class="outline-2">
-<h2 id="org2687133">Automatic camera follows speaker</h2>
-<div class="outline-text-2" id="text-org2687133">
+<div id="outline-container-org1be6a24" class="outline-2">
+<h2 id="org1be6a24">Automatic camera follows speaker</h2>
+<div class="outline-text-2" id="text-org1be6a24">
 <p>
 There is a component called SpeakerTrack that is able to follow the currently speaking presenter. It's a marvelous piece of technology. It uses two cameras to allow focusing on one speaker while moving the other camera to be ready to cut to the next "scene", for example an overview of all participants in a meeting. I'm not entirely sure how it works but it has a large microphone array which I assume is for localizing the speaker in a room and then probably do fine adjustments based on video analysis. I have a hard time imagining that finding the speaker could be based purely on a microphone array since it also properly finds your head regardless if you are sitting down or standing up. That <i>has</i> to come out of image analysis. I've seen there are debug settings related to face detection, so this seems likely. The same technology is used in the MX700/MX800 (two large monitors with camera built-in) Telepresence systems.
 </p>
@@ -407,13 +406,13 @@ While SpeakerTrack is a product, there is a feature called PresenterTrack that a
 </div>
 </div>
 
-<div id="outline-container-org6f6bda3" class="outline-2">
-<h2 id="org6f6bda3">Similar systems</h2>
-<div class="outline-text-2" id="text-org6f6bda3">
+<div id="outline-container-org290254a" class="outline-2">
+<h2 id="org290254a">Similar systems</h2>
+<div class="outline-text-2" id="text-org290254a">
 </div>
-<div id="outline-container-org3a2d42e" class="outline-3">
-<h3 id="org3a2d42e">C20</h3>
-<div class="outline-text-3" id="text-org3a2d42e">
+<div id="outline-container-org53ff78d" class="outline-3">
+<h3 id="org53ff78d">C20</h3>
+<div class="outline-text-3" id="text-org53ff78d">
 <p>
 The C20 codec is a smaller codec, both physically and in terms of features and capabilities. It supports up to 720p content and has fewer inputs and outputs.
 </p>
@@ -424,9 +423,9 @@ It is intended for use in smaller locations, like huddle rooms.
 </div>
 </div>
 
-<div id="outline-container-org10e8b2e" class="outline-3">
-<h3 id="org10e8b2e">C60 / C90</h3>
-<div class="outline-text-3" id="text-org10e8b2e">
+<div id="outline-container-orgc4f76f7" class="outline-3">
+<h3 id="orgc4f76f7">C60 / C90</h3>
+<div class="outline-text-3" id="text-orgc4f76f7">
 <p>
 Same capabilities as C40 in terms of resolutions (1080p) and features, just with more inputs and outputs.
 </p>
@@ -437,9 +436,9 @@ All three (C40, C60 and C90) are intended for installation in (small to large) c
 </div>
 </div>
 
-<div id="outline-container-orgd3269cb" class="outline-3">
-<h3 id="orgd3269cb">SX20 / SX80</h3>
-<div class="outline-text-3" id="text-orgd3269cb">
+<div id="outline-container-org264a58b" class="outline-3">
+<h3 id="org264a58b">SX20 / SX80</h3>
+<div class="outline-text-3" id="text-org264a58b">
 <p>
 This is the generation after the Cxx devices with SX20 supposedly roughly mapping to the C20 (think huddle room) whereas the SX80 is somewhere in between the C60 and C90 in number of inputs/outputs. Being of a later generation, they can run more modern software and are still supported.
 </p>
@@ -451,9 +450,9 @@ The only feature I've seen that seems way cooler is the PresenterTrack feature a
 </div>
 </div>
 
-<div id="outline-container-org4c8b465" class="outline-2">
-<h2 id="org4c8b465">4K</h2>
-<div class="outline-text-2" id="text-org4c8b465">
+<div id="outline-container-org12abc0c" class="outline-2">
+<h2 id="org12abc0c">4K</h2>
+<div class="outline-text-2" id="text-org12abc0c">
 <p>
 I love high resolution screens. I use a 32" 4K monitor at home so I can fit a lot of text on it. My laptops have high DPI screens. Unfortunately the C40 is a 1080p system. I would love to do 4K video conferencing. Judging overall, the world isn't ready for it. Video calling apps on phones are mostly using low bit rates. Many video conferencing software is also falling back to lower bit rate video stream as the computer can't keep up or the Internet connection can't.
 </p>
@@ -468,9 +467,9 @@ Lifesize latest series of video conference equipment supports 4K. They cost an a
 </div>
 </div>
 
-<div id="outline-container-orge44a92f" class="outline-2">
-<h2 id="orge44a92f">Buying one</h2>
-<div class="outline-text-2" id="text-orge44a92f">
+<div id="outline-container-org2a56aff" class="outline-2">
+<h2 id="org2a56aff">Buying one</h2>
+<div class="outline-text-2" id="text-org2a56aff">
 <p>
 The prices in the US is considerably lower than in Europe. You can get a C40 for $50 or less. Some of the cameras are available at $20-30. Good mics are also fairly cheap. Assembling a complete system from individual parts is likely the cheapest way as people will sell it as untested gear. People tend to overcharge for the cables though and it might be a little tricky getting hold of the special serial cable (I haven't actually checked the pin-out - perhaps it isn't that special?).
 </p>
