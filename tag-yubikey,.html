@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="alternate"
+      type="application/rss+xml"
+      href="https://plajjan.github.io/rss.xml"
+      title="RSS feed for https://plajjan.github.io/"/>
+<title>Network Automation ramblings by Kristian Larsson</title>
+<meta name="author" content="Kristian Larsson">
+<meta name="referrer" content="no-referrer">
+<link href= "css/style.css" rel="stylesheet" type="text/css" />
+<link rel="icon" href="static/favicon.ico">
+<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script></head>
+<body>
+<div id="preamble" class="status"><div class='header'>
+  <a href='/'>Network Automation ramblings by Kristian Larsson</a>
+</div>
+<nav style='float: right; display: block;'>
+<a href='/'>Blog</a>
+<a href='/tools.html'>Tools</a>
+<a href='/about.html'>About</a>
+</nav></div>
+<div id="content">
+<h1 class="title">Posts tagged "yubikey,":</h1>
+<div class="post-date">15 Sep 2018</div><h1 class="post-title"><a href="2018-09-15-perfectly-reasonable-security.html">Perfectly reasonable security for GPG, SSH and password management using a Yubikey hardware device</a></h1>
+<p>
+Perfect security, if such a thing exists, probably involves a Faraday cage and no Internet connectivity. Increasing security usually comes at the cost of usability and if a computer system is so cumbersome to use that it isn't used at all, then it serves no purpose. One must strike a balance between the two. I recently did, when I got myself a set of Yubikeys, a hardware authentication device. This is my setup for perfectly reasonable security.
+</p>
+
+<p>
+While no expert on the matter, I know enough about crypto to be nervous. I have wanted to improve my setup for a long time and when I recently got myself a Yubikey for hardware authentication I decided to write down some of my thoughts and what I learned in the process of setting it up.
+</p>
+
+<div id="outline-container-orgb840c7e" class="outline-2">
+<h2 id="orgb840c7e">TL; DR; version</h2>
+<div class="outline-text-2" id="text-orgb840c7e">
+<p>
+I want:
+</p>
+<ul class="org-ul">
+<li>secure password manager</li>
+<li>secure SSH auth</li>
+<li>GPG for email, maybe? I'm not really using it but it's a plus</li>
+</ul>
+
+<p>
+It is challenging because:
+</p>
+<ul class="org-ul">
+<li>computer security sucks</li>
+</ul>
+
+<p>
+Solution:
+</p>
+<ul class="org-ul">
+<li>don't keep secret keys on computer!</li>
+<li>put key on dedicated hardware authentication device
+<ul class="org-ul">
+<li>thus hacking computer reveals no keys</li>
+</ul></li>
+<li>I choose Yubikey 4 as my hardware authentication device (HAD)</li>
+<li>my GPG key is on the Yubikey</li>
+<li>I use password store, a very UNIXy solution for password management, which can use the GPG keys on the Yubikey for decryption of secrets</li>
+<li>GPG key on Yubikey is used for SSH authentication</li>
+<li>GPG key on Yubikey can be used for GPG email</li>
+<li>all security / trust is rooted in the keys on the Yubikey</li>
+<li>someone can steal my Yubikey, but it's impossible to retrieve the key itself from the Yubikey</li>
+<li>stolen hardware device can be <b>used</b> to sign / authenticate / decrypt though, if PIN is known - so need to protect PIN too</li>
+<li>too many failed PIN attempts =&gt; hardware authentication device is locked</li>
+<li>attack surface and risk is lower since number of people in physical proximity able to steal my Yubikey is probably lower than everyone on the Internet wanting to steal my secrets (and can through some combination of security flaws)</li>
+<li>Yubikey doesn't carry master key, only sub keys signed by master</li>
+<li>if retrieving key from Yubikey turns out to be possible, due to some flaw in the Yubikey, it is "only" a subkey</li>
+<li>subkeys expire after one (1) year</li>
+<li>extending subkey expiry requires master keys, thus need to bring out master key once a year, at which time I also verify all USB sticks work etc.</li>
+<li>protect backups just like any other key!</li>
+<li>I reduce risk of rogue application on my computer using the Yubikey to decrypt / sign / whatever by requiring that I physically touch the Yubikey for <b>every</b> operation. maybe slight PITA but IMHO worth it - you don't have to do that</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org50ae67f" class="outline-2">
+<h2 id="org50ae67f">Longer version</h2>
+<div class="outline-text-2" id="text-org50ae67f">
+<p>
+If you don't feel like getting depressed you can skip this next section over to the much less gloomy solutions part further down.
+</p>
+</div>
+
+<div id="outline-container-org2d59ab5" class="outline-3">
+<h3 id="org2d59ab5">Motivation a.k.a. the depressing state of computer systems</h3>
+<div class="outline-text-3" id="text-org2d59ab5">
+<p>
+I started writing this post focusing on the solutions I had found for improving security but realised that what I present, while nice in many aspects, often means a few more hoops to jump through than what one might be used to. I felt I needed to explain and motivate why we want something, what the risks are of not doing it and all of a sudden, this whole heading was born. Read this if you want to feel depressed over the state of your computer and how insecure it all really is.
+</p>
+</div>
+
+<div id="outline-container-orgb9df9e1" class="outline-4">
+<h4 id="orgb9df9e1">Password management</h4>
+<div class="outline-text-4" id="text-orgb9df9e1">
+<p>
+I've relied on Chrome remembering passwords pretty much since the feature was made available. When I got a MacBook a few years back I started using the OS X keychain for all sorts of passwords too and made a short foray into using Safari as well.
+</p>
+
+<p>
+Chrome password manager or similar features of Firefox or any other browser only goes so far. They cover web pages but not other passwords or sensitive information you might want to save. For example, you might want to save credit card information or personal information like passport numbers etc.
+</p>
+
+<p>
+Over the years there have been plenty of bugs surrounding browser password management and the automatic form filling functionality that often comes with it. I think it started with autofill filling in hidden input fields, like [described here](<a href="https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/">https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/</a>). It got blocked but then clever people put the input fields at negative x or y coordinates, which when blocked prompted using z-index to hide the fields from the human user but still having them visible to the machine. All in order to steal data from users. It would have been nice if I could offer you a list of bug references here but I never took note. They exist though and are too many to ignore. Overall, the idea of having a programmable machine (a JavaScript engine) without much checks, running inside of the same environment you use to do banking or other sensitive things is.. sad or laughable depending on your mood. Not a very good idea. There's a [good and fun read about what could happen over here](<a href="https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5">https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5</a>).
+</p>
+
+<p>
+I got tired of it all. I can't use a feature that best case consistently leaks some information left and right and worst case sends all my passwords to some bad guy. I decided to go for [password-store](<a href="https://www.passwordstore.org/">https://www.passwordstore.org/</a>), a very UNIX style password manager. It's actually a shell script that invokes GPG to keep secrets in encrypted form on disk. It can also check everything into git. I love it.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orgcbd0403" class="outline-4">
+<h4 id="orgcbd0403">Computer hardware are crap, or is it just Intel CPUs?</h4>
+<div class="outline-text-4" id="text-orgcbd0403">
+<p>
+Then there is of course Spectre and Meltdown. For a period of time, anyone could read all your memory. They just needed a local login to run some program that would extract secrets through precise timing. Then someone wrote a proof-of-concept in JavaScript and all off a sudden an ad, loaded by your browser from some random ad network, could read your gpg key or the secret key for your full disk encryption or just some passwords, whatever happened to be in memory.
+</p>
+
+<p>
+Spectre and Meltdown were patched. Then we got L1TF. It's sort of the same thing. OpenBSD's Theo de Raadt [commented](<a href="https://marc.info/?l=openbsd-tech&amp;m=153431475429367&amp;w=2">https://marc.info/?l=openbsd-tech&amp;m=153431475429367&amp;w=2</a>);
+</p>
+
+<p>
+&gt; We believe Intel cpus do almost no security checks up-front, but defer checks until instruction retire.  As a result we believe similar issues will be coming in the future.
+</p>
+
+<p>
+So it's just a matter of time until someone comes up with other clever ways of tricking your CPU to leak data. This is at the very bottom of your stack - the hardware of your computer. If we move up a level we'll find the operating system and its kernel.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3df0649" class="outline-4">
+<h4 id="org3df0649">OS</h4>
+<div class="outline-text-4" id="text-org3df0649">
+<p>
+Somewhat like the browser bugs, I haven't taken note of Linux CVEs but over the last ten years I've had to patch my machines a few times too many. I have a child now so I don't have time in my life for surprise patching sessions.
+</p>
+
+<p>
+I mentioned I had a MacBook and I'm afraid it's no better. In addition, using multiple computers and having secret keys on all of them means I am exposed to more security flaws. Breaking any of them would reveal my secrets.
+</p>
+
+<p>
+I think the basic problem is that the focus of almost all software development is with features - anything bringing perceived value to the product, so it can be sold for more or motivate the next upgrade. I want a system that works and I want it developed through a process that prioritise correct code. I think it is more important to be correct than fast which is why my interest for OpenBSD has only increased.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org93b6205" class="outline-4">
+<h4 id="org93b6205">Summary of the state of computer systems</h4>
+<div class="outline-text-4" id="text-org93b6205">
+<p>
+In the end, we have a machine built of hardware we don't trust with an operating system we don't trust that executes different programs, some or all of which we don't trust. The computer shifts between executing these programs so fast that we humans actually perceive the programs as running in parallel, yet it's all running on a single execution engine (core / thread) - no wonder there are timing related side channel attacks in there.
+</p>
+
+<p>
+One of those program executing is bound to be a web browser that downloads JavaScript code from random places on the Internet, which I certainly don't trust. At the same time we want to use the same machine for doing important things, like online banking or signing code. How?
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9b38993" class="outline-3">
+<h3 id="org9b38993">Solutions / mitigations</h3>
+<div class="outline-text-3" id="text-org9b38993">
+<p>
+Using a hardware authentication device (HAD) we can get around some of these issues. By placing my GPG keys on the HAD, they are no longer accessible from the computer.I can sign, authenticate and encrypt or decrypt data by using my HAD but the keys will not ever leave the HAD.
+</p>
+
+<p>
+My choice for this hardware authentication device fell on the Yubikey 4. There's some criticism of the Yubikey 4 because unlike some earlier designs, it has a completely closed design. I read [Yubico CTO Jakob Ehrensvärd's thoughts on the matter](<a href="https://www.yubico.com/2016/05/secure-hardware-vs-open-source/">https://www.yubico.com/2016/05/secure-hardware-vs-open-source/</a>). It turns out the previous designs weren't that open, so the Yubikey 4 isn't much worse. I suppose a completely open card would be better but as I can't find one it doesn't seem to make much of a difference. Bottom line, I believe that by using a Yubikey 4 I will be much better off than keeping my keys on disk on multiple computers.
+</p>
+
+<p>
+A bad person can naturally steal my Yubikey, however, since hardware authentication devices are designed to be write-only it is impossible to retrieve my keys from it.
+</p>
+
+<p>
+A stolen Yubikey could still be used to sign, authenticate or decrypt content but that requires a PIN. Entering an incorrect PIN too many times will lock that PIN.
+</p>
+
+<p>
+PIN entry is potentially insecure as it's done through software. A "proper" hardware authentication device would have a PIN entry mechanism on the device itself, instead of through the "insecure" computer. The small size of the Yubikey, which is rather convenient, sort of prevents putting many physical keys on it. With the alternative being a much larger device, I am overall fine with this and deem the risk acceptable.
+</p>
+
+<p>
+When inserting the Yubikey and trying to use it, you will be prompted for the PIN. gpg-agent can cache the PIN for a certain amount of time such that the PIN doesn't have to be entered for every use of the Yubikey.
+</p>
+
+<p>
+However, any program could use the Yubikey once unlocked. To prevent this, I have enabled a mode that forces me to push the button on the Yubikey. I think this is an effective measure to mitigate the risk of rogue programs running on my computer trying to use the Yubikey to decrypt my content behind my back. It does however mean I can't batch anything. Also a nice thing I didn't know; there is a small light on the Yubikey and it lights up when it needs me to press. If it lights up and I didn't do anything, then something fishy is going on.
+</p>
+
+<p>
+It is possible to generate keys on the Yubikey making it truly impossible to ever read them out (provided as always, that they Yubikey does what it says on the box). However, it also means you loose the key if you loose the Yubikey so instead I opted to generate my keys on a computer and copy them to the Yubikey. This way I can have multiple Yubikeys and obviously restore one if it's lost or broken.
+</p>
+
+<p>
+I generate they keys on an air gapped computer that I boot from a USB stick so that it has no permanent storage. The keys are backed up to USB sticks. The USB sticks use an encryption layer and the keys themselves are encrypted since I have a passphrase on them.
+</p>
+
+<p>
+One master key is first generated which then signs a number of subkeys. It is the subkeys that are copied to the hardware authentication device.
+</p>
+
+<p>
+If the Yubikey promise holds not to be true - that it is indeed possible to read out the key, then it is "only" a subkey.
+</p>
+
+<p>
+The subkeys expire after one year, making it further difficult to use it if somehow stolen.
+</p>
+
+<p>
+To update the expiry date of subkeys, I must bring out my master key. This is also a good time to verify readability of the multiple backups - USB sticks don't last forever, so I figured a yearly refresh is prudent.
+</p>
+
+<p>
+I'm still pondering devising some way of printing the keys for backup. Others are doing this, I just need to see if it fits my backup methods.
+</p>
+
+<p>
+Don't forget that all "backups" of your keys are just a copy of the key. They're not worth less. If someone gets their hand on it, it can be used just like your normal key. All copies, including backups, needs to be carefully protected!
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge407694" class="outline-3">
+<h3 id="orge407694">Random bits of GPG and other information</h3>
+<div class="outline-text-3" id="text-orge407694">
+</div>
+<div id="outline-container-orgbc78720" class="outline-4">
+<h4 id="orgbc78720">Do I need passphrases on the keys I generate for my Yubikey?</h4>
+<div class="outline-text-4" id="text-orgbc78720">
+<p>
+You should always put a passphrase on your key, even ones you intend to use on a Yubikey.
+</p>
+
+<p>
+The passphrase means the key is encrypted on disk, which is a very nice feature.
+</p>
+
+<p>
+Given that the Yubikey doesn't prompt for the passphrase (not that it really could), I suspect the `keytocard` command might not actually move the key verbatim but decrypt it from disk based on the passphrase (you need to enter it when running `keytocard`) and put the key on the card in plain-text (although still protected on the card by other means, preventing it from being read).
+</p>
+
+<p>
+I initially thought of SSH keys where it is common to not add a passphrase for keys that are used non-interactively by computers and similar. GPG is different. Always use a passphrase!
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge7c7cc8" class="outline-4">
+<h4 id="orge7c7cc8">Same GPG key on multiple Yubikeys? Maybe not a good idea. It's not very smooth.</h4>
+<div class="outline-text-4" id="text-orge7c7cc8">
+<p>
+I have both a Yubikey 4 and a Yubikey 4 nano and my idea was that I would load the exact same keys on them so they could be used interchangeably. That's not the case though. GPG wasn't built for this at all and it's actually per design that you are not meant to do this.
+</p>
+
+<p>
+First, when moving the keys to the card using the keytocard command, the keys are actually <b>moved</b> so after you've done that with the first Yubikey, you simple won't have the keys anymore in your .gnupg directory. This is why you need a backup. I merely restored the backup, restoring the state gnupg thought it was in before I issued keytocard and thus I was able to do that again for the second Yubikey.
+</p>
+
+<p>
+On my other computers I have imported the public key but as GPG associates the key with a particular Yubikey card ID, it prompts me to insert that particular card when it wants to use the key. This is a feature, since otherwise it might mean that someone has stolen your key, put it on their own card and are now trying to use it.
+</p>
+
+<p>
+It is possible to change the card ID associated with the key using gpg-command-agent.
+</p>
+
+<p>
+Display the serial number of the currently inserted card
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">scd serialno
+</pre>
+</div>
+
+<p>
+Tells GPG to learn and associate the new card with the relevant keys
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">learn --force
+</pre>
+</div>
+
+<p>
+You can combine these in a single shell command line:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">gpg-command agent <span style="color: #2d9574;">"scd serialno"</span> <span style="color: #2d9574;">"learn --force"</span> /bye
+</pre>
+</div>
+
+<p>
+I will probably try to use one of the Yubikeys as my primary one and only rarely rely on this command to relearn card ID.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge7b6ea4" class="outline-4">
+<h4 id="orge7b6ea4">Key Expiry</h4>
+<div class="outline-text-4" id="text-orge7b6ea4">
+<p>
+I was initially rather nervous about what expiry time to set. I figured that a key that never expired would be bad and picking a too short time meant I would have to do lots of GPG key magic to generate new keys, have them signed by the old ones etc etc.
+</p>
+
+<p>
+It doesn't seem so bad though. My master key doesn't expire but since it's not used for anything but signing the subkeys it doesn't matter. The subkeys do expire so before that happens I will need to bring out my master key from the backup USB sticks, modify the expiry date on the subkeys and install the new version of them on the Yubikey.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org09a500c" class="outline-4">
+<h4 id="org09a500c">Getting to it</h4>
+<div class="outline-text-4" id="text-org09a500c">
+<p>
+I mostly relied [on this excellent guide](<a href="https://github.com/drduh/YubiKey-Guide#verify-keys">https://github.com/drduh/YubiKey-Guide#verify-keys</a>) for doing all that I described above. I also liked the details of [Simon Josefsson's guide](<a href="https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/">https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/</a>). Last but certainly not least, [this post](<a href="https://www.palkeo.com/sys/perfect-password-manager.html">https://www.palkeo.com/sys/perfect-password-manager.html</a>) that really resonated with me, in particular the parts on how the Yubikey can be configured to require touch for every decrypt / auth / sign operation.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-gpg,.html">gpg,</a> <a href="tag-yubikey,.html">yubikey,</a> <a href="tag-security.html">security</a> </div><div id="archive">
+<a href="archive.html">Other posts</a>
+</div>
+</div>
+</body>
+</html>
