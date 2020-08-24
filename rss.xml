@@ -4,7 +4,7 @@
 <title>Network Automation ramblings by Kristian Larsson</title>
 <description>Network Automation ramblings by Kristian Larsson</description>
 <link>https://plajjan.github.io/</link>
-<lastBuildDate>Mon, 24 Aug 2020 09:10:44 +0200</lastBuildDate>
+<lastBuildDate>Mon, 24 Aug 2020 10:36:20 +0200</lastBuildDate>
 <item>
   <title>Retro SIP video conferencing to Webex et al using a Cisco C40 TelePresence codec</title>
   <description><![CDATA[
@@ -3301,9 +3301,9 @@ Perfect security, if such a thing exists, probably involves a Faraday cage and n
 While no expert on the matter, I know enough about crypto to be nervous. I have wanted to improve my setup for a long time and when I recently got myself a Yubikey for hardware authentication I decided to write down some of my thoughts and what I learned in the process of setting it up.
 </p>
 
-<div id="outline-container-orgb840c7e" class="outline-2">
-<h2 id="orgb840c7e">TL; DR; version</h2>
-<div class="outline-text-2" id="text-orgb840c7e">
+<div id="outline-container-orgd785160" class="outline-2">
+<h2 id="orgd785160">TL; DR; version</h2>
+<div class="outline-text-2" id="text-orgd785160">
 <p>
 I want:
 </p>
@@ -3349,25 +3349,25 @@ Solution:
 </div>
 </div>
 
-<div id="outline-container-org50ae67f" class="outline-2">
-<h2 id="org50ae67f">Longer version</h2>
-<div class="outline-text-2" id="text-org50ae67f">
+<div id="outline-container-org16f4da7" class="outline-2">
+<h2 id="org16f4da7">Longer version</h2>
+<div class="outline-text-2" id="text-org16f4da7">
 <p>
 If you don't feel like getting depressed you can skip this next section over to the much less gloomy solutions part further down.
 </p>
 </div>
 
-<div id="outline-container-org2d59ab5" class="outline-3">
-<h3 id="org2d59ab5">Motivation a.k.a. the depressing state of computer systems</h3>
-<div class="outline-text-3" id="text-org2d59ab5">
+<div id="outline-container-orgadd63f0" class="outline-3">
+<h3 id="orgadd63f0">Motivation a.k.a. the depressing state of computer systems</h3>
+<div class="outline-text-3" id="text-orgadd63f0">
 <p>
 I started writing this post focusing on the solutions I had found for improving security but realised that what I present, while nice in many aspects, often means a few more hoops to jump through than what one might be used to. I felt I needed to explain and motivate why we want something, what the risks are of not doing it and all of a sudden, this whole heading was born. Read this if you want to feel depressed over the state of your computer and how insecure it all really is.
 </p>
 </div>
 
-<div id="outline-container-orgb9df9e1" class="outline-4">
-<h4 id="orgb9df9e1">Password management</h4>
-<div class="outline-text-4" id="text-orgb9df9e1">
+<div id="outline-container-orga18b924" class="outline-4">
+<h4 id="orga18b924">Password management</h4>
+<div class="outline-text-4" id="text-orga18b924">
 <p>
 I've relied on Chrome remembering passwords pretty much since the feature was made available. When I got a MacBook a few years back I started using the OS X keychain for all sorts of passwords too and made a short foray into using Safari as well.
 </p>
@@ -3377,30 +3377,32 @@ Chrome password manager or similar features of Firefox or any other browser only
 </p>
 
 <p>
-Over the years there have been plenty of bugs surrounding browser password management and the automatic form filling functionality that often comes with it. I think it started with autofill filling in hidden input fields, like [described here](<a href="https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/">https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/</a>). It got blocked but then clever people put the input fields at negative x or y coordinates, which when blocked prompted using z-index to hide the fields from the human user but still having them visible to the machine. All in order to steal data from users. It would have been nice if I could offer you a list of bug references here but I never took note. They exist though and are too many to ignore. Overall, the idea of having a programmable machine (a JavaScript engine) without much checks, running inside of the same environment you use to do banking or other sensitive things is.. sad or laughable depending on your mood. Not a very good idea. There's a [good and fun read about what could happen over here](<a href="https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5">https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5</a>).
+Over the years there have been plenty of bugs surrounding browser password management and the automatic form filling functionality that often comes with it. I think it started with autofill filling in hidden input fields, like <a href="https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/">described here</a>. It got blocked but then clever people put the input fields at negative x or y coordinates, which when blocked prompted using z-index to hide the fields from the human user but still having them visible to the machine. All in order to steal data from users. It would have been nice if I could offer you a list of bug references here but I never took note. They exist though and are too many to ignore. Overall, the idea of having a programmable machine (a JavaScript engine) without much checks, running inside of the same environment you use to do banking or other sensitive things is.. sad or laughable depending on your mood. Not a very good idea. There's a <a href="https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5">good and fun read about what could happen over here</a>.
 </p>
 
 <p>
-I got tired of it all. I can't use a feature that best case consistently leaks some information left and right and worst case sends all my passwords to some bad guy. I decided to go for [password-store](<a href="https://www.passwordstore.org/">https://www.passwordstore.org/</a>), a very UNIX style password manager. It's actually a shell script that invokes GPG to keep secrets in encrypted form on disk. It can also check everything into git. I love it.
+I got tired of it all. I can't use a feature that best case consistently leaks some information left and right and worst case sends all my passwords to some bad guy. I decided to go for <a href="https://www.passwordstore.org/">password-store</a>, a very UNIX style password manager. It's actually a shell script that invokes GPG to keep secrets in encrypted form on disk. It can also check everything into git. I love it.
 </p>
 </div>
 </div>
 
 
-<div id="outline-container-orgcbd0403" class="outline-4">
-<h4 id="orgcbd0403">Computer hardware are crap, or is it just Intel CPUs?</h4>
-<div class="outline-text-4" id="text-orgcbd0403">
+<div id="outline-container-org6c95cb8" class="outline-4">
+<h4 id="org6c95cb8">Computer hardware are crap, or is it just Intel CPUs?</h4>
+<div class="outline-text-4" id="text-org6c95cb8">
 <p>
 Then there is of course Spectre and Meltdown. For a period of time, anyone could read all your memory. They just needed a local login to run some program that would extract secrets through precise timing. Then someone wrote a proof-of-concept in JavaScript and all off a sudden an ad, loaded by your browser from some random ad network, could read your gpg key or the secret key for your full disk encryption or just some passwords, whatever happened to be in memory.
 </p>
 
 <p>
-Spectre and Meltdown were patched. Then we got L1TF. It's sort of the same thing. OpenBSD's Theo de Raadt [commented](<a href="https://marc.info/?l=openbsd-tech&amp;m=153431475429367&amp;w=2">https://marc.info/?l=openbsd-tech&amp;m=153431475429367&amp;w=2</a>);
+Spectre and Meltdown were patched. Then we got L1TF. It's sort of the same thing. OpenBSD's Theo de Raadt <a href="https://marc.info/?l=openbsd-tech&amp;m=153431475429367&amp;w=2">commented</a>;
 </p>
 
+<blockquote>
 <p>
-&gt; We believe Intel cpus do almost no security checks up-front, but defer checks until instruction retire.  As a result we believe similar issues will be coming in the future.
+We believe Intel cpus do almost no security checks up-front, but defer checks until instruction retire.  As a result we believe similar issues will be coming in the future.
 </p>
+</blockquote>
 
 <p>
 So it's just a matter of time until someone comes up with other clever ways of tricking your CPU to leak data. This is at the very bottom of your stack - the hardware of your computer. If we move up a level we'll find the operating system and its kernel.
@@ -3408,9 +3410,9 @@ So it's just a matter of time until someone comes up with other clever ways of t
 </div>
 </div>
 
-<div id="outline-container-org3df0649" class="outline-4">
-<h4 id="org3df0649">OS</h4>
-<div class="outline-text-4" id="text-org3df0649">
+<div id="outline-container-org8b18466" class="outline-4">
+<h4 id="org8b18466">OS</h4>
+<div class="outline-text-4" id="text-org8b18466">
 <p>
 Somewhat like the browser bugs, I haven't taken note of Linux CVEs but over the last ten years I've had to patch my machines a few times too many. I have a child now so I don't have time in my life for surprise patching sessions.
 </p>
@@ -3425,9 +3427,9 @@ I think the basic problem is that the focus of almost all software development i
 </div>
 </div>
 
-<div id="outline-container-org93b6205" class="outline-4">
-<h4 id="org93b6205">Summary of the state of computer systems</h4>
-<div class="outline-text-4" id="text-org93b6205">
+<div id="outline-container-orgf9b7561" class="outline-4">
+<h4 id="orgf9b7561">Summary of the state of computer systems</h4>
+<div class="outline-text-4" id="text-orgf9b7561">
 <p>
 In the end, we have a machine built of hardware we don't trust with an operating system we don't trust that executes different programs, some or all of which we don't trust. The computer shifts between executing these programs so fast that we humans actually perceive the programs as running in parallel, yet it's all running on a single execution engine (core / thread) - no wonder there are timing related side channel attacks in there.
 </p>
@@ -3439,19 +3441,19 @@ One of those program executing is bound to be a web browser that downloads JavaS
 </div>
 </div>
 
-<div id="outline-container-org9b38993" class="outline-3">
-<h3 id="org9b38993">Solutions / mitigations</h3>
-<div class="outline-text-3" id="text-org9b38993">
+<div id="outline-container-org0f95997" class="outline-3">
+<h3 id="org0f95997">Solutions / mitigations</h3>
+<div class="outline-text-3" id="text-org0f95997">
 <p>
 Using a hardware authentication device (HAD) we can get around some of these issues. By placing my GPG keys on the HAD, they are no longer accessible from the computer.I can sign, authenticate and encrypt or decrypt data by using my HAD but the keys will not ever leave the HAD.
 </p>
 
 <p>
-My choice for this hardware authentication device fell on the Yubikey 4. There's some criticism of the Yubikey 4 because unlike some earlier designs, it has a completely closed design. I read [Yubico CTO Jakob Ehrensvärd's thoughts on the matter](<a href="https://www.yubico.com/2016/05/secure-hardware-vs-open-source/">https://www.yubico.com/2016/05/secure-hardware-vs-open-source/</a>). It turns out the previous designs weren't that open, so the Yubikey 4 isn't much worse. I suppose a completely open card would be better but as I can't find one it doesn't seem to make much of a difference. Bottom line, I believe that by using a Yubikey 4 I will be much better off than keeping my keys on disk on multiple computers.
+My choice for this hardware authentication device fell on the Yubikey 4. There's some criticism of the Yubikey 4 because unlike some earlier designs, it has a completely closed design. I read <a href="https://www.yubico.com/2016/05/secure-hardware-vs-open-source/">Yubico CTO Jakob Ehrensvärd's thoughts on the matter</a>. It turns out the previous designs weren't that open, so the Yubikey 4 isn't much worse. I suppose a completely open card would be better but as I can't find one it doesn't seem to make much of a difference. Bottom line, I believe that by using a Yubikey 4 I will be much better off than keeping my keys on disk on multiple computers.
 </p>
 
 <p>
-A bad person can naturally steal my Yubikey, however, since hardware authentication devices are designed to be write-only it is impossible to retrieve my keys from it.
+A bad person can steal my Yubikey, however, since hardware authentication devices are designed to be write-only it is supposedly impossible to retrieve my keys from it.
 </p>
 
 <p>
@@ -3504,13 +3506,13 @@ Don't forget that all "backups" of your keys are just a copy of the key. They're
 </div>
 </div>
 
-<div id="outline-container-orge407694" class="outline-3">
-<h3 id="orge407694">Random bits of GPG and other information</h3>
-<div class="outline-text-3" id="text-orge407694">
+<div id="outline-container-orgef42927" class="outline-3">
+<h3 id="orgef42927">Random bits of GPG and other information</h3>
+<div class="outline-text-3" id="text-orgef42927">
 </div>
-<div id="outline-container-orgbc78720" class="outline-4">
-<h4 id="orgbc78720">Do I need passphrases on the keys I generate for my Yubikey?</h4>
-<div class="outline-text-4" id="text-orgbc78720">
+<div id="outline-container-org147503e" class="outline-4">
+<h4 id="org147503e">Do I need passphrases on the keys I generate for my Yubikey?</h4>
+<div class="outline-text-4" id="text-org147503e">
 <p>
 You should always put a passphrase on your key, even ones you intend to use on a Yubikey.
 </p>
@@ -3529,9 +3531,9 @@ I initially thought of SSH keys where it is common to not add a passphrase for k
 </div>
 </div>
 
-<div id="outline-container-orge7c7cc8" class="outline-4">
-<h4 id="orge7c7cc8">Same GPG key on multiple Yubikeys? Maybe not a good idea. It's not very smooth.</h4>
-<div class="outline-text-4" id="text-orge7c7cc8">
+<div id="outline-container-orgfeff6a4" class="outline-4">
+<h4 id="orgfeff6a4">Same GPG key on multiple Yubikeys? Maybe not a good idea. It's not very smooth.</h4>
+<div class="outline-text-4" id="text-orgfeff6a4">
 <p>
 I have both a Yubikey 4 and a Yubikey 4 nano and my idea was that I would load the exact same keys on them so they could be used interchangeably. That's not the case though. GPG wasn't built for this at all and it's actually per design that you are not meant to do this.
 </p>
@@ -3578,9 +3580,9 @@ I will probably try to use one of the Yubikeys as my primary one and only rarely
 </div>
 </div>
 
-<div id="outline-container-orge7b6ea4" class="outline-4">
-<h4 id="orge7b6ea4">Key Expiry</h4>
-<div class="outline-text-4" id="text-orge7b6ea4">
+<div id="outline-container-org9a70561" class="outline-4">
+<h4 id="org9a70561">Key Expiry</h4>
+<div class="outline-text-4" id="text-org9a70561">
 <p>
 I was initially rather nervous about what expiry time to set. I figured that a key that never expired would be bad and picking a too short time meant I would have to do lots of GPG key magic to generate new keys, have them signed by the old ones etc etc.
 </p>
@@ -3591,19 +3593,19 @@ It doesn't seem so bad though. My master key doesn't expire but since it's not u
 </div>
 </div>
 
-<div id="outline-container-org09a500c" class="outline-4">
-<h4 id="org09a500c">Getting to it</h4>
-<div class="outline-text-4" id="text-org09a500c">
+<div id="outline-container-org58daed3" class="outline-4">
+<h4 id="org58daed3">Getting to it</h4>
+<div class="outline-text-4" id="text-org58daed3">
 <p>
-I mostly relied [on this excellent guide](<a href="https://github.com/drduh/YubiKey-Guide#verify-keys">https://github.com/drduh/YubiKey-Guide#verify-keys</a>) for doing all that I described above. I also liked the details of [Simon Josefsson's guide](<a href="https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/">https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/</a>). Last but certainly not least, [this post](<a href="https://www.palkeo.com/sys/perfect-password-manager.html">https://www.palkeo.com/sys/perfect-password-manager.html</a>) that really resonated with me, in particular the parts on how the Yubikey can be configured to require touch for every decrypt / auth / sign operation.
+I mostly relied <a href="https://github.com/drduh/YubiKey-Guide#verify-keys">on this excellent guide</a> for doing all that I described above. I also liked the details of <a href="https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/">Simon Josefsson's guide</a>. Last but certainly not least, <a href="https://www.palkeo.com/sys/perfect-password-manager.html">this post</a> that really resonated with me, in particular the parts on how the Yubikey can be configured to require touch for every decrypt / auth / sign operation.
 </p>
 </div>
 </div>
 </div>
 </div>
-<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-gpg,.html">gpg,</a> <a href="tag-yubikey,.html">yubikey,</a> <a href="tag-security.html">security</a> </div>]]></description>
-  <category>gpg,</category>
-  <category>yubikey,</category>
+<div class="taglist"><a href="tags.html">Tags</a>: <a href="tag-gpg.html">gpg</a> <a href="tag-yubikey.html">yubikey</a> <a href="tag-security.html">security</a> </div>]]></description>
+  <category>gpg</category>
+  <category>yubikey</category>
   <category>security</category>
   <link>https://plajjan.github.io/2018-09-15-perfectly-reasonable-security.html</link>
   <pubDate>Sat, 15 Sep 2018 14:00:00 +0200</pubDate>

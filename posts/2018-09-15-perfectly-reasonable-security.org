@@ -3,7 +3,7 @@
 #+EMAIL: kristian@spritelink.net
 #+DATE: <2018-09-15 Sat 14:00>
 #+LANGUAGE: en
-#+FILETAGS: gpg, yubikey, security
+#+FILETAGS: gpg yubikey security
 #+OPTIONS: toc:nil num:0 H:4 ^:nil pri:t
 #+OPTIONS: html-style:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css"/>
@@ -54,17 +54,19 @@ While no expert on the matter, I know enough about crypto to be nervous. I have 
 
     Chrome password manager or similar features of Firefox or any other browser only goes so far. They cover web pages but not other passwords or sensitive information you might want to save. For example, you might want to save credit card information or personal information like passport numbers etc.
 
-    Over the years there have been plenty of bugs surrounding browser password management and the automatic form filling functionality that often comes with it. I think it started with autofill filling in hidden input fields, like [described here](https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/). It got blocked but then clever people put the input fields at negative x or y coordinates, which when blocked prompted using z-index to hide the fields from the human user but still having them visible to the machine. All in order to steal data from users. It would have been nice if I could offer you a list of bug references here but I never took note. They exist though and are too many to ignore. Overall, the idea of having a programmable machine (a JavaScript engine) without much checks, running inside of the same environment you use to do banking or other sensitive things is.. sad or laughable depending on your mood. Not a very good idea. There's a [good and fun read about what could happen over here](https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5).
+    Over the years there have been plenty of bugs surrounding browser password management and the automatic form filling functionality that often comes with it. I think it started with autofill filling in hidden input fields, like [[https://www.bleepingcomputer.com/news/security/browser-autofill-profiles-can-be-abused-for-phishing-attacks/][described here]]. It got blocked but then clever people put the input fields at negative x or y coordinates, which when blocked prompted using z-index to hide the fields from the human user but still having them visible to the machine. All in order to steal data from users. It would have been nice if I could offer you a list of bug references here but I never took note. They exist though and are too many to ignore. Overall, the idea of having a programmable machine (a JavaScript engine) without much checks, running inside of the same environment you use to do banking or other sensitive things is.. sad or laughable depending on your mood. Not a very good idea. There's a [[https://hackernoon.com/im-harvesting-credit-card-numbers-and-passwords-from-your-site-here-s-how-9a8cb347c5b5][good and fun read about what could happen over here]].
 
-    I got tired of it all. I can't use a feature that best case consistently leaks some information left and right and worst case sends all my passwords to some bad guy. I decided to go for [password-store](https://www.passwordstore.org/), a very UNIX style password manager. It's actually a shell script that invokes GPG to keep secrets in encrypted form on disk. It can also check everything into git. I love it.
+    I got tired of it all. I can't use a feature that best case consistently leaks some information left and right and worst case sends all my passwords to some bad guy. I decided to go for [[https://www.passwordstore.org/][password-store]], a very UNIX style password manager. It's actually a shell script that invokes GPG to keep secrets in encrypted form on disk. It can also check everything into git. I love it.
 
 
 *** Computer hardware are crap, or is it just Intel CPUs?
     Then there is of course Spectre and Meltdown. For a period of time, anyone could read all your memory. They just needed a local login to run some program that would extract secrets through precise timing. Then someone wrote a proof-of-concept in JavaScript and all off a sudden an ad, loaded by your browser from some random ad network, could read your gpg key or the secret key for your full disk encryption or just some passwords, whatever happened to be in memory.
 
-    Spectre and Meltdown were patched. Then we got L1TF. It's sort of the same thing. OpenBSD's Theo de Raadt [commented](https://marc.info/?l=openbsd-tech&m=153431475429367&w=2);
+    Spectre and Meltdown were patched. Then we got L1TF. It's sort of the same thing. OpenBSD's Theo de Raadt [[https://marc.info/?l=openbsd-tech&m=153431475429367&w=2][commented]];
 
-    > We believe Intel cpus do almost no security checks up-front, but defer checks until instruction retire.  As a result we believe similar issues will be coming in the future.
+    #+BEGIN_QUOTE
+    We believe Intel cpus do almost no security checks up-front, but defer checks until instruction retire.  As a result we believe similar issues will be coming in the future.
+    #+END_QUOTE
 
     So it's just a matter of time until someone comes up with other clever ways of tricking your CPU to leak data. This is at the very bottom of your stack - the hardware of your computer. If we move up a level we'll find the operating system and its kernel.
 
@@ -83,9 +85,9 @@ While no expert on the matter, I know enough about crypto to be nervous. I have 
 ** Solutions / mitigations
    Using a hardware authentication device (HAD) we can get around some of these issues. By placing my GPG keys on the HAD, they are no longer accessible from the computer.I can sign, authenticate and encrypt or decrypt data by using my HAD but the keys will not ever leave the HAD.
 
-   My choice for this hardware authentication device fell on the Yubikey 4. There's some criticism of the Yubikey 4 because unlike some earlier designs, it has a completely closed design. I read [Yubico CTO Jakob Ehrensvärd's thoughts on the matter](https://www.yubico.com/2016/05/secure-hardware-vs-open-source/). It turns out the previous designs weren't that open, so the Yubikey 4 isn't much worse. I suppose a completely open card would be better but as I can't find one it doesn't seem to make much of a difference. Bottom line, I believe that by using a Yubikey 4 I will be much better off than keeping my keys on disk on multiple computers.
+   My choice for this hardware authentication device fell on the Yubikey 4. There's some criticism of the Yubikey 4 because unlike some earlier designs, it has a completely closed design. I read [[https://www.yubico.com/2016/05/secure-hardware-vs-open-source/][Yubico CTO Jakob Ehrensvärd's thoughts on the matter]]. It turns out the previous designs weren't that open, so the Yubikey 4 isn't much worse. I suppose a completely open card would be better but as I can't find one it doesn't seem to make much of a difference. Bottom line, I believe that by using a Yubikey 4 I will be much better off than keeping my keys on disk on multiple computers.
 
-   A bad person can naturally steal my Yubikey, however, since hardware authentication devices are designed to be write-only it is impossible to retrieve my keys from it.
+   A bad person can steal my Yubikey, however, since hardware authentication devices are designed to be write-only it is supposedly impossible to retrieve my keys from it.
 
    A stolen Yubikey could still be used to sign, authenticate or decrypt content but that requires a PIN. Entering an incorrect PIN too many times will lock that PIN.
 
@@ -153,4 +155,4 @@ While no expert on the matter, I know enough about crypto to be nervous. I have 
     It doesn't seem so bad though. My master key doesn't expire but since it's not used for anything but signing the subkeys it doesn't matter. The subkeys do expire so before that happens I will need to bring out my master key from the backup USB sticks, modify the expiry date on the subkeys and install the new version of them on the Yubikey.
 
 *** Getting to it
-    I mostly relied [on this excellent guide](https://github.com/drduh/YubiKey-Guide#verify-keys) for doing all that I described above. I also liked the details of [Simon Josefsson's guide](https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/). Last but certainly not least, [this post](https://www.palkeo.com/sys/perfect-password-manager.html) that really resonated with me, in particular the parts on how the Yubikey can be configured to require touch for every decrypt / auth / sign operation.
+    I mostly relied [[https://github.com/drduh/YubiKey-Guide#verify-keys][on this excellent guide]] for doing all that I described above. I also liked the details of [[https://blog.josefsson.org/2014/06/23/offline-gnupg-master-key-and-subkeys-on-yubikey-neo-smartcard/][Simon Josefsson's guide]]. Last but certainly not least, [[https://www.palkeo.com/sys/perfect-password-manager.html][this post]] that really resonated with me, in particular the parts on how the Yubikey can be configured to require touch for every decrypt / auth / sign operation.
