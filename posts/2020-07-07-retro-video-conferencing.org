@@ -22,9 +22,11 @@ The bulk of my work, like emailing and writing code, is carried out on Linux. I 
 
 Video conferencing software for Linux or any non-Windows/OS X platform is mostly an abysmal experience. Most of it is confined to a browser, as there are no native clients (though many "native" programs today are really just a web browser anyway). A lot of the times it won't work, even when you can join the conference itself, something else, like screen sharing will fail.
 
-Even on OS X or Windows, video conference software has a tendency to deal you the "I'm just going to install this upgrade" just as you are about to join a conference. This might not happen for the software you use in your team, as you use it every day, but then you have a slew of other video conferencing apps installed for the more infrequent meetings. I heard Zoom (I think) fixed this by scheduling the upgrade just after you had your meeting, which is great. How much in advance of your actual meeting do you need to fire up a video conferencing app to ensure you are ready on time? This is a broader issue with modern software - a form of arrogance.
+Even on OS X or Windows, video conference software has a tendency to deal you the "I'm just going to install this upgrade" just as you are about to join a conference. This might not happen for the software you use in your team, as you use it every day, but then you have a slew of other video conferencing apps installed for the more infrequent meetings. How much in advance of your actual meeting do you need to fire up a video conferencing app to ensure you are ready on time? This is a broader issue with modern software - a form of arrogance on the developers part for their users.
 
-Needing multiple installed video conferencing applications highlights another problem. Just like modern chat applications each live in their own universe and won't interoperate with anything else, many video conferencing or collaboration solutions are walled gardens. I want the lions share of communications to be based on federated technology, like email or SIP, both relying on DNS as the distributed directory. It's beautiful! I'm afraid email was the last widely spread truly federated application.
+Needing multiple installed video conferencing applications highlights another problem. Just like modern chat applications each live in their own universe and won't interoperate with anything else, many video conferencing or collaboration solutions are walled gardens.
+
+I want the lions share of communications to be based on *federated* technology, like email or SIP, both relying on DNS as the distributed directory. It's beautiful! I'm afraid email was the last widely spread truly federated application.
 
 
 * My solution; a decade old video conference hardware
@@ -56,15 +58,19 @@ The C40 is actually just a codec unit. A 1U piece of specialized hardware (I loo
 I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to my Linux workstation and have one loose HDMI cable on my desktop which I can connect to another laptop when needed.
 
 * Camera picture quality
-  I use a PrecisionHD 4x (TTC8-04) camera. It's actually just 720p but still delivers better quality video than most of my colleagues who are on the latest MacBook Pro or similar new laptop. 10 year old digital camera sensors aren't great but it has pretty decent optics - big pieces of glass that just don't get out of date. The motors are fairly quiet. I have the 12x zoom camera too, which has 1080p output and it is noticeably (or not, heh) quieter. Unfortunately, there is some form of analog noise from that camera which is why I am not using it.
+  I use a Precision 60 camera. It is built for the SX80 codec (the generation after the C40) and isn't officially supported together with the C40 but I found out through a forum post that it actually works so I bought a few and it is working great. Picture quality is superb with a 1080p picture at 60fps and coupled with 20x zoom (10x optical zoom and 2x digital) - great if you have a big office. Zoomed out it provides a good wide view of my room. The pan and tilt motors are completely quiet - I simply cannot hear when it is moving and I don't understand how they can be so quiet. The zoom and focus camera makes a slight noise. Nothing that annoys you - I have to sort of actively listen for it. The Precision 60 is a very good camera.
 
-  I find that the bit rate used, usually has a larger effect on qualitative experience than the sheer resolution. This is in comparison to most modern laptops, which for some weird reason come with really poor cameras. Buy a $4000 laptop and get a $4 camera. Why does the iPhone or an iPad have so much better cameras than a MacBook Pro? I haven't used either my iPhone or an iPad extensively for video conferencing professionally so I can't speak to how it works in reality. I do however use my iPhone for Facetime and Whatsapp with family, which usually results in rather crappy video, I suspect it is because both end points are behind NAT and whatever relay is used is severely rate limiting the video stream.
+  Previously I used a PrecisionHD 4x (TTC8-04) camera. It's actually just 720p but still delivers better quality video than most of my colleagues who are on the latest MacBook Pro or similar new laptop. 10 year old digital camera sensors aren't great but it has pretty decent optics - big pieces of glass just don't get out of date. Unlike my main driver, the Precision 60, the motors do make some noise but still qualify as fairly quiet. I have the 12x zoom camera too, which has 1080p output and it is noticeably (or not, heh) quieter than the PrecisionHD 4x but still makes some noise, so somewhere in between the completely quiet Precision 60 and the quite quiet PrecisionHD 4x. Unfortunately, there is some form of analog noise from my 12x camera which is why I've never really used it.
+
+  I find that the camera sensor, optics and bit rate used, usually has a larger effect on qualitative experience than the sheer resolution. This is in comparison to most modern laptops, which for some weird reason come with really poor cameras. Buy a $4000 laptop and get a $4 camera. Why does the iPhone or an iPad have so much better cameras than a MacBook Pro? I haven't used either my iPhone or an iPad extensively for video conferencing professionally so I can't speak to how it works in reality. I do however use my iPhone for Facetime and Whatsapp with family, which usually results in rather crappy video, I suspect it is because both end points are behind NAT and whatever relay is used is severely rate limiting the video stream.
  
   Modern laptops usually have crappy cameras resulting in an overall crappy picture.
 
-  Mobile phones and tablets have decent cameras but in my experience often end up with crappy picture due to low bitrate (large blocks visible from low bit rate encoding).
+  Mobile phones and tablets have decent cameras but in my experience with video calls, often end up with crappy picture due to low bitrate (large blocks visible from low bit rate encoding).
 
-  In practice, my C40 achieves high bit rate video and with good lenses it more than compensates for its aged camera sensor. It has very good picture. Oh did I say it has a motor too? I never get tired of that ;)
+  In practice, my C40 with its Precision 60 achieves delivers a very high quality video experience. Even with my older PrecisionHD 4x camera, the good lenses more than compensates for its aged camera sensor providing an overall better experience than modern web cameras.
+
+  Also, I just love that all these cameras are motorized, I just never get tired of moving about my room and pan my camera to where I'm at.
   
 * Audio
   Audio is great. You have to connect external speakers, so that is largely up to your own choice of speakers. My kit came equipped with a desktop microphone with a micro-XLR output that is jacked up to the XLR input of the codec. Since there's an XLR input, the choices are endless.
@@ -167,10 +173,11 @@ I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to 
   For a system like mine, you need:
   - codec unit (C20, C40, C60, C90)
   - camera
-    - TTC8-02 - the 12x camera I have
-    - TTC8-04 - the 4x camera I have
+    - TTC8-02 - 1080p60fps, the 12x camera I have
+    - TTC8-04 - 720p, 4x zoom the 4x camera I have
     - TTC8-05 - newer 4x camera doing 1080p
     - TTC8-06 - 2.5x zoom - seems crappy
+    - TTC8-07 - 1080p60fps, Precision60, 20x zoom, this is my main driver
   - microphone
     - AudioTecnica, JAVS etc sell desk microphones with XLR connections
     - you can be creative and get anything you want
@@ -179,7 +186,7 @@ I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to 
   - remote control (there's also a touch screen display but it's more costly)
   - a TV / monitor
   
-  You need to be aware of compatibility. The C40/C60/C90 codecs work with all the cameras listed above as they all feature that serial port to connect to the camera. Newer cameras like the Precision60 (TTC8-07) doesn't have a serial port AFAIK, instead it uses Ethernet, as the C40/C60/C90 have a secondary Ethernet, this still works. The C20 however only has a single Ethernet so I'm not sure about its compatibility.
+  You need to be aware of compatibility. The C40/C60/C90 codecs work with all the cameras listed above as they all feature that serial port to connect to the camera. Newer cameras like the Precision60 (TTC8-07) doesn't have a serial port AFAIK, instead it uses Ethernet, as the C40/C60/C90 have a secondary Ethernet, this still works (although not officially supported). The C20 however only has a single Ethernet so I'm not sure about its compatibility.
   
   The camera cable for the SX20 looks like a HDMI fused together with something else - I'm not sure what is is compatible with as I don't have that generation of gear.
 
@@ -189,7 +196,8 @@ I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to 
 
   SpeakerTrack 60, as its called, is a large beast. Probably not something you want in a home office, but nonetheless a very cool piece of technology. I believe all the clever analysis is done in the SpeakerTrack unit itself and so it is compatible with the C40, C60 and C90. It's connected mostly like any other camera via HDMI inputs though also uses the Ethernet jack but I suspect that is mostly for management.
   
-  While SpeakerTrack is a product, there is a feature called PresenterTrack that allows the same functionality of following the currently speaking presenter but with a single camera. It does however require the Precision 60 camera and a SX80 codec at a minimum. I have no idea of the underlying implementation. Both the SX80 and Precision 60 is considerably more expensive than the C40 and camera I have, so I probably won't be upgrading for a while. They are cheaper in the US so perhaps during my next trip there I'll get the chance but in the current situation, no one knows when that will be.
+  While SpeakerTrack is a product, there is a feature called PresenterTrack that allows the same functionality of following the currently speaking presenter but with a single camera. It does however require the Precision 60 camera and a SX80 codec at a minimum. I have no idea of the underlying implementation. The SX80 is considerably more expensive than the C40 I have, so I probably won't be upgrading for a while. They are cheaper in the US so perhaps during my next trip there I'll get the chance but in the current situation, no one knows when that will be.
+
 
 * Similar systems
 ** C20
@@ -208,11 +216,9 @@ I use the second HDMI and the DVI port with a DVI-to-HDMI adapter to connect to 
    The only feature I've seen that seems way cooler is the PresenterTrack feature available in the SX80.
 
 * 4K
-  I love high resolution screens. I use a 32" 4K monitor at home so I can fit a lot of text on it. My laptops have high DPI screens. Unfortunately the C40 is a 1080p system. I would love to do 4K video conferencing. Judging overall, the world isn't ready for it. Video calling apps on phones are mostly using low bit rates. Many video conferencing software is also falling back to lower bit rate video stream as the computer can't keep up or the Internet connection can't.
-  
-  Given that my MacBook Pro runs hot with todays relatively low rate video conferencing, I doubt it would run particularly well with a 4K video source. I think hardware is currently required for a good low latency experience.
-  
-  Lifesize latest series of video conference equipment supports 4K. They cost an arm and a leg. While I do want 4K, I doubt it would make much of a difference to most video conference sessions and the high price doesn't justify it. I'll live with my C40 for the next decade so I can get a 4K one when they're the price of a C40 today ;)
+  I love high resolution screens. I use a 32" 4K monitor at home so I can fit a lot of text on it. My laptops have high DPI screens. While camera streams of people are usually quite fine at 1080p or even 720p, sharing your desktop at 1080p is painful. Unfortunately the C40 is a 1080p system since all signal processing is implemented in hardware and that hardware is designed for 1080p. The same is true for the later generation SX80. The newest video conference equipment from Cisco (generation after SX80), called Webex Rooms, offer the same 1080p streams for camera feeds but support 2160p, i.e. 4K, on ports from computers. This makes a lot of sense, since you typically want the higher resolution for screen sharing. The frame rate is much lower, like 5fps for the 2160p, presumably to keep down the bit rate. I would love to have this on my C40 but again, the FPGA is simply designed for 1080p.
+
+  The lack of 4K is the biggest disadvantage of my setup but as I mentioned above, with simple ways of enlarging content, like font size in terminals, it is manageable. For normal presentations, which use large fonts and visuals, it is not an issue.
 
 * Buying one
   The prices in the US is considerably lower than in Europe. You can get a C40 for $50 or less. Some of the cameras are available at $20-30. Good mics are also fairly cheap. Assembling a complete system from individual parts is likely the cheapest way as people will sell it as untested gear. People tend to overcharge for the cables though and it might be a little tricky getting hold of the special serial cable (I haven't actually checked the pin-out - perhaps it isn't that special?).
